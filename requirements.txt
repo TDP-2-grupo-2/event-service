@@ -1,0 +1,3 @@
+fastapi==0.86.0
+SQLAlchemy==2.0.7
+uvicorn==0.18.3

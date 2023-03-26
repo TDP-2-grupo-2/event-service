@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  event-service:
+    build: . # subir nuestra imagen y usarla de docker hub
+    ports:
+      - "8000:8000"
+    volumes:
+      - /event-service:/event-service
+
+  postgres:
+    image: postgres:alpine
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    environment:
+      - POSTGRES_DB=event_services_db
+      - POSTGRES_USER= ${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - users-postgres:/var/lib/postgresql/data
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL} #admin@mail.com
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD} #admin
+    ports:
+      - "80:8080"
+    depends_on:
+      - postgres
+
+
+volumes:
+  users-postgres:
+  service_data:
+
+
