@@ -1,6 +1,6 @@
 import uvicorn
-from app import app
-from database import database
+from event_service.app import app
+from event_service.database import database
 
 database.init_database()
 

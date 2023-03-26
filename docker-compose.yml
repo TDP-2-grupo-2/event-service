@@ -3,10 +3,16 @@ version: "3.9"
 services:
   event-service:
     build: . # subir nuestra imagen y usarla de docker hub
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     volumes:
-      - /event-service:/event-service
+      - /event_service:/event_service
+    restart: on-failure
+    depends_on:
+      - postgres
+
 
   postgres:
     image: postgres:alpine
@@ -14,10 +20,11 @@ services:
       - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     environment:
       - POSTGRES_DB=event_services_db
-      - POSTGRES_USER= ${POSTGRES_USER}
+      - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - users-postgres:/var/lib/postgresql/data
+    restart: on-failure
 
   pgadmin:
     container_name: pgadmin
@@ -33,6 +40,6 @@ services:
 
 volumes:
   users-postgres:
-  service_data:
+  event_service:
 
 
