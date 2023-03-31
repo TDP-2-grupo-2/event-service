@@ -17,4 +17,4 @@ COPY ./event_service/ ./event_service
 
 EXPOSE 8000
 
-CMD uvicorn event_service.main:app --host 0.0.0.0 --reload
+ENTRYPOINT uvicorn event_service.main:app --host 0.0.0.0 --reload
