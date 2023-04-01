@@ -1,5 +1,12 @@
-from event_service.databases.event_database import EventDatabase
+import json
+from bson import json_util
 
-class EventRepository:
-    def __init__(self, event_database):
-        self.database = event_database
+
+
+     
+def createEvent(event: dict, db):
+
+    new_event = db["events"].insert_one(event)
+    event_created = db["events"].find_one(
+            {"_id": new_event.inserted_id})
+    return json.loads(json_util.dumps(event_created))
