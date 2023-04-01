@@ -12,6 +12,7 @@ RUN /usr/local/bin/python -m pip install --upgrade pip
 RUN pip install psycopg2-binary
 RUN pip install -r requirements.txt
 
+# Create event_service dir
 RUN mkdir event_service
 COPY ./event_service/ ./event_service
 

@@ -2,7 +2,7 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from dotenv import find_dotenv, load_dotenv
-from event_service.database.model import Base
+from event_service.databases.user_model import Base
 
 load_dotenv(find_dotenv())
 
