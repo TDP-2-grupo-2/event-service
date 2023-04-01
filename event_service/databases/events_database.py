@@ -13,7 +13,4 @@ class EventDatabase:
         MONGO_INITDB_ROOT_PASSOWRD = os.getenv('MONGO_INITDB_ROOT_PASSOWRD')
         self.client = MongoClient(f'mongodb://{MONGO_INITDB_ROOT_USERNAME}:{MONGO_INITDB_ROOT_PASSOWRD}@mongo:27017/event_db')
         self.db = self.client.event_db
-        self.event_collection = self.event_db.event_collection
-
-    def get_events(self):
-        return self.event_collection.find()
+        self.event_collection = self.db.event_collection
