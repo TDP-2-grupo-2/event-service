@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import status
+from event_service.routes.routes_events import event_router
 # from .routes import routes_admin, routes_attendee, routes_events, routes_organizer
 
 app = FastAPI()
@@ -15,7 +16,7 @@ app.add_middleware(
 
 # app.include_router(routes_admin, prefix="/admins", tags=["Admins"])
 # app.include_router(routes_attendee, prefix="/attendees", tags=["Attendees"])
-# app.include_router(routes_events, prefix="/events", tags=["Events"])
+app.include_router(event_router, prefix="/events", tags=["Events"])
 # app.include_router(routes_organizer, prefix="/organizers", tags=["Organizers"])
 
 @app.get("/")
