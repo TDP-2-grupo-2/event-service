@@ -8,12 +8,8 @@ client = TestClient(app)
 
 
 
-def test_prueb2():
-    
-    response = client.get("/")
-    assert response.status_code == 200
 
-def create_event():
+def create_event1():
     respose = client.post("/events/", json={
             "name": "Music Fest ",
             "owner": "Agustina Segura",
@@ -32,10 +28,29 @@ def create_event():
                     },)
     return respose
 
+def create_event2():
+    respose = client.post("/events/", json={
+            "name": "Music Fest ",
+            "owner": "Agustina Segura",
+            "description": "Musical de pop, rock y mucho más",
+            "location": "Estadio River ",
+            "capacity": 5000,
+            "dateEvent": "2023-01-01",
+            "attendance": 0,
+            "tags": [
+                "MUSICA", "DIVERSION"
+            ],
+            "latitud": 8.9,
+            "longitud": 6.8,
+            "start": "19:00",
+            "end": "23:00"
+                    },)
+    return respose
+
 
 def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_create_it():
 
-    response = create_event()
+    response = create_event1()
     assert response.status_code == status.HTTP_201_CREATED, response.text
     data = response.json()
     data = data['message']
@@ -52,5 +67,11 @@ def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_cre
     assert data["start"]=="19:00:00"
     assert data["end"]=="23:00:00"
 
-    
-    
+
+def test_given_a_test_that_passed_when_creating_an_event_then_it_should_not_create_it():
+
+    response = create_event2()
+    assert response.status_code == status.HTTP_409_CONFLICT, response.text
+    data = response.json()
+
+    assert data["detail"] == "the chosen date has passed"
