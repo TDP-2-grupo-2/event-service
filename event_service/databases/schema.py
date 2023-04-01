@@ -3,7 +3,6 @@ from pydantic import BaseModel
 import datetime
 
 class Event(BaseModel):
-    key: Optional[str]
     name: str
     owner: str
     description: str
