@@ -1,0 +1,35 @@
+name: test
+
+on:
+  push:
+    branches: 
+    - '*'         # matches every branch that doesn't contain a '/'
+    - "!fix**"
+  pull_request:
+    branches:
+    - "develop"
+    - "main"
+    - "!fix**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      #----------------------------------------------
+      #       check-out repo and set-up python
+      #----------------------------------------------
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+      - name: Run tests
+        run: pytest -v
+      #----------------------------------------------
+      #              upload coverage reports
+      #----------------------------------------------
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: 8cb02339-066b-427a-97c7-719a64d9d631
+          
