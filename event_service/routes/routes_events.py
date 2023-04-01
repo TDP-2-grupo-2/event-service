@@ -18,3 +18,12 @@ def create_event(event: Event, db=Depends(get_mongo_db)):
         return {"message": created_event}
     except  (exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__)
+
+
+@event_router.get("/{id}", status_code=status.HTTP_200_OK)
+def get_event_by_id(id:str, db=Depends(get_mongo_db)):
+    try:
+        event = event_repository.get_event_by_id(id, db)
+        return {"message": event}
+    except (exceptions.EventInfoException) as error:
+        raise HTTPException(**error.__dict__)
