@@ -7,10 +7,20 @@ from bson.objectid import ObjectId
 
 load_dotenv(find_dotenv())
 
-class EventDatabase:
-    def __init__(self):
+
+
+def init_database():
         MONGO_INITDB_ROOT_USERNAME = os.getenv('MONGO_INITDB_ROOT_USERNAME')
-        MONGO_INITDB_ROOT_PASSOWRD = os.getenv('MONGO_INITDB_ROOT_PASSOWRD')
-        self.client = MongoClient(f'mongodb://{MONGO_INITDB_ROOT_USERNAME}:{MONGO_INITDB_ROOT_PASSOWRD}@mongo:27017/event_db')
-        self.db = self.client.event_db
-        self.event_collection = self.db.event_collection
+        MONGO_INITDB_ROOT_PASSWORD = os.getenv('MONGO_INITDB_ROOT_PASSWORD')
+        print(MONGO_INITDB_ROOT_PASSWORD)
+        print(MONGO_INITDB_ROOT_USERNAME)
+        client = MongoClient(f'mongodb://{MONGO_INITDB_ROOT_USERNAME}:{MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/event_db',authSource="admin")
+        global db
+        db = client['event_db']
+       
+
+def get_mongo_db():
+    try:
+        yield db
+    finally:
+        db
