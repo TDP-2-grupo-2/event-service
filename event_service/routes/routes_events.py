@@ -13,9 +13,8 @@ def convert_datetime(dateEvent):
     return dateEvent.isoformat()
 
 
-@event_router.post("/event", status_code=status.HTTP_200_OK)
+@event_router.post("/", status_code=status.HTTP_201_CREATED)
 def create_event(event: Event, db=Depends(get_mongo_db)):
-    #event.dateEvent = convert_datetime(event.dateEvent)
     event_aux = jsonable_encoder(event)
     created_event = event_repository.createEvent(event_aux, db)
     return {"message": created_event}
