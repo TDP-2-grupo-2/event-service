@@ -16,7 +16,8 @@ json_rock_music_event = {
             "name": "Music Fest",  "owner": "Agustina Segura",  "description": "Musical de pop, rock y mucho más", 
             "location": "Av. Pres. Figueroa Alcorta 7597, C1428 CABA",
             "locationDescription": "Estadio River", "capacity": 5000, "dateEvent": "2023-06-01", "attendance": 0, 
-            "tags": [ "MUSICA", "DIVERSION" ], "latitud": 8.9, "longitud": 6.8, "start": "19:00", "end": "23:00" }
+            "tags": [ "MUSICA", "DIVERSION" ], "latitud": 8.9, "longitud": 6.8, "start": "19:00", "end": "23:00",
+            "faqs": {'Como llegar?': 'Por medio del colectivo 152'} }
 
 json_theatre_event = {
             "name": "Tootsie",  "owner": "Nico Vazquez",  "description": "La comedia del 2023",
@@ -49,6 +50,8 @@ def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_cre
     assert data["longitud"] == 6.8
     assert data["start"]=="19:00:00"
     assert data["end"]=="23:00:00"
+    assert list(data['faqs'].keys())[0]== 'Como llegar?'
+    assert list(data['faqs'].values())[0] == 'Por medio del colectivo 152'
 
     config.clear_db_collection(db)
 
