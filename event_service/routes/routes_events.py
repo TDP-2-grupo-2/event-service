@@ -1,14 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from event_service.databases import event_repository
-from event_service.databases.schema import Event
+from event_service.databases.event_schema import Event
 
 from event_service.databases.events_database import get_mongo_db
 from event_service.exceptions import exceptions
 
-
 event_router = APIRouter()
-
-
 
 @event_router.post("/", status_code=status.HTTP_201_CREATED)
 def create_event(event: Event, db=Depends(get_mongo_db)):
@@ -27,3 +24,8 @@ def get_event_by_id(id:str, db=Depends(get_mongo_db)):
         return {"message": event}
     except (exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__)
+
+@event_router.get("/", status_code=status.HTTP_200_OK)
+def get_events(db=Depends(get_mongo_db)):
+    events = event_repository.get_events(db)
+    return {"message": events}

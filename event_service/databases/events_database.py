@@ -7,8 +7,6 @@ from bson.objectid import ObjectId
 
 load_dotenv(find_dotenv())
 
-
-
 def init_database():
         MONGO_INITDB_ROOT_USERNAME = os.getenv('MONGO_INITDB_ROOT_USERNAME')
         MONGO_INITDB_ROOT_PASSWORD = os.getenv('MONGO_INITDB_ROOT_PASSWORD')
