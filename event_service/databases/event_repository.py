@@ -22,3 +22,11 @@ def get_event_by_id(id: str, db):
     if event is None:
             raise exceptions.EventNotFound
     return json.loads(json_util.dumps(event))
+
+
+def delete_event_with_id(id: str, db):
+    deleted_event = db["events"].delete_one(
+            {"_id": ObjectId(id)})
+    if deleted_event.deleted_count == 0:
+            raise exceptions.EventNotFound
+    return deleted_event

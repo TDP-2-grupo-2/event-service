@@ -66,6 +66,11 @@ def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_cre
     assert data["longitud"] == 6.8
     assert data["start"]=="19:00:00"
     assert data["end"]=="23:00:00"
+    
+    response = client.delete("/events/" +  data['_id']['$oid'])
+    assert response.status_code == status.HTTP_200_OK, response.text
+    data = response.json()
+    assert 'ok' == data['message']
 
 
 def test_given_a_test_that_passed_when_creating_an_event_then_it_should_not_create_it():
@@ -79,12 +84,9 @@ def test_given_a_test_that_passed_when_creating_an_event_then_it_should_not_crea
 def test_given_an_event_when_the_event_exits_then_it_should_return_it():
     response = create_event1()
     data = response.json()
-    data = data['message']
-    print(data)
-    path_end = "/events/" + data['_id']['$oid']
-    print(path_end)
+    path_end = "/events/" + data['message']['_id']['$oid']
     response = client.get(path_end)
-    print(response)
+    assert response.status_code == status.HTTP_200_OK, response.text
     data = response.json()
     data = data['message']
     assert data["name"] == "Music Fest "
@@ -98,9 +100,27 @@ def test_given_an_event_when_the_event_exits_then_it_should_return_it():
     assert data["longitud"] == 6.8
     assert data["start"]=="19:00:00"
     assert data["end"]=="23:00:00"
+    response = client.delete(path_end)
+    
 
 def test_given_an_event_when_the_event_does_not_exits_then_it_should_not_return_it():
     response = client.get("/events/5428bd284042b5da2e28b6a1")
+    assert response.status_code == status.HTTP_404_NOT_FOUND, response.text
+    data = response.json()
+
+    assert data["detail"] == "The event does not exists"
+
+def test_given_an_exiting_event_when_i_want_to_deleted_then_it_should_do_it():
+    response = create_event1()
+    data = response.json()
+    path_end = "/events/" + data['message']['_id']['$oid']
+    response = client.delete(path_end)
+    assert response.status_code == status.HTTP_200_OK, response.text
+    data = response.json()
+    assert 'ok' == data['message']
+
+def test_given_an_event_that_dont_exists_when_i_want_to_delete_it_then_it_should_not_do_it():
+    response = client.delete("/events/5428bd284042b5da2e28b6a1")
     assert response.status_code == status.HTTP_404_NOT_FOUND, response.text
     data = response.json()
 

@@ -27,3 +27,12 @@ def get_event_by_id(id:str, db=Depends(get_mongo_db)):
         return {"message": event}
     except (exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__)
+
+@event_router.delete("/{id}", status_code=status.HTTP_200_OK)
+def delete_event_by_id(id:str, db=Depends(get_mongo_db)):
+    try:
+        event = event_repository.delete_event_with_id(id, db)
+        print(event)
+        return {"message": "ok"}
+    except (exceptions.EventInfoException) as error:
+        raise HTTPException(**error.__dict__)
