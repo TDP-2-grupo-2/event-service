@@ -22,7 +22,7 @@ json_lollapalooza_first_date = {
             "name": "lollapalooza",  "owner": "Sol Fontenla",  "description": "Veni a disfrutar del primer dia de esta nueva edición", 
             "location": "Av. Bernabé Márquez 700, B1642 San Isidro, Provincia de Buenos Aires",
             "locationDescription": "Hipodromo de San Isidro", "capacity": 200000, "dateEvent": "2024-03-28", "attendance": 300, 
-            "tags": [ "MUSICA", "DIVERSION", "FESTIVAL" ], "latitud": 8.9, "longitud": 6.8, "start": "19:00", "end": "23:00" }
+            "tags": [ "MuSiCa", "DiVeRsIoN", "FESTIVAL" ], "latitud": 8.9, "longitud": 6.8, "start": "19:00", "end": "23:00" }
 
 
 json_theatre_event = {

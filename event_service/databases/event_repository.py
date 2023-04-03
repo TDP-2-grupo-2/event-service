@@ -11,8 +11,11 @@ def createEvent(event: dict, db):
     if event.dateEvent < datetime.date.today():
         raise exceptions.InvalidDate()
     event = jsonable_encoder(event)
+    tagsToUpper = []
+    for t in event['tags']:
+        tagsToUpper.append(t.upper())
+    event['tags'] = tagsToUpper
     new_event = db["events"].insert_one(event)
-    print(new_event)
     event_created = db["events"].find_one(
             {"_id": new_event.inserted_id})
     return json.loads(json_util.dumps(event_created))
