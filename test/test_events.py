@@ -18,6 +18,13 @@ json_rock_music_event = {
             "locationDescription": "Estadio River", "capacity": 5000, "dateEvent": "2023-06-01", "attendance": 0, 
             "tags": [ "MUSICA", "DIVERSION" ], "latitud": 8.9, "longitud": 6.8, "start": "19:00", "end": "23:00" }
 
+json_lollapalooza_first_date = {
+            "name": "lollapalooza",  "owner": "Sol Fontenla",  "description": "Veni a disfrutar del primer dia de esta nueva edición", 
+            "location": "Av. Bernabé Márquez 700, B1642 San Isidro, Provincia de Buenos Aires",
+            "locationDescription": "Hipodromo de San Isidro", "capacity": 200000, "dateEvent": "2024-03-28", "attendance": 300, 
+            "tags": [ "MUSICA", "DIVERSION", "FESTIVAL" ], "latitud": 8.9, "longitud": 6.8, "start": "19:00", "end": "23:00" }
+
+
 json_theatre_event = {
             "name": "Tootsie",  "owner": "Nico Vazquez",  "description": "La comedia del 2023",
             "location": "Av. Corrientes 1280, C1043AAZ CABA",
@@ -50,7 +57,7 @@ def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_cre
     assert data["start"]=="19:00:00"
     assert data["end"]=="23:00:00"
 
-    config.clear_db_collection(db)
+    #config.clear_db_collection(db)
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -64,7 +71,7 @@ def test_given_a_date_that_passed_when_creating_an_event_then_it_should_not_crea
 
     assert data["detail"] == "the chosen date has passed"
 
-    config.clear_db_collection(db)
+    #config.clear_db_collection(db)
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -92,7 +99,7 @@ def test_given_an_event_when_the_event_exists_then_it_should_return_it():
     assert data["start"]=="19:00:00"
     assert data["end"]=="23:00:00"
 
-    config.clear_db_collection(db)
+    #config.clear_db_collection(db)
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -127,3 +134,81 @@ def test_WhenTheClientTriesToGetAllTheEvents_ThereAreThreeEvents_TheAppReturnsAL
     assert len(events) == 3
     
     
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientTriesToGetEventsByName_NoneMatch_TheAppReturnsAnEmptyList():
+    client.post("/events/", json=json_rock_music_event)
+    client.post("/events/", json=json_theatre_event)
+
+    response = client.get("/events?name=Festival")
+    data = response.json()
+    data = data['message']
+
+    assert response.status_code == status.HTTP_200_OK
+    assert data == []
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientTriesToGetEventsByName_OneMatches_TheAppReturnsTheEventCorrectly():
+    client.post("/events/", json=json_rock_music_event)
+    client.post("/events/", json=json_theatre_event)
+
+    response = client.get("/events?name=tootsie")
+    data = response.json()
+    data = data['message']
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(data) == 1
+    # TODO: mas asserts
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientTriesToGetEventsByIncompleteName_OneMatches_TheAppReturnsTheEventCorrectly():
+    client.post("/events/", json=json_rock_music_event)
+    client.post("/events/", json=json_theatre_event)
+
+    response = client.get("/events?name=oot")
+    data = response.json()
+    data = data['message']
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(data) == 1
+
+    # TODO: mas datos del asssert
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientTriesToGetEventsByType_NoneMatch_TheAppReturnsAnEmptyList():
+    client.post("/events/", json=json_rock_music_event)
+    client.post("/events/", json=json_theatre_event)
+
+    response = client.get("/events", params={"taglist": "APRENDIZAJE"})
+    data = response.json()
+    data = data['message']
+
+    assert response.status_code == status.HTTP_200_OK
+    assert data == []
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientTriesToGetEventsByTwoTypes_NoneMatch_TheAppReturnsAnEmptyList():
+    client.post("/events/", json=json_rock_music_event)
+    client.post("/events/", json=json_theatre_event)
+
+    response = client.get("/events", params={"taglist": "APRENDIZAJE,DIVERSION"})
+    data = response.json()
+    data = data['message']
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(data) == 0
+
+    # TODO: mas datos del asssert
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientTriesToGetEventsByManyTypes_ManyMatch_TheAppReturnsTheEventsCorrectly():
+    client.post("/events/", json=json_rock_music_event)
+    client.post("/events/", json=json_theatre_event)
+    client.post("/events/", json=json_lollapalooza_first_date)
+
+    response = client.get("/events", params={"taglist": "MUSICA,DIVERSION"})
+    data = response.json()
+    data = data['message']
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(data) == 2
+
