@@ -57,8 +57,6 @@ def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_cre
     assert data["start"]=="19:00:00"
     assert data["end"]=="23:00:00"
 
-    #config.clear_db_collection(db)
-
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_given_a_date_that_passed_when_creating_an_event_then_it_should_not_create_it():
@@ -70,8 +68,6 @@ def test_given_a_date_that_passed_when_creating_an_event_then_it_should_not_crea
     data = response.json()
 
     assert data["detail"] == "the chosen date has passed"
-
-    #config.clear_db_collection(db)
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -98,8 +94,6 @@ def test_given_an_event_when_the_event_exists_then_it_should_return_it():
     assert data["longitud"] == 6.8
     assert data["start"]=="19:00:00"
     assert data["end"]=="23:00:00"
-
-    #config.clear_db_collection(db)
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -146,6 +140,7 @@ def test_WhenTheClientTriesToGetEventsByName_NoneMatch_TheAppReturnsAnEmptyList(
     assert response.status_code == status.HTTP_200_OK
     assert data == []
 
+
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByName_OneMatches_TheAppReturnsTheEventCorrectly():
     client.post("/events/", json=json_rock_music_event)
@@ -170,6 +165,8 @@ def test_WhenTheClientTriesToGetEventsByName_OneMatches_TheAppReturnsTheEventCor
     assert data[0]["longitud"] == 6.8
     assert data[0]["start"]== "21:00:00"
     assert data[0]["end"]== "22:30:00"
+
+
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByIncompleteName_OneMatches_TheAppReturnsTheEventCorrectly():
@@ -196,6 +193,7 @@ def test_WhenTheClientTriesToGetEventsByIncompleteName_OneMatches_TheAppReturnsT
     assert data[0]["start"]== "21:00:00"
     assert data[0]["end"]== "22:30:00"
 
+
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByType_NoneMatch_TheAppReturnsAnEmptyList():
     client.post("/events/", json=json_rock_music_event)
@@ -208,6 +206,7 @@ def test_WhenTheClientTriesToGetEventsByType_NoneMatch_TheAppReturnsAnEmptyList(
     assert response.status_code == status.HTTP_200_OK
     assert data == []
 
+
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByTwoTypes_NoneMatch_TheAppReturnsAnEmptyList():
     client.post("/events/", json=json_rock_music_event)
@@ -219,6 +218,7 @@ def test_WhenTheClientTriesToGetEventsByTwoTypes_NoneMatch_TheAppReturnsAnEmptyL
 
     assert response.status_code == status.HTTP_200_OK
     assert data == []
+
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByManyTypes_ManyMatch_TheAppReturnsTheEventsCorrectly():
