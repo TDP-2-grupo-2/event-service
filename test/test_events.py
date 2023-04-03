@@ -29,13 +29,13 @@ json_theatre_event = {
             "name": "Tootsie",  "owner": "Nico Vazquez",  "description": "La comedia del 2023",
             "location": "Av. Corrientes 1280, C1043AAZ CABA",
             "locationDescription": "Teatro Lola Membrives", "capacity": 400, "dateEvent": "2023-04-30", "attendance": 0, 
-            "tags": [ "TEATRO", "FAMILIAR", "ENTRETENIMIENTO" ], "latitud": 8.9, "longitud": 6.8, "start": "21.00", "end": "22:30" }
+            "tags": [ "TEATRO", "FAMILIAR", "ENTRETENIMIENTO" ], "latitud": 8.9, "longitud": 6.8, "start": "21:00", "end": "22:30" }
 
 json_programming_event = {
             "name": "Aprendé a programar en python!",  "owner": "Sol Fontenla",  "description": "Aprende a programar en python desde cero",
             "location": "Av. Paseo Colón 850, C1063 CABA",
             "locationDescription": "Facultad de Ingenieria - UBA", "capacity": 100, "dateEvent": "2023-07-07", "attendance": 0, 
-            "tags": [ "PROGRAMACION", "APRENDIZAJE", ], "latitud": 8.9, "longitud": 6.8, "start": "21.00", "end": "22:30" }
+            "tags": [ "PROGRAMACION", "APRENDIZAJE", ], "latitud": 8.9, "longitud": 6.8, "start": "21:00", "end": "22:30" }
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_create_it():
@@ -157,7 +157,19 @@ def test_WhenTheClientTriesToGetEventsByName_OneMatches_TheAppReturnsTheEventCor
 
     assert response.status_code == status.HTTP_200_OK
     assert len(data) == 1
-    # TODO: mas asserts
+    assert data[0]["name"] == "Tootsie"
+    assert data[0]["owner"] == "Nico Vazquez"
+    assert data[0]["description"] == "La comedia del 2023"
+    assert data[0]["location"] == "Av. Corrientes 1280, C1043AAZ CABA"
+    assert data[0]["locationDescription"] == "Teatro Lola Membrives"
+    assert data[0]["capacity"] == 400
+    assert data[0]["dateEvent"] == "2023-04-30"
+    assert data[0]["attendance"]== 0
+    assert data[0]["tags"] == [ "TEATRO", "FAMILIAR", "ENTRETENIMIENTO" ]
+    assert data[0]["latitud"] == 8.9
+    assert data[0]["longitud"] == 6.8
+    assert data[0]["start"]== "21:00:00"
+    assert data[0]["end"]== "22:30:00"
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByIncompleteName_OneMatches_TheAppReturnsTheEventCorrectly():
@@ -170,8 +182,19 @@ def test_WhenTheClientTriesToGetEventsByIncompleteName_OneMatches_TheAppReturnsT
 
     assert response.status_code == status.HTTP_200_OK
     assert len(data) == 1
-
-    # TODO: mas datos del asssert
+    assert data[0]["name"] == "Tootsie"
+    assert data[0]["owner"] == "Nico Vazquez"
+    assert data[0]["description"] == "La comedia del 2023"
+    assert data[0]["location"] == "Av. Corrientes 1280, C1043AAZ CABA"
+    assert data[0]["locationDescription"] == "Teatro Lola Membrives"
+    assert data[0]["capacity"] == 400
+    assert data[0]["dateEvent"] == "2023-04-30"
+    assert data[0]["attendance"]== 0
+    assert data[0]["tags"] == [ "TEATRO", "FAMILIAR", "ENTRETENIMIENTO" ]
+    assert data[0]["latitud"] == 8.9
+    assert data[0]["longitud"] == 6.8
+    assert data[0]["start"]== "21:00:00"
+    assert data[0]["end"]== "22:30:00"
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByType_NoneMatch_TheAppReturnsAnEmptyList():
@@ -195,9 +218,7 @@ def test_WhenTheClientTriesToGetEventsByTwoTypes_NoneMatch_TheAppReturnsAnEmptyL
     data = data['message']
 
     assert response.status_code == status.HTTP_200_OK
-    assert len(data) == 0
-
-    # TODO: mas datos del asssert
+    assert data == []
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByManyTypes_ManyMatch_TheAppReturnsTheEventsCorrectly():
@@ -211,4 +232,9 @@ def test_WhenTheClientTriesToGetEventsByManyTypes_ManyMatch_TheAppReturnsTheEven
 
     assert response.status_code == status.HTTP_200_OK
     assert len(data) == 2
+    json_theatre_event_in_response = False
+    for i in data:
+        if i["name"] == json_theatre_event["name"]:
+            json_theatre_event_in_response = True
 
+    assert not json_theatre_event_in_response
