@@ -20,4 +20,3 @@ def init_db():
 
 def clear_db_collection(db):
     result = db["events"].delete_many({})
-    print(result.deleted_count)
