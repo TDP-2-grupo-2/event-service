@@ -35,7 +35,6 @@ def get_events(db, name: Union[str, None] = None, eventType: Union[str, None] = 
         pipeline.append({"$match": {"name": { "$regex": name, "$options":'i'} }})
     if (tags is not None): 
         tagList = tags.split(',')
-        print(tagList)
         pipeline.append({"$match": {"tags": {"$all": tagList}}})
     if (eventType is not None):
         pipeline.append({"$match": {"eventType": { "$regex": eventType, "$options":'i'} }})
