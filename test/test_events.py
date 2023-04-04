@@ -14,28 +14,27 @@ def drop_collection_documents():
 
 json_rock_music_event = {
             "name": "Music Fest",  "owner": "Agustina Segura",  "description": "Musical de pop, rock y mucho más", 
-            "location": "Av. Pres. Figueroa Alcorta 7597, C1428 CABA",
-            "locationDescription": "Estadio River", "capacity": 5000, "dateEvent": "2023-06-01", "attendance": 0, 
-            "tags": [ "MUSICA", "DIVERSION" ], "latitud": 8.9, "longitud": 6.8, "start": "19:00", "end": "23:00",
-            "faqs": {'Como llegar?': 'Por medio del colectivo 152'} }
+            "location": "Av. Pres. Figueroa Alcorta 7597, C1428 CABA", "locationDescription": "Estadio River", "capacity": 5000, 
+            "dateEvent": "2023-06-01", "attendance": 0, "eventType": "SHOW","tags": [ "MUSICA", "DIVERSION" ], "latitud": 8.9, 
+            "longitud": 6.8, "start": "19:00", "end": "23:00", "faqs": {'Como llegar?': 'Por medio del colectivo 152'} }
 
 json_lollapalooza_first_date = {
             "name": "lollapalooza",  "owner": "Sol Fontenla",  "description": "Veni a disfrutar del primer dia de esta nueva edición", 
-            "location": "Av. Bernabé Márquez 700, B1642 San Isidro, Provincia de Buenos Aires",
-            "locationDescription": "Hipodromo de San Isidro", "capacity": 200000, "dateEvent": "2024-03-28", "attendance": 300, 
-            "tags": [ "MuSiCa", "DiVeRsIoN", "FESTIVAL" ], "latitud": 8.9, "longitud": 6.8, "start": "19:00", "end": "23:00" }
+            "location": "Av. Bernabé Márquez 700, B1642 San Isidro, Provincia de Buenos Aires", "locationDescription": "Hipodromo de San Isidro",
+            "capacity": 200000, "dateEvent": "2024-03-28", "attendance": 300, "eventType": "SHOW", "tags": [ "MuSiCa", "DiVeRsIoN", "FESTIVAL" ],
+            "latitud": 8.9, "longitud": 6.8, "start": "11:00", "end": "23:00" }
 
 
 json_theatre_event = {
             "name": "Tootsie",  "owner": "Nico Vazquez",  "description": "La comedia del 2023",
-            "location": "Av. Corrientes 1280, C1043AAZ CABA",
-            "locationDescription": "Teatro Lola Membrives", "capacity": 400, "dateEvent": "2023-04-30", "attendance": 0, 
-            "tags": [ "TEATRO", "FAMILIAR", "ENTRETENIMIENTO" ], "latitud": 8.9, "longitud": 6.8, "start": "21:00", "end": "22:30" }
+            "location": "Av. Corrientes 1280, C1043AAZ CABA", "locationDescription": "Teatro Lola Membrives", 
+            "capacity": 400, "dateEvent": "2023-04-30", "attendance": 0, "eventType": "TEATRO", 
+            "tags": [ "COMEDIA", "FAMILIAR", "ENTRETENIMIENTO" ], "latitud": 8.9, "longitud": 6.8, "start": "21:00", "end": "22:30" }
 
 json_programming_event = {
             "name": "Aprendé a programar en python!",  "owner": "Sol Fontenla",  "description": "Aprende a programar en python desde cero",
             "location": "Av. Paseo Colón 850, C1063 CABA",
-            "locationDescription": "Facultad de Ingenieria - UBA", "capacity": 100, "dateEvent": "2023-07-07", "attendance": 0, 
+            "locationDescription": "Facultad de Ingenieria - UBA", "capacity": 100, "dateEvent": "2023-07-07", "attendance": 0, "eventType": "TECNOLOGIA",
             "tags": [ "PROGRAMACION", "APRENDIZAJE", ], "latitud": 8.9, "longitud": 6.8, "start": "21:00", "end": "22:30" }
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -163,7 +162,7 @@ def test_WhenTheClientTriesToGetEventsByName_OneMatches_TheAppReturnsTheEventCor
     assert data[0]["capacity"] == 400
     assert data[0]["dateEvent"] == "2023-04-30"
     assert data[0]["attendance"]== 0
-    assert data[0]["tags"] == [ "TEATRO", "FAMILIAR", "ENTRETENIMIENTO" ]
+    assert data[0]["tags"] == [ "COMEDIA", "FAMILIAR", "ENTRETENIMIENTO" ]
     assert data[0]["latitud"] == 8.9
     assert data[0]["longitud"] == 6.8
     assert data[0]["start"]== "21:00:00"
@@ -190,7 +189,7 @@ def test_WhenTheClientTriesToGetEventsByIncompleteName_OneMatches_TheAppReturnsT
     assert data[0]["capacity"] == 400
     assert data[0]["dateEvent"] == "2023-04-30"
     assert data[0]["attendance"]== 0
-    assert data[0]["tags"] == [ "TEATRO", "FAMILIAR", "ENTRETENIMIENTO" ]
+    assert data[0]["tags"] == [ "COMEDIA", "FAMILIAR", "ENTRETENIMIENTO" ]
     assert data[0]["latitud"] == 8.9
     assert data[0]["longitud"] == 6.8
     assert data[0]["start"]== "21:00:00"
@@ -198,7 +197,7 @@ def test_WhenTheClientTriesToGetEventsByIncompleteName_OneMatches_TheAppReturnsT
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
-def test_WhenTheClientTriesToGetEventsByType_NoneMatch_TheAppReturnsAnEmptyList():
+def test_WhenTheClientTriesToGetEventsByTags_NoneMatch_TheAppReturnsAnEmptyList():
     client.post("/events/", json=json_rock_music_event)
     client.post("/events/", json=json_theatre_event)
 
@@ -211,7 +210,7 @@ def test_WhenTheClientTriesToGetEventsByType_NoneMatch_TheAppReturnsAnEmptyList(
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
-def test_WhenTheClientTriesToGetEventsByTwoTypes_NoneMatch_TheAppReturnsAnEmptyList():
+def test_WhenTheClientTriesToGetEventsByTwoTags_NoneMatch_TheAppReturnsAnEmptyList():
     client.post("/events/", json=json_rock_music_event)
     client.post("/events/", json=json_theatre_event)
 
@@ -224,7 +223,7 @@ def test_WhenTheClientTriesToGetEventsByTwoTypes_NoneMatch_TheAppReturnsAnEmptyL
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
-def test_WhenTheClientTriesToGetEventsByManyTypes_ManyMatch_TheAppReturnsTheEventsCorrectly():
+def test_WhenTheClientTriesToGetEventsByManyTags_ManyMatch_TheAppReturnsTheEventsCorrectly():
     client.post("/events/", json=json_rock_music_event)
     client.post("/events/", json=json_theatre_event)
     client.post("/events/", json=json_lollapalooza_first_date)
@@ -241,3 +240,76 @@ def test_WhenTheClientTriesToGetEventsByManyTypes_ManyMatch_TheAppReturnsTheEven
             json_theatre_event_in_response = True
 
     assert not json_theatre_event_in_response
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientTriesToGetEventsByType_NoneMatch_TheAppReturnsAnEmptyList():
+    client.post("/events/", json=json_rock_music_event)
+    client.post("/events/", json=json_theatre_event)
+
+    response = client.get("/events", params={"eventType": "CINE"})
+    data = response.json()
+    data = data['message']
+
+    assert response.status_code == status.HTTP_200_OK
+    assert data == []
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientTriesToGetEventsByType_TwoMatch_TheAppReturnsTheEventsCorrectly():
+    client.post("/events/", json=json_rock_music_event)
+    client.post("/events/", json=json_theatre_event)
+    client.post("/events/", json=json_lollapalooza_first_date)
+
+    response = client.get("/events", params={"eventType": "SHOW"})
+    data = response.json()
+    data = data['message']
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(data) == 2
+    json_theatre_event_in_response = False
+    for i in data:
+        if i["name"] == json_theatre_event["name"]:
+            json_theatre_event_in_response = True
+
+    assert not json_theatre_event_in_response
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientTriesToGetEventsByTypeAndTag_OneMatches_TheAppReturnsTheEventCorrectly():
+    client.post("/events/", json=json_rock_music_event)
+    client.post("/events/", json=json_theatre_event)
+    client.post("/events/", json=json_lollapalooza_first_date)
+
+    response = client.get("/events", params={"eventType": "SHOW", "taglist": "MUSICA,FESTIVAL"})
+    data = response.json()
+    data = data['message']
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(data) == 1
+    assert data[0]["name"] == "lollapalooza"
+    assert data[0]["owner"] == "Sol Fontenla"
+    assert data[0]["description"] == "Veni a disfrutar del primer dia de esta nueva edición"
+    assert data[0]["location"] == "Av. Bernabé Márquez 700, B1642 San Isidro, Provincia de Buenos Aires"
+    assert data[0]["locationDescription"] == "Hipodromo de San Isidro"
+    assert data[0]["capacity"] == 200000
+    assert data[0]["dateEvent"] == "2024-03-28"
+    assert data[0]["eventType"] == "SHOW"
+    assert data[0]["attendance"]== 300
+    assert data[0]["tags"] == [ "MUSICA", "DIVERSION", "FESTIVAL" ]
+    assert data[0]["latitud"] == 8.9
+    assert data[0]["longitud"] == 6.8
+    assert data[0]["start"]== "11:00:00"
+    assert data[0]["end"]== "23:00:00"
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientTriesToGetEventsByTypeTagAndName_NoneMatches_TheAppReturnsAnEmptyList():
+    client.post("/events/", json=json_rock_music_event)
+    client.post("/events/", json=json_theatre_event)
+    client.post("/events/", json=json_lollapalooza_first_date)
+
+    response = client.get("/events", params={"eventType": "SHOW", "taglist": "MUSICA,FESTIVAL", "name":"Primavera Sound"})
+    data = response.json()
+    data = data['message']
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(data) == 0
+

@@ -12,6 +12,7 @@ class Event(BaseModel):
     dateEvent: datetime.date
     photos: Union[List[str], None] = None
     attendance: Optional[int] = 0
+    eventType: str
     tags: List[str]
     faqs: Optional[dict] = None
     latitud: float

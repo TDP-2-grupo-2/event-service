@@ -15,6 +15,7 @@ def createEvent(event: dict, db):
     for t in event['tags']:
         tagsToUpper.append(t.upper())
     event['tags'] = tagsToUpper
+    event['eventType'] = event['eventType'].upper()
     new_event = db["events"].insert_one(event)
     event_created = db["events"].find_one(
             {"_id": new_event.inserted_id})
@@ -28,13 +29,16 @@ def get_event_by_id(id: str, db):
     return json.loads(json_util.dumps(event))
 
 
-def get_events(db, name: Union[str, None] = None, tags: Union[str, None] = None):
+def get_events(db, name: Union[str, None] = None, eventType: Union[str, None] = None, tags: Union[str, None] = None):
     pipeline = [{"$match": {}}]
     if (name is not None):
-        matching_name = f"^${name}.*"
         pipeline.append({"$match": {"name": { "$regex": name, "$options":'i'} }})
     if (tags is not None): 
         tagList = tags.split(',')
+        print(tagList)
         pipeline.append({"$match": {"tags": {"$all": tagList}}})
+    if (eventType is not None):
+        pipeline.append({"$match": {"eventType": { "$regex": eventType, "$options":'i'} }})
+    
     events = db["events"].aggregate(pipeline)
     return list(json.loads(json_util.dumps(events)))
