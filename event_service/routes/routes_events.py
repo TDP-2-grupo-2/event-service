@@ -26,6 +26,16 @@ async def get_event_by_id(id:str, db=Depends(get_mongo_db)):
     except (exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__)
 
+
+@event_router.delete("/{id}", status_code=status.HTTP_200_OK)
+async def delete_event_by_id(id:str, db=Depends(get_mongo_db)):
+    try:
+        event = event_repository.delete_event_with_id(id, db)
+        return {"message": "ok"}
+    except (exceptions.EventInfoException) as error:
+        raise HTTPException(**error.__dict__)
+        
+
 @event_router.get("/", status_code=status.HTTP_200_OK)
 async def get_events(name: Optional[str] = None, eventType: Optional[str] = None, taglist: Optional[str] = None, db=Depends(get_mongo_db)):
     events = event_repository.get_events(db, name, eventType, taglist)

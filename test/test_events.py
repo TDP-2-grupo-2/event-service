@@ -59,6 +59,8 @@ def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_cre
     assert list(data['faqs'].keys())[0]== 'Como llegar?'
     assert list(data['faqs'].values())[0] == 'Por medio del colectivo 152'
 
+    
+
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_given_a_date_that_passed_when_creating_an_event_then_it_should_not_create_it():
@@ -77,10 +79,9 @@ def test_given_an_event_when_the_event_exists_then_it_should_return_it():
     response = client.post("/events/", json=json_rock_music_event)
 
     data = response.json()
-
-    data = data['message']
-    path_end = "/events/" + data['_id']['$oid']
+    path_end = "/events/" + data['message']['_id']['$oid']
     response = client.get(path_end)
+    assert response.status_code == status.HTTP_200_OK, response.text
     data = response.json()
     data = data['message']
 
@@ -96,11 +97,32 @@ def test_given_an_event_when_the_event_exists_then_it_should_return_it():
     assert data["longitud"] == 6.8
     assert data["start"]=="19:00:00"
     assert data["end"]=="23:00:00"
+    
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_given_an_event_when_the_event_does_not_exist_then_it_should_not_return_it():
     response = client.get("/events/5428bd284042b5da2e28b6a1")
+    assert response.status_code == status.HTTP_404_NOT_FOUND, response.text
+    data = response.json()
+
+    assert data["detail"] == "The event does not exists"
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_given_an_exiting_event_when_i_want_to_deleted_then_it_should_do_it():
+    response = client.post("/events/", json=json_rock_music_event)
+    data = response.json()
+    path_end = "/events/" + data['message']['_id']['$oid']
+    response = client.delete(path_end)
+    assert response.status_code == status.HTTP_200_OK, response.text
+    data = response.json()
+    assert 'ok' == data['message']
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_given_an_event_that_dont_exists_when_i_want_to_delete_it_then_it_should_not_do_it():
+    response = client.delete("/events/5428bd284042b5da2e28b6a1")
     assert response.status_code == status.HTTP_404_NOT_FOUND, response.text
     data = response.json()
 

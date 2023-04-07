@@ -29,6 +29,14 @@ def get_event_by_id(id: str, db):
     return json.loads(json_util.dumps(event))
 
 
+def delete_event_with_id(id: str, db):
+    deleted_event = db["events"].delete_one(
+            {"_id": ObjectId(id)})
+    if deleted_event.deleted_count == 0:
+            raise exceptions.EventNotFound
+    return deleted_event
+
+
 def get_events(db, name: Union[str, None] = None, eventType: Union[str, None] = None, tags: Union[str, None] = None):
     pipeline = [{"$match": {}}]
     if (name is not None):
