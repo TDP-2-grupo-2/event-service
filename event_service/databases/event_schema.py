@@ -7,11 +7,14 @@ class Event(BaseModel):
     owner: str
     description: str
     location: str
+    locationDescription: str
     capacity: Optional[int] = None # no se si si es obligaotiro o puede no haber cupos por evento
     dateEvent: datetime.date
     photos: Union[List[str], None] = None
     attendance: Optional[int] = 0
+    eventType: str
     tags: List[str]
+    faqs: Optional[dict] = None
     latitud: float
     longitud: float
     start: datetime.time

@@ -6,7 +6,6 @@ from event_service.databases.user_model import Base
 
 load_dotenv(find_dotenv())
 
-
 def init_database():
     POSTGRES_USER = os.getenv('POSTGRES_USER')
     POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD')
@@ -20,7 +19,6 @@ def init_database():
 
 def get_db():
     db = SessionLocal()
-    print(db)
     try:
         yield db
     finally:
