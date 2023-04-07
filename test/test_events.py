@@ -56,13 +56,10 @@ def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_cre
     assert data["longitud"] == 6.8
     assert data["start"]=="19:00:00"
     assert data["end"]=="23:00:00"
-    
-    response = client.delete("/events/" +  data['_id']['$oid'])
-    assert response.status_code == status.HTTP_200_OK, response.text
-    data = response.json()
-    assert 'ok' == data['message']
     assert list(data['faqs'].keys())[0]== 'Como llegar?'
     assert list(data['faqs'].values())[0] == 'Por medio del colectivo 152'
+
+    
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -100,7 +97,6 @@ def test_given_an_event_when_the_event_exists_then_it_should_return_it():
     assert data["longitud"] == 6.8
     assert data["start"]=="19:00:00"
     assert data["end"]=="23:00:00"
-    response = client.delete(path_end)
     
 
 
@@ -115,7 +111,7 @@ def test_given_an_event_when_the_event_does_not_exist_then_it_should_not_return_
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_given_an_exiting_event_when_i_want_to_deleted_then_it_should_do_it():
-    response = create_event1()
+    response = client.post("/events/", json=json_rock_music_event)
     data = response.json()
     path_end = "/events/" + data['message']['_id']['$oid']
     response = client.delete(path_end)
