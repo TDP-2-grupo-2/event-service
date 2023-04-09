@@ -14,7 +14,7 @@ class Event(BaseModel):
     attendance: Optional[int] = 0
     eventType: str
     tags: List[str]
-    faqs: Optional[dict] = None
+    faqs: Optional[List] = None
     latitud: float
     longitud: float
     start: datetime.time
