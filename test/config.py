@@ -2,7 +2,32 @@ from pymongo import MongoClient
 import sys
 sys.path.append("../")
 from event_service.app import app
-from event_service.databases import events_database
+from event_service.databases import events_database, user_model, users_database
+from event_service.utils.firebase_mock import FirebaseMock
+from event_service.utils.firebase_handler import get_fb
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+def init_postg_db(app):
+    SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL, echo=False, connect_args={"check_same_thread": False}
+    )
+
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    user_model.Base.metadata.drop_all(engine)
+    user_model.Base.metadata.create_all(bind=engine)
+
+    def override_get_db():
+        try:
+            db = TestingSessionLocal()
+            yield db
+        finally:
+            db.close()
+
+    app.dependency_overrides[users_database.get_postg_db] = override_get_db
+    return TestingSessionLocal()
+
 
 
 def init_db():
@@ -17,6 +42,17 @@ def init_db():
 
     app.dependency_overrides[events_database.get_mongo_db] = override_get_db
     return db_test
+
+def init_firebase(app):
+    firebase = FirebaseMock()
+
+    def override_get_fb():
+        try:
+            yield firebase
+        finally:
+            firebase
+
+    app.dependency_overrides[get_fb] = override_get_fb
 
 def clear_db_collection(db):
     result = db["events"].delete_many({})
