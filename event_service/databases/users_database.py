@@ -17,7 +17,7 @@ def init_database():
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     Base.metadata.create_all(engine)
 
-def get_db():
+def get_postg_db():
     db = SessionLocal()
     try:
         yield db
