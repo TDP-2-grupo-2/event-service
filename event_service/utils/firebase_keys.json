@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "tdp2-ticketapp",
+  "private_key_id": "7c62dd4404281433ac2cb63267a701567b1f0d58",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEuwIBADANBgkqhkiG9w0BAQEFAASCBKUwggShAgEAAoIBAQDfXoSYOBlc3qCs\n58SkCFVJ7jazwqpYJBC4ekJu9tlNRMbo43qpaSuuevGaXa4OJzbMtl5hh5F0iGXS\nxvjfdAxeqKALM6mK5/3S6KoZW6HffHD6xH1uHs8GUVwL7zHptVdjug+6TxdM8/YJ\nzGVtyErnJ5jB0550L9AqhMnSPZeBNJ1hOCxUWPMMfn/5AyA5F68qGtVEZetb/HOU\npf/A3BTPLJxYoOLoYvgUg36qiVoTrvKixcAGgn1YZs5/+w2vsYQmajaK/sDOSTV5\nuhh2KWVlwy4RN2zwKeFNeUiNAERJnlCXiSGC6SbCQc5/8Hv+wqEP3nYYIhqONXNn\nFYTImRkBAgMBAAECgf8xbfBJZh4+BwJvrCIxGCltVxd2cWXQDDwpciQXVg01/m+2\nzErVSkNXguyjGyht2keYKslUp9+OvMFFkE8++jPemN4a8dLe2i39b1BZkk2CINhi\nBPuBDU536qSgtRsTxyRIkjwbWkARG9RqV0lUErybbGixAenbym6E5rYZQVkPoTgq\nlN84G/9BkMre4cDyIXcst9xacWiIwOFoTmeXQaa6nFsfGsMEfDsmHLiz8EJ1eaCU\n72vGoJqiOQ8ZPs4tE7lfUH8OZzsumNobAvB68MmdgHKgUahufMFa+1SCab8WoN/q\nsHTETC13zSt1oEKxoUQgL4L21Tn8h9Nxv9Aq52kCgYEA/L9BhFUSxVnqmsQBPEhM\n9LihaycMN+ZqV/amGX1+oJZk9Q1i6Reb4IYKJS6bt9K+wlDQV4/0FagtfU0GfDfY\n9AHPm8qPta1OYuC4TsDqfSHIaN1hS0ogKjaowBVaIEQYloSfYfPeiYz+V4ezSCbO\nWUxgedeiU/QVd6BYxXvjxYkCgYEA4j539b7g4c1HUqcyxGzqlsNA4v/xzj7Hpj/N\nlqAihgY+OruMUGcvAt+idcLcmssJoeE1tXhzsckpFnbJ/JTyzHDMfzjaabL+rqZt\ncOrIaSEsXvBB4aOo+Ttu2HAHqxIA9Tvenz+L2N4kztFlUGUSjKPj0Hv9hf3LH4Ta\nIRLHUbkCgYEAlGpqup6KS0EltoPqhc+fAQV6JEXlst2nDMhVeRpsRTiLSCr4LhAj\nBJExW+wmnKcwRULXVNO/bQg4zh9w83iH+aEmnEEyami+Yum60OQPzjMMUCfPfjqk\n8KTwKvte1RunpJt0TDy8LOGSaSvSZ0gCXAWxkVrCg7IM+RY7ipvZgKECgYBgKAi4\nK45MqgCcQm+zSE9UEFxtnjZZYBlesVNhp2HE8LZWJAv4yEIUyJO11UIJkC3h3WQE\nYtNZRpPt9kLW1T90YKSplbJOpkLUW+u7yC2xcOX428hEbFiOxRHRb5vyu04o7G8r\n48g+PfwK4rhauPpvR+C1ZV1VK46/MKm80MxiEQKBgHnB/1sinOlktXVEMAERipAM\nnjkGkF72FqyWXv34ZzV0OQXgNGLrVCySCQjjJ+UCg+sJy8BxFyrCUQOawa+rgzUi\nnrjPFrn70wWmaIe45yTcfCSsn2hG8AfoAjHGGYnrUqEY60jkGSg44CEB6+ltqLcS\nb+JOIX1aKssYgjzw8DmB\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-1j4cj@tdp2-ticketapp.iam.gserviceaccount.com",
+  "client_id": "110805512423078914779",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-1j4cj%40tdp2-ticketapp.iam.gserviceaccount.com"
+}
