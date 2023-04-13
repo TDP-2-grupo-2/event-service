@@ -12,3 +12,13 @@ class Attende(Base):
     name = Column("name", String(255), nullable=False)
     email = Column("email", String(255), nullable=False)
     picture = Column("picture",  String(255), nullable=True)
+
+
+class Organizer(Base):
+    __tablename__ = "organizers"
+
+    id = Column("id", Integer, primary_key=True, autoincrement=True)
+    googleId = Column("googleId", String(255), nullable=False)
+    name = Column("name", String(255), nullable=False)
+    email = Column("email", String(255), nullable=False)
+    picture = Column("picture",  String(255), nullable=True)
