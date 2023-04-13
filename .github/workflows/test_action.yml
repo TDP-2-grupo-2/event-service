@@ -28,7 +28,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Run unit tests
-        run: RUN_ENV='test' python -m pytest --cov=event_service test/ --cov-report=xml
+        run: RUN_ENV='test' python -m pytest
       #----------------------------------------------
       #              upload coverage reports
       #----------------------------------------------
