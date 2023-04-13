@@ -15,10 +15,10 @@ class Firebase:
             self.auth.RevokedIdTokenError,
             self.auth.ExpiredIdTokenError,
             self.auth.InvalidIdTokenError,
-        ):
+        )as e:
+            print(e)
             raise exceptions.UserWrongLoginInformation
-        except (self.auth.UserDisabledError):
-            raise exceptions.UserIsBlock
+
 
     def get_email(self, uid: str):
         user = self.auth.get_user(uid, app=self.app)
