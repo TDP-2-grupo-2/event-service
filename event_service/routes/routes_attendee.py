@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from event_service.databases import attende_repository, users_schema, users_database
 from event_service.exceptions import exceptions
 from sqlalchemy.orm import Session
-from event_service.utils import firebase_handler
+from event_service.utils import firebase_handler, jwt_handler
 
 attendee_router = APIRouter()
 
@@ -23,7 +23,7 @@ async def login_google(
             user.get("picture"),
             db,
         )
-       
-        return user_created
+        token = jwt_handler.create_access_token(user_created.id, "attendee")
+        return token
     except exceptions.UserInfoException as error:
         raise HTTPException(**error.__dict__)

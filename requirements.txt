@@ -8,3 +8,4 @@ httpx==0.23.3
 python-dotenv==1.0.0
 pytest-mock==3.10.0
 firebase-admin==6.1.0
+python-jose==3.3.0
