@@ -10,12 +10,12 @@ attendee_router = APIRouter()
 async def login_google(
     googleUser: users_schema.GoogleLogin,
     db: Session = Depends(users_database.get_postg_db),
+    firebase = Depends(firebase_handler.get_fb),
 ):
     try:
-        #user = firebase.valid_user(googleUser.token)
-        #email = firebase.get_email(user.get("uid"))
-        email = 'agus@gmail.com'
-        user = {'uid': '123', 'name': 'agustina', 'picture': 'picture'}
+        user = firebase.valid_user(googleUser.token)
+        email = firebase.get_email(user.get("uid"))
+
         user_created = attende_repository.login_google(
             user.get("uid"),
             email,

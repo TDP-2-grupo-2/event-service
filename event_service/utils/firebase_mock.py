@@ -7,28 +7,28 @@ class FirebaseMock:
         "email": "agus@gmail.com",
         "name": "agus",
         "picture": "picture",
-        "block": False,
+
     }
     usersfireabse["ahsgdhauiwhfdiwhf"] = {
         "uid": "djdhdhdhd",
         "email": "sol@gmail.com",
         "name": "sol",
         "picture": "picture",
-        "block": False,
+
     }
     usersfireabse["eujthfydhd"] = {
         "uid": "shdashdHSDY",
         "email": "ale@gmail.com",
         "name": "ale",
         "picture": "picture",
-        "block": False,
+
     }
     usersfireabse["ueywepd"] = {
         "uid": "poiyres",
         "email": "franco@gmail.com",
         "name": "franco",
         "picture": "picture",
-        "block": False,
+
     }
 
     def valid_user(self, token):
@@ -38,3 +38,10 @@ class FirebaseMock:
             return info
         else:
             raise exceptions.UserWrongLoginInformation
+        
+    def get_email(self, uid):
+        email = None
+        for value in self.usersfireabse.values():
+            if value["uid"] == uid:
+                email = value["email"]
+        return email
