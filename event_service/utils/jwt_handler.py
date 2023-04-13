@@ -1,5 +1,6 @@
 import os
 from jose import jwt
+from datetime import datetime, timedelta
 from dotenv import find_dotenv, load_dotenv
 
 load_dotenv(find_dotenv())
@@ -16,8 +17,11 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 5
 
 def create_access_token(user_id: int, rol: str) -> str:
 
-    to_encode = {"id": user_id, "rol": rol}
+    expires_delta = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
+    to_encode = {"id": user_id, "rol": rol, "exp": expires_delta}
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, ALGORITHM)
+    print(encoded_jwt)
     return encoded_jwt
 
 
