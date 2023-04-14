@@ -49,3 +49,29 @@ def get_events(db, name: Union[str, None] = None, eventType: Union[str, None] = 
     
     events = db["events"].aggregate(pipeline)
     return list(json.loads(json_util.dumps(events)))
+
+
+def toggle_favourite(db, event_id: str, user_id: str):
+    event = db["events"].find_one({"_id": ObjectId(event_id)})
+    if event is None:
+            raise exceptions.EventNotFound
+
+    favourite = db["favourites"].find_one({"user_id": user_id, "event_id": event_id})
+    if favourite is None:
+        new_favourite = {"user_id": user_id, "event_id": event_id}
+        db["favourites"].insert_one(new_favourite)
+        return "Se agregó como favorito el evento"
+    else:
+        db["favourites"].delete_one({"user_id": user_id, "event_id": event_id})
+        return "Se eliminó como favorito el evento"
+        
+
+def get_favourites(db, user_id: str):
+    favourites = db["favourites"].find({"user_id": user_id})
+    
+    events = []
+    for fav in favourites:
+        events.append(get_event_by_id(fav["event_id"], db))
+
+    return events 
+        

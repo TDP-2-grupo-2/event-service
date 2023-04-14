@@ -19,4 +19,3 @@ class Event(BaseModel):
     longitud: float
     start: datetime.time
     end:datetime.time
-   

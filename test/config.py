@@ -18,5 +18,12 @@ def init_db():
     app.dependency_overrides[events_database.get_mongo_db] = override_get_db
     return db_test
 
-def clear_db_collection(db):
+
+def clear_db_events_collection(db):
     result = db["events"].delete_many({})
+
+
+def clear_db_favourites_collection(db):
+    result = db["favourites"].delete_many({})
+
+
