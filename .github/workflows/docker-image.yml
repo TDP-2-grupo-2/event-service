@@ -24,3 +24,16 @@ jobs:
       run: docker build . --file Dockerfile --tag ${{secrets.DOCKER_USER}}/event-service:latest
     - name: Docker Push
       run: docker push ${{secrets.DOCKER_USER}}/event-service:latest
+
+    - name: Context
+      uses: okteto/context@latest
+      with:
+        token: ${{secrets.OKTETO_TOKEN}}
+   
+    - name: Deploy preview environment
+      uses: okteto/deploy-preview@latest
+      with:
+        scope: global
+        name: event-service
+      env:
+        GITHUB_TOKEN: ${{secrets.TOKEN_GUTHUB}}
