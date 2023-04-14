@@ -402,6 +402,7 @@ def test_WhenTheClientMarksAsFavouriteAnExistingEvent_TheClientsAsksForFavourite
     assert data[0]['_id']['$oid'] == event_id
     assert data[0]["name"] == "Music Fest"
 
+
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientMarksAsFavouriteTwiceAnExistingEvent_TheClientsAsksForFavouriteEventsOfUser_TheAppReturnsEmptyList():
     response = client.post("/events/", json=json_rock_music_event)
@@ -414,6 +415,22 @@ def test_WhenTheClientMarksAsFavouriteTwiceAnExistingEvent_TheClientsAsksForFavo
 
     response_to_favourite = client.patch(f"/events/favourites/{event_id}/user/{user_id}")
     response_to_favourite = client.patch(f"/events/favourites/{event_id}/user/{user_id}")
+    favourite_events = client.get(f"/events/favourites/{user_id}")
+    data = favourite_events.json()
+    data = data['message']
+
+    assert len(data) == 0
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientHasNoFavouriteEvents_TheClientsAsksForFavouriteEventsOfUser_TheAppReturnsEmptyList():
+    response = client.post("/events/", json=json_rock_music_event)
+    data = response.json()
+    data = data['message']
+
+    user_id = "1"
+    event_id = data['_id']['$oid']
+    
     favourite_events = client.get(f"/events/favourites/{user_id}")
     data = favourite_events.json()
     data = data['message']
