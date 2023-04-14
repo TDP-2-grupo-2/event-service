@@ -10,7 +10,9 @@ import pytest
 client = TestClient(app)
 @pytest.fixture
 def drop_collection_documents():
-    config.clear_db_collection(db)
+    config.clear_db_events_collection(db)
+    config.clear_db_favourites_collection(db)
+
 
 json_rock_music_event = {
             "name": "Music Fest",  "owner": "Agustina Segura",  "description": "Musical de pop, rock y mucho más", 
@@ -333,3 +335,87 @@ def test_WhenTheClientTriesToGetEventsByTypeTagAndName_NoneMatches_TheAppReturns
     assert response.status_code == status.HTTP_200_OK
     assert len(data) == 0
 
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientMarksAsFavouriteAnExistingEvent_TheEventIsMarkedCorrectly_TheAppReturnsCorrectMessage():
+    response = client.post("/events/", json=json_rock_music_event)
+    assert response.status_code == status.HTTP_201_CREATED, response.text
+    data = response.json()
+    data = data['message']
+
+    user_id = "1"
+
+    response_to_favourite = client.patch(f"/events/favourites/{data['_id']['$oid']}/user/{user_id}")
+
+    assert response_to_favourite.status_code == status.HTTP_200_OK, response.text
+    data = response_to_favourite.json()
+    data = data['message']
+
+    assert data == "Se agregó como favorito el evento"
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientMarksAsFavouriteANonExistingEvent_TheEventIsMarkedCorrectly_TheAppReturnsCorrectMessage():
+    user_id = "1"
+    event_id = "6439a8d0c392bdf710446d31"
+
+    response_to_favourite = client.patch(f"/events/favourites/{event_id}/user/{user_id}")
+
+    assert response_to_favourite.status_code == status.HTTP_404_NOT_FOUND, response.text
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientMarksAsFavouriteTwiceAnExistingEvent_TheEventIsUnMarkedCorrectly_TheAppReturnsCorrectMessage():
+    response = client.post("/events/", json=json_rock_music_event)
+    data = response.json()
+    data = data['message']
+    user_id = "1"
+    event_id = data['_id']['$oid']
+
+    response_to_favourite = client.patch(f"/events/favourites/{event_id}/user/{user_id}")
+    assert response_to_favourite.status_code == status.HTTP_200_OK, response.text
+    data = response_to_favourite.json()
+    data = data['message']
+    assert data == "Se agregó como favorito el evento"
+
+    response_to_unfavourite = client.patch(f"/events/favourites/{event_id}/user/{user_id}")
+    data = response_to_unfavourite.json()
+    data = data['message']
+    assert data == "Se eliminó como favorito el evento"
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientMarksAsFavouriteAnExistingEvent_TheClientsAsksForFavouriteEventsOfUser_TheAppReturnsTheEventCorrectly():
+    response = client.post("/events/", json=json_rock_music_event)
+    assert response.status_code == status.HTTP_201_CREATED, response.text
+    data = response.json()
+    data = data['message']
+
+    user_id = "1"
+    event_id = data['_id']['$oid']
+
+    response_to_favourite = client.patch(f"/events/favourites/{event_id}/user/{user_id}")
+    favourite_events = client.get(f"/events/favourites/{user_id}")
+    data = favourite_events.json()
+    data = data['message']
+
+    assert len(data) == 1
+    assert data[0]['_id']['$oid'] == event_id
+    assert data[0]["name"] == "Music Fest"
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientMarksAsFavouriteTwiceAnExistingEvent_TheClientsAsksForFavouriteEventsOfUser_TheAppReturnsEmptyList():
+    response = client.post("/events/", json=json_rock_music_event)
+    assert response.status_code == status.HTTP_201_CREATED, response.text
+    data = response.json()
+    data = data['message']
+
+    user_id = "1"
+    event_id = data['_id']['$oid']
+
+    response_to_favourite = client.patch(f"/events/favourites/{event_id}/user/{user_id}")
+    response_to_favourite = client.patch(f"/events/favourites/{event_id}/user/{user_id}")
+    favourite_events = client.get(f"/events/favourites/{user_id}")
+    data = favourite_events.json()
+    data = data['message']
+
+    assert len(data) == 0
