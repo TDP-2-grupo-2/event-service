@@ -37,8 +37,12 @@ async def delete_event_by_id(id:str, db=Depends(get_mongo_db)):
         
 
 @event_router.get("/", status_code=status.HTTP_200_OK)
-async def get_events(name: Optional[str] = None, eventType: Optional[str] = None, taglist: Optional[str] = None, db=Depends(get_mongo_db)):
-    events = event_repository.get_events(db, name, eventType, taglist)
+async def get_events(name: Optional[str] = None, 
+                    eventType: Optional[str] = None, 
+                    taglist: Optional[str] = None, 
+                    owner: Optional[str] = None,  
+                    db=Depends(get_mongo_db)):
+    events = event_repository.get_events(db, name, eventType, taglist, owner)
     return {"message": events}
 
 

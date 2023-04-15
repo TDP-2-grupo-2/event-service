@@ -166,6 +166,32 @@ def test_WhenTheClientTriesToGetEventsByName_NoneMatch_TheAppReturnsAnEmptyList(
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientTriesToGetEventsByOwner_OneMatches_TheAppReturnsTheEventCorrectly():
+    client.post("/events/", json=json_rock_music_event)
+    client.post("/events/", json=json_theatre_event)
+
+    response = client.get("/events?owner=Nico Vazquez")
+    data = response.json()
+    data = data['message']
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(data) == 1
+    assert data[0]["name"] == "Tootsie"
+    assert data[0]["owner"] == "Nico Vazquez"
+    assert data[0]["description"] == "La comedia del 2023"
+    assert data[0]["location"] == "Av. Corrientes 1280, C1043AAZ CABA"
+    assert data[0]["locationDescription"] == "Teatro Lola Membrives"
+    assert data[0]["capacity"] == 400
+    assert data[0]["dateEvent"] == "2023-04-30"
+    assert data[0]["attendance"]== 0
+    assert data[0]["tags"] == [ "COMEDIA", "FAMILIAR", "ENTRETENIMIENTO" ]
+    assert data[0]["latitud"] == 8.9
+    assert data[0]["longitud"] == 6.8
+    assert data[0]["start"]== "21:00:00"
+    assert data[0]["end"]== "22:30:00"
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByName_OneMatches_TheAppReturnsTheEventCorrectly():
     client.post("/events/", json=json_rock_music_event)
     client.post("/events/", json=json_theatre_event)
