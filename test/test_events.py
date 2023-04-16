@@ -18,7 +18,8 @@ json_rock_music_event = {
             "name": "Music Fest",  "owner": "Agustina Segura",  "description": "Musical de pop, rock y mucho más", 
             "location": "Av. Pres. Figueroa Alcorta 7597, C1428 CABA", "locationDescription": "Estadio River", "capacity": 5000, 
             "dateEvent": "2023-06-01", "attendance": 0, "eventType": "SHOW","tags": [ "MUSICA", "DIVERSION" ], "latitud": 8.9, 
-            "longitud": 6.8, "start": "19:00", "end": "23:00", "faqs": [{'pregunta':'Como llegar?', 'respuesta':'Por medio del colectivo 152'}] }
+            "longitud": 6.8, "start": "19:00", "end": "23:00", "faqs": [{'pregunta':'Como llegar?', 'respuesta':'Por medio del colectivo 152'}],
+            "agenda": [{'time': "19:00", 'description': 'Arranca banda de rock'}, {'time': '20:00', 'description': 'comienza banda de pop'}] }
 
 json_lollapalooza_first_date = {
             "name": "lollapalooza",  "owner": "Sol Fontenla",  "description": "Veni a disfrutar del primer dia de esta nueva edición", 
@@ -60,6 +61,10 @@ def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_cre
     assert data["end"]=="23:00:00"
     assert data['faqs'][0]['pregunta'] == 'Como llegar?'
     assert data['faqs'][0]['respuesta'] == 'Por medio del colectivo 152'
+    assert data['agenda'][0]['time'] == "19:00"
+    assert data['agenda'][0]['description'] == 'Arranca banda de rock'
+    assert data['agenda'][1]['time'] == "20:00"
+    assert data['agenda'][1]['description'] ==  'comienza banda de pop'
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
