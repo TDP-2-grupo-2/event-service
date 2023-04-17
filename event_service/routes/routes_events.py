@@ -62,3 +62,23 @@ async def get_user_favourites(user_id: str, db=Depends(get_mongo_db)):
         return {"message": events}
     except (exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__) 
+
+
+@event_router.post("/reservations/user/{user_id}/event/{event_id}", status_code=status.HTTP_201_CREATED)
+async def reserve_event(event_id: str,user_id: str, db=Depends(get_mongo_db)):
+    try:
+        result = event_repository.reserve_event(db, event_id, user_id)
+        return {"message": result}
+    except (exceptions.EventInfoException) as error:
+        raise HTTPException(**error.__dict__) 
+
+
+@event_router.get("/reservations/user/{user_id}", status_code=status.HTTP_200_OK)
+async def get_user_reservations(user_id: str, db=Depends(get_mongo_db)):
+    try:
+        reservations = event_repository.get_user_reservations(db, user_id)
+        return {"message": reservations}
+    except (exceptions.EventInfoException) as error:
+        raise HTTPException(**error.__dict__) 
+            
+

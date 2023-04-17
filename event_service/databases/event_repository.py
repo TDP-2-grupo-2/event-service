@@ -70,10 +70,28 @@ def toggle_favourite(db, event_id: str, user_id: str):
 
 def get_favourites(db, user_id: str):
     favourites = db["favourites"].find({"user_id": user_id})
-    
     events = []
     for fav in favourites:
         events.append(get_event_by_id(fav["event_id"], db))
-
     return events 
         
+def get_user_reservations(db, user_id: str):
+    reservations = db["reservations"].find({"user_id": user_id})
+    events = []
+    for res in reservations:
+        events.append(get_event_by_id(res["event_id"], db))
+    return events 
+
+
+def reserve_event(db, event_id: str, user_id: str):
+    event = db["events"].find_one({"_id": ObjectId(event_id)})
+    if event is None:
+            raise exceptions.EventNotFound
+
+    reservation = db["reservations"].find_one({"user_id": user_id, "event_id": event_id})
+    if reservation is None:
+        new_reservation = {"user_id": user_id, "event_id": event_id}
+        db["reservations"].insert_one(new_reservation)
+        return "Se reservo el evento exitosamente"
+    else:
+        raise exceptions.ReservationAlreadyExists
