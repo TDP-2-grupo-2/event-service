@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from event_service.databases import event_repository
-from event_service.databases.event_schema import Event, EventFilter
+from event_service.databases.event_schema import Event, Coordinates
 
 from event_service.databases.events_database import get_mongo_db
 from event_service.exceptions import exceptions
@@ -37,9 +37,13 @@ async def delete_event_by_id(id:str, db=Depends(get_mongo_db)):
         
 
 @event_router.get("/", status_code=status.HTTP_200_OK)
-async def get_events(event_filter: EventFilter,
+async def get_events(name: Optional[str] = None,
+                    eventType: Optional[str] = None,
+                    taglist: Optional[str] = None,
+                    owner: Optional[str] = None,
+                    coordinates: Optional[Coordinates] = None,
                     db=Depends(get_mongo_db)):
-    events = event_repository.get_events(db, event_filter)
+    events = event_repository.get_events(db, name, eventType, taglist, owner, coordinates)
     return {"message": events}
 
 

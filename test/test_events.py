@@ -228,7 +228,6 @@ def test_WhenTheClientTriesToGetEventsByName_OneMatches_TheAppReturnsTheEventCor
 def test_WhenTheClientTriesToGetEventsByIncompleteName_OneMatches_TheAppReturnsTheEventCorrectly():
     client.post("/events/", json=json_rock_music_event)
     client.post("/events/", json=json_theatre_event)
-
     response = client.get("/events?name=oot")
     data = response.json()
     data = data['message']

@@ -22,10 +22,8 @@ class Event(BaseModel):
     end:datetime.time
 
 
-class EventFilter(BaseModel):
-    name: Optional[str] = None
-    eventType: Optional[str] = None
-    taglist: Optional[str] = None
-    owner: Optional[str] = None
-    coordinates: Optional[List[float]] = None
-    distance: Optional[int] = None
+class Coordinates(BaseModel):
+    latitud: float
+    longitud: float
+    min_distance: int
+    max_distance: int

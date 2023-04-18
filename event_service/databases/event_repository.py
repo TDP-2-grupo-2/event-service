@@ -44,22 +44,34 @@ def delete_event_with_id(id: str, db):
     return deleted_event
 
 
-def get_events(db, event_filter: dict):
-    print(event_filter)
+def get_events(db, name: Union[str, None] = None,
+                eventType: Union[str, None] = None,
+                tags: Union[str, None] = None,
+                owner: Union[str, None] = None,
+                coordinates: Union[dict, None] = None):
+
     pipeline = [{"$match": {}}]
-    if (event_filter["name"] is not None):
+    if (name is not None):
         pipeline.append({"$match": {"name": { "$regex": name, "$options":'i'} }})
-    if (event_filter["tags"] is not None): 
+    if (tags is not None): 
         tagList = tags.split(',')
         pipeline.append({"$match": {"tags": {"$all": tagList}}})
-    if (event_filter["eventType"] is not None):
+    if (eventType is not None):
         pipeline.append({"$match": {"eventType": { "$regex": eventType, "$options":'i'} }})
-    if(event_filter["owner"] is not None):
+    if(owner is not None):
         pipeline.append({"$match": {"owner": { "$regex": owner, "$options":'i'} }})
     
     events = db["events"].aggregate(pipeline)
-    events = list(json.loads(json_util.dumps(events)))
-    
+    filtered_events = list(json.loads(json_util.dumps(events)))
+    if (coordinates is not None):
+        filtered_by_distance_events = []
+        for e in events:
+            calculated_distance = distance_calculator.calculate(e["latitude"], e["longitude"], coordinates["latitude"], coordinates["longitude"])
+            if coordinates["min_distance"] <= calculated_distance and calculated_distance <= coordinates["max_distance"]:
+                filter_by_distance_events.append(e)
+            events = filtered_by_distance_events
+
+    return filtered_events
 
 
 def toggle_favourite(db, event_id: str, user_id: str):
