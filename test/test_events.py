@@ -2,9 +2,11 @@ from fastapi.testclient import TestClient
 from fastapi import status
 from test import config
 from event_service.app import app
+
 db = config.init_db()
-from pymongo.results import InsertOneResult
-from bson.objectid import ObjectId
+
+
+
 import pytest
 
 client = TestClient(app)

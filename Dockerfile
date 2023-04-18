@@ -1,5 +1,5 @@
 # Define image to use
-FROM python:3.8.2-alpine
+FROM python:3.11.0-alpine
 
 #define workdir
 WORKDIR /app
