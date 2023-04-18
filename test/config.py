@@ -3,8 +3,6 @@ import sys
 sys.path.append("../")
 from event_service.app import app
 from event_service.databases import events_database, user_model, users_database
-from event_service.utils.firebase_mock import FirebaseMock
-from event_service.utils.firebase_handler import get_fb
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -43,16 +41,6 @@ def init_db():
     app.dependency_overrides[events_database.get_mongo_db] = override_get_db
     return db_test
 
-def init_firebase(app):
-    firebase = FirebaseMock()
-
-    def override_get_fb():
-        try:
-            yield firebase
-        finally:
-            firebase
-
-    app.dependency_overrides[get_fb] = override_get_fb
 
 def clear_db_collection(db):
     result = db["events"].delete_many({})

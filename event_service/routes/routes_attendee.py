@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from event_service.databases import attende_repository, users_schema, users_database
 from event_service.exceptions import exceptions
 from sqlalchemy.orm import Session
-from event_service.utils import firebase_handler, jwt_handler
+from event_service.utils import jwt_handler
 
 attendee_router = APIRouter()
 
@@ -10,17 +10,11 @@ attendee_router = APIRouter()
 async def login_google(
     googleUser: users_schema.GoogleLogin,
     db: Session = Depends(users_database.get_postg_db),
-    firebase = Depends(firebase_handler.get_fb),
 ):
     try:
-        user = firebase.valid_user(googleUser.token)
-        email = firebase.get_email(user.get("uid"))
-
         user_created = attende_repository.login_google(
-            user.get("uid"),
-            email,
-            user.get("name"),
-            user.get("picture"),
+            googleUser.email,
+            googleUser.name,
             db,
         )
         token = jwt_handler.create_access_token(user_created.id, "attendee")

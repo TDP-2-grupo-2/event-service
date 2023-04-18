@@ -5,20 +5,20 @@ def get_organizer_by_email(email:str, db:Session):
      return db.query(user_model.Organizer).filter(user_model.Organizer.email == email).first()
 
 
-def create_organizer(uid: str, email: str, name: str, picture: str, db: Session):
-    db_attende = user_model.Organizer(googleId=uid, email=email, name=name, picture= picture)
+def create_organizer(email: str, name: str, db: Session):
+    db_attende = user_model.Organizer(email=email, name=name)
     db.add(db_attende)
     db.commit()
     db.refresh(db_attende)
     return db_attende
 
-def login_google(uid: str, email: str, name: str, picture: str, db: Session):
+def login_google(email: str, name: str, db: Session):
 
     user = get_organizer_by_email(email, db)
     if user is None:
         ## creo al usuario
         print("usuario no existe")
-        user_created = create_organizer(uid, email, name, picture, db)
+        user_created = create_organizer(email, name, db)
     else: 
         ## ya existe en la base
         print("usuario existe")
