@@ -37,7 +37,7 @@ def delete_event_with_id(id: str, db):
     return deleted_event
 
 
-def get_events(db, name: Union[str, None] = None, eventType: Union[str, None] = None, tags: Union[str, None] = None):
+def get_events(db, name: Union[str, None] = None, eventType: Union[str, None] = None, tags: Union[str, None] = None, owner: Union[str,None]=None):
     pipeline = [{"$match": {}}]
     if (name is not None):
         pipeline.append({"$match": {"name": { "$regex": name, "$options":'i'} }})
@@ -46,6 +46,52 @@ def get_events(db, name: Union[str, None] = None, eventType: Union[str, None] = 
         pipeline.append({"$match": {"tags": {"$all": tagList}}})
     if (eventType is not None):
         pipeline.append({"$match": {"eventType": { "$regex": eventType, "$options":'i'} }})
+    if(owner is not None):
+        pipeline.append({"$match": {"owner": { "$regex": owner, "$options":'i'} }})
     
     events = db["events"].aggregate(pipeline)
     return list(json.loads(json_util.dumps(events)))
+
+
+def toggle_favourite(db, event_id: str, user_id: str):
+    event = db["events"].find_one({"_id": ObjectId(event_id)})
+    if event is None:
+            raise exceptions.EventNotFound
+
+    favourite = db["favourites"].find_one({"user_id": user_id, "event_id": event_id})
+    if favourite is None:
+        new_favourite = {"user_id": user_id, "event_id": event_id}
+        db["favourites"].insert_one(new_favourite)
+        return "Se agregó como favorito el evento"
+    else:
+        db["favourites"].delete_one({"user_id": user_id, "event_id": event_id})
+        return "Se eliminó como favorito el evento"
+        
+
+def get_favourites(db, user_id: str):
+    favourites = db["favourites"].find({"user_id": user_id})
+    events = []
+    for fav in favourites:
+        events.append(get_event_by_id(fav["event_id"], db))
+    return events 
+        
+def get_user_reservations(db, user_id: str):
+    reservations = db["reservations"].find({"user_id": user_id})
+    events = []
+    for res in reservations:
+        events.append(get_event_by_id(res["event_id"], db))
+    return events 
+
+
+def reserve_event(db, event_id: str, user_id: str):
+    event = db["events"].find_one({"_id": ObjectId(event_id)})
+    if event is None:
+            raise exceptions.EventNotFound
+
+    reservation = db["reservations"].find_one({"user_id": user_id, "event_id": event_id})
+    if reservation is None:
+        new_reservation = {"user_id": user_id, "event_id": event_id}
+        db["reservations"].insert_one(new_reservation)
+        return "Se reservo el evento exitosamente"
+    else:
+        raise exceptions.ReservationAlreadyExists

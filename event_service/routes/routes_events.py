@@ -37,6 +37,48 @@ async def delete_event_by_id(id:str, db=Depends(get_mongo_db)):
         
 
 @event_router.get("/", status_code=status.HTTP_200_OK)
-async def get_events(name: Optional[str] = None, eventType: Optional[str] = None, taglist: Optional[str] = None, db=Depends(get_mongo_db)):
-    events = event_repository.get_events(db, name, eventType, taglist)
+async def get_events(name: Optional[str] = None, 
+                    eventType: Optional[str] = None, 
+                    taglist: Optional[str] = None, 
+                    owner: Optional[str] = None,  
+                    db=Depends(get_mongo_db)):
+    events = event_repository.get_events(db, name, eventType, taglist, owner)
     return {"message": events}
+
+
+@event_router.patch("/favourites/{event_id}/user/{user_id}", status_code=status.HTTP_200_OK)
+async def toggle_favourite(event_id: str,user_id: str, db=Depends(get_mongo_db)):
+    try:
+        result = event_repository.toggle_favourite(db, event_id, user_id)
+        return {"message": result}
+    except (exceptions.EventInfoException) as error:
+        raise HTTPException(**error.__dict__) 
+
+
+@event_router.get("/favourites/{user_id}", status_code=status.HTTP_200_OK)
+async def get_user_favourites(user_id: str, db=Depends(get_mongo_db)):
+    try: 
+        events = event_repository.get_favourites(db, user_id)
+        return {"message": events}
+    except (exceptions.EventInfoException) as error:
+        raise HTTPException(**error.__dict__) 
+
+
+@event_router.post("/reservations/user/{user_id}/event/{event_id}", status_code=status.HTTP_201_CREATED)
+async def reserve_event(event_id: str,user_id: str, db=Depends(get_mongo_db)):
+    try:
+        result = event_repository.reserve_event(db, event_id, user_id)
+        return {"message": result}
+    except (exceptions.EventInfoException) as error:
+        raise HTTPException(**error.__dict__) 
+
+
+@event_router.get("/reservations/user/{user_id}", status_code=status.HTTP_200_OK)
+async def get_user_reservations(user_id: str, db=Depends(get_mongo_db)):
+    try:
+        reservations = event_repository.get_user_reservations(db, user_id)
+        return {"message": reservations}
+    except (exceptions.EventInfoException) as error:
+        raise HTTPException(**error.__dict__) 
+            
+

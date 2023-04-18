@@ -42,5 +42,14 @@ def init_db():
     return db_test
 
 
-def clear_db_collection(db):
+def clear_db_events_collection(db):
     result = db["events"].delete_many({})
+
+
+def clear_db_favourites_collection(db):
+    result = db["favourites"].delete_many({})
+
+def clear_db_reservations_collection(db):
+    result = db["reservations"].delete_many({})
+
+

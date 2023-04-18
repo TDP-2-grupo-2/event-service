@@ -15,8 +15,8 @@ class Event(BaseModel):
     eventType: str
     tags: List[str]
     faqs: Optional[List] = None
+    agenda: Optional[List] = None
     latitud: float
     longitud: float
     start: datetime.time
     end:datetime.time
-   
