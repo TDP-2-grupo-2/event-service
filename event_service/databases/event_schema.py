@@ -20,3 +20,12 @@ class Event(BaseModel):
     longitud: float
     start: datetime.time
     end:datetime.time
+
+
+class EventFilter(BaseModel):
+    name: Optional[str] = None
+    eventType: Optional[str] = None
+    taglist: Optional[str] = None
+    owner: Optional[str] = None
+    coordinates: Optional[List[float]] = None
+    distance: Optional[int] = None

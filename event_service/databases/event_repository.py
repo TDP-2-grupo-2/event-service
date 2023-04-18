@@ -5,7 +5,14 @@ from fastapi.encoders import jsonable_encoder
 from bson.objectid import ObjectId
 from event_service.exceptions import exceptions
 from typing import Union, List
+from ..utils.distance_calculator import DistanceCalculator
 import re
+import math
+
+ALPHA = 0.25
+
+distance_calculator = DistanceCalculator()
+
 
 def createEvent(event: dict, db):
     if event.dateEvent < datetime.date.today():
@@ -37,20 +44,22 @@ def delete_event_with_id(id: str, db):
     return deleted_event
 
 
-def get_events(db, name: Union[str, None] = None, eventType: Union[str, None] = None, tags: Union[str, None] = None, owner: Union[str,None]=None):
+def get_events(db, event_filter: dict):
+    print(event_filter)
     pipeline = [{"$match": {}}]
-    if (name is not None):
+    if (event_filter["name"] is not None):
         pipeline.append({"$match": {"name": { "$regex": name, "$options":'i'} }})
-    if (tags is not None): 
+    if (event_filter["tags"] is not None): 
         tagList = tags.split(',')
         pipeline.append({"$match": {"tags": {"$all": tagList}}})
-    if (eventType is not None):
+    if (event_filter["eventType"] is not None):
         pipeline.append({"$match": {"eventType": { "$regex": eventType, "$options":'i'} }})
-    if(owner is not None):
+    if(event_filter["owner"] is not None):
         pipeline.append({"$match": {"owner": { "$regex": owner, "$options":'i'} }})
     
     events = db["events"].aggregate(pipeline)
-    return list(json.loads(json_util.dumps(events)))
+    events = list(json.loads(json_util.dumps(events)))
+    
 
 
 def toggle_favourite(db, event_id: str, user_id: str):
