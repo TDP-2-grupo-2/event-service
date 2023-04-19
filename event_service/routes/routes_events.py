@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from event_service.databases import event_repository
-from event_service.databases.event_schema import Event
+from event_service.databases.event_schema import Event, Coordinates
 
 from event_service.databases.events_database import get_mongo_db
 from event_service.exceptions import exceptions
@@ -37,12 +37,14 @@ async def delete_event_by_id(id:str, db=Depends(get_mongo_db)):
         
 
 @event_router.get("/", status_code=status.HTTP_200_OK)
-async def get_events(name: Optional[str] = None, 
-                    eventType: Optional[str] = None, 
-                    taglist: Optional[str] = None, 
-                    owner: Optional[str] = None,  
+async def get_events(name: Optional[str] = None,
+                    eventType: Optional[str] = None,
+                    taglist: Optional[str] = None,
+                    owner: Optional[str] = None,
+                    coordinates: Optional[str] = None,
+                    distances_range: Optional[str] = None,
                     db=Depends(get_mongo_db)):
-    events = event_repository.get_events(db, name, eventType, taglist, owner)
+    events = event_repository.get_events(db, name, eventType, taglist, owner, coordinates, distances_range)
     return {"message": events}
 
 
@@ -81,4 +83,3 @@ async def get_user_reservations(user_id: str, db=Depends(get_mongo_db)):
     except (exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__) 
             
-

@@ -9,6 +9,9 @@ db = config.init_db()
 
 import pytest
 
+COORDENADAS_CIUDAD_DE_CORDOBA = "-31.399377,-64.3344291"
+COORDENAS_OBELISCO = "-34.6034353,-58.4143837"
+
 client = TestClient(app)
 @pytest.fixture
 def drop_collection_documents():
@@ -20,22 +23,22 @@ def drop_collection_documents():
 json_rock_music_event = {
             "name": "Music Fest",  "owner": "Agustina Segura",  "description": "Musical de pop, rock y mucho más", 
             "location": "Av. Pres. Figueroa Alcorta 7597, C1428 CABA", "locationDescription": "Estadio River", "capacity": 5000, 
-            "dateEvent": "2023-06-01", "attendance": 0, "eventType": "SHOW","tags": [ "MUSICA", "DIVERSION" ], "latitud": 8.9, 
-            "longitud": 6.8, "start": "19:00", "end": "23:00", "faqs": [{'pregunta':'Como llegar?', 'respuesta':'Por medio del colectivo 152'}],
+            "dateEvent": "2023-06-01", "attendance": 0, "eventType": "SHOW","tags": [ "MUSICA", "DIVERSION" ], "latitud": -34.6274931, 
+            "longitud": -68.3252097, "start": "19:00", "end": "23:00", "faqs": [{'pregunta':'Como llegar?', 'respuesta':'Por medio del colectivo 152'}],
             "agenda": [{'time': "19:00", 'description': 'Arranca banda de rock'}, {'time': '20:00', 'description': 'comienza banda de pop'}] }
 
 json_lollapalooza_first_date = {
             "name": "lollapalooza",  "owner": "Sol Fontenla",  "description": "Veni a disfrutar del primer dia de esta nueva edición", 
             "location": "Av. Bernabé Márquez 700, B1642 San Isidro, Provincia de Buenos Aires", "locationDescription": "Hipodromo de San Isidro",
             "capacity": 200000, "dateEvent": "2024-03-28", "attendance": 300, "eventType": "SHOW", "tags": [ "MuSiCa", "DiVeRsIoN", "FESTIVAL" ],
-            "latitud": 8.9, "longitud": 6.8, "start": "11:00", "end": "23:00" }
+            "latitud": -34.4811222, "longitud": -58.526158, "start": "11:00", "end": "23:00" }
 
 
 json_theatre_event = {
             "name": "Tootsie",  "owner": "Nico Vazquez",  "description": "La comedia del 2023",
             "location": "Av. Corrientes 1280, C1043AAZ CABA", "locationDescription": "Teatro Lola Membrives", 
             "capacity": 400, "dateEvent": "2023-04-30", "attendance": 0, "eventType": "TEATRO", 
-            "tags": [ "COMEDIA", "FAMILIAR", "ENTRETENIMIENTO" ], "latitud": 8.9, "longitud": 6.8, "start": "21:00", "end": "22:30" }
+            "tags": [ "COMEDIA", "FAMILIAR", "ENTRETENIMIENTO" ], "latitud": -34.6019915, "longitud": -58.3711065, "start": "21:00", "end": "22:30" }
 
 json_programming_event = {
             "name": "Aprendé a programar en python!",  "owner": "Sol Fontenla",  "description": "Aprende a programar en python desde cero",
@@ -58,8 +61,8 @@ def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_cre
     assert data["capacity"] == 5000
     assert data["dateEvent"] == "2023-06-01"
     assert data["attendance"]== 0
-    assert data["latitud"] == 8.9
-    assert data["longitud"] == 6.8
+    assert data["latitud"] == -34.6274931
+    assert data["longitud"] == -68.3252097
     assert data["start"]=="19:00:00"
     assert data["end"]=="23:00:00"
     assert data['faqs'][0]['pregunta'] == 'Como llegar?'
@@ -101,8 +104,8 @@ def test_given_an_event_when_the_event_exists_then_it_should_return_it():
     assert data["capacity"] == 5000
     assert data["dateEvent"] == "2023-06-01"
     assert data["attendance"]== 0
-    assert data["latitud"] == 8.9
-    assert data["longitud"] == 6.8
+    assert data["latitud"] == -34.6274931
+    assert data["longitud"] == -68.3252097
     assert data["start"]=="19:00:00"
     assert data["end"]=="23:00:00"
     
@@ -193,8 +196,8 @@ def test_WhenTheClientTriesToGetEventsByOwner_OneMatches_TheAppReturnsTheEventCo
     assert data[0]["dateEvent"] == "2023-04-30"
     assert data[0]["attendance"]== 0
     assert data[0]["tags"] == [ "COMEDIA", "FAMILIAR", "ENTRETENIMIENTO" ]
-    assert data[0]["latitud"] == 8.9
-    assert data[0]["longitud"] == 6.8
+    assert data[0]["latitud"] == -34.6019915 
+    assert data[0]["longitud"] == -58.3711065
     assert data[0]["start"]== "21:00:00"
     assert data[0]["end"]== "22:30:00"
 
@@ -219,8 +222,8 @@ def test_WhenTheClientTriesToGetEventsByName_OneMatches_TheAppReturnsTheEventCor
     assert data[0]["dateEvent"] == "2023-04-30"
     assert data[0]["attendance"]== 0
     assert data[0]["tags"] == [ "COMEDIA", "FAMILIAR", "ENTRETENIMIENTO" ]
-    assert data[0]["latitud"] == 8.9
-    assert data[0]["longitud"] == 6.8
+    assert data[0]["latitud"] == -34.6019915 
+    assert data[0]["longitud"] == -58.3711065
     assert data[0]["start"]== "21:00:00"
     assert data[0]["end"]== "22:30:00"
 
@@ -230,7 +233,6 @@ def test_WhenTheClientTriesToGetEventsByName_OneMatches_TheAppReturnsTheEventCor
 def test_WhenTheClientTriesToGetEventsByIncompleteName_OneMatches_TheAppReturnsTheEventCorrectly():
     client.post("/events/", json=json_rock_music_event)
     client.post("/events/", json=json_theatre_event)
-
     response = client.get("/events?name=oot")
     data = response.json()
     data = data['message']
@@ -246,8 +248,8 @@ def test_WhenTheClientTriesToGetEventsByIncompleteName_OneMatches_TheAppReturnsT
     assert data[0]["dateEvent"] == "2023-04-30"
     assert data[0]["attendance"]== 0
     assert data[0]["tags"] == [ "COMEDIA", "FAMILIAR", "ENTRETENIMIENTO" ]
-    assert data[0]["latitud"] == 8.9
-    assert data[0]["longitud"] == 6.8
+    assert data[0]["latitud"] == -34.6019915 
+    assert data[0]["longitud"] == -58.3711065
     assert data[0]["start"]== "21:00:00"
     assert data[0]["end"]== "22:30:00"
 
@@ -351,8 +353,8 @@ def test_WhenTheClientTriesToGetEventsByTypeAndTag_OneMatches_TheAppReturnsTheEv
     assert data[0]["eventType"] == "SHOW"
     assert data[0]["attendance"]== 300
     assert data[0]["tags"] == [ "MUSICA", "DIVERSION", "FESTIVAL" ]
-    assert data[0]["latitud"] == 8.9
-    assert data[0]["longitud"] == 6.8
+    assert data[0]["latitud"] == -34.4811222
+    assert data[0]["longitud"] == -58.526158
     assert data[0]["start"]== "11:00:00"
     assert data[0]["end"]== "23:00:00"
 
@@ -543,3 +545,58 @@ def test_WhenTheClientReservesAnExistingEvent_TheClientGetsTheReservedEvents_The
     assert len(data) == 1
     assert data[0]['_id']['$oid'] == event_id
     assert data[0]["name"] == "Aprendé a programar en python!"
+
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientTriesToGetEventsBetween0And40KM_NoneMatch_TheAppReturnsAnEmptyList():
+    client.post("/events/", json=json_rock_music_event)
+    client.post("/events/", json=json_theatre_event)
+    client.post("/events/", json=json_lollapalooza_first_date)
+
+    response = client.get("/events", params={"coordinates": COORDENADAS_CIUDAD_DE_CORDOBA, "distances_range": "0,40"})
+    data = response.json()
+    data = data['message']
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(data) == 0
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientTriesToGetEventsBetween0And40KM_TwoMatch_TheAppReturnsTheEventsCorrectly():
+    client.post("/events/", json=json_rock_music_event)
+    client.post("/events/", json=json_theatre_event)
+    client.post("/events/", json=json_lollapalooza_first_date)
+
+    response = client.get("/events", params={"coordinates": COORDENAS_OBELISCO, "distances_range": "0,40"})
+    data = response.json()
+    data = data['message']
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(data) == 2
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientTriesToGetEventsBetween10And40KM_NoneMatch_TheAppReturnsAnEmptyList():
+    client.post("/events/", json=json_rock_music_event)
+    client.post("/events/", json=json_theatre_event)
+
+    response = client.get("/events", params={"coordinates": COORDENAS_OBELISCO, "distances_range": "10,40"})
+    data = response.json()
+    data = data['message']
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(data) == 0
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientTriesToGetEventsBetween0And10KM_NoneMatch_TheAppReturnsAnEmptyList():
+    client.post("/events/", json=json_rock_music_event)
+    client.post("/events/", json=json_theatre_event)
+    client.post("/events/", json=json_lollapalooza_first_date)
+
+    response = client.get("/events", params={"coordinates": COORDENAS_OBELISCO, "distances_range": "0,10"})
+    data = response.json()
+    data = data['message']
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(data) == 1

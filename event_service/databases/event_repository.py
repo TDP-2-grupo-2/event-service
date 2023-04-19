@@ -5,7 +5,14 @@ from fastapi.encoders import jsonable_encoder
 from bson.objectid import ObjectId
 from event_service.exceptions import exceptions
 from typing import Union, List
+from ..utils.distance_calculator import DistanceCalculator
 import re
+
+
+ALPHA = 0.25
+
+distance_calculator = DistanceCalculator()
+
 
 def createEvent(event: dict, db):
     if event.dateEvent < datetime.date.today():
@@ -37,7 +44,13 @@ def delete_event_with_id(id: str, db):
     return deleted_event
 
 
-def get_events(db, name: Union[str, None] = None, eventType: Union[str, None] = None, tags: Union[str, None] = None, owner: Union[str,None]=None):
+def get_events(db, name: Union[str, None] = None,
+                eventType: Union[str, None] = None,
+                tags: Union[str, None] = None,
+                owner: Union[str, None] = None,
+                coordinates: Union[str, None] = None,
+                distances: Union[str, None] = None):
+
     pipeline = [{"$match": {}}]
     if (name is not None):
         pipeline.append({"$match": {"name": { "$regex": name, "$options":'i'} }})
@@ -50,7 +63,20 @@ def get_events(db, name: Union[str, None] = None, eventType: Union[str, None] = 
         pipeline.append({"$match": {"owner": { "$regex": owner, "$options":'i'} }})
     
     events = db["events"].aggregate(pipeline)
-    return list(json.loads(json_util.dumps(events)))
+    filtered_events = list(json.loads(json_util.dumps(events)))
+    if (coordinates is not None and distances is not None):
+        coordinates_list = coordinates.split(',')
+        distances_list = distances.split(',')
+        if (len(distances_list) == 2 and len(coordinates_list) == 2):
+            filtered_by_distance_events = []
+            for e in filtered_events:
+                coords_1 = (e["latitud"], e["longitud"])
+                coords_2 = (coordinates_list[0], coordinates_list[1])
+                if distance_calculator.coordinates_in_range(coords_1, coords_2, int(distances_list[0]), int(distances_list[1])):
+                    filtered_by_distance_events.append(e)
+                filtered_events = filtered_by_distance_events
+
+    return filtered_events
 
 
 def toggle_favourite(db, event_id: str, user_id: str):

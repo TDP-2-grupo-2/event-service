@@ -20,3 +20,10 @@ class Event(BaseModel):
     longitud: float
     start: datetime.time
     end:datetime.time
+
+
+class Coordinates(BaseModel):
+    latitude: float
+    longitude: float
+    min_distance: int
+    max_distance: int
