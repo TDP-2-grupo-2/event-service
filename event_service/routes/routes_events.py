@@ -41,9 +41,10 @@ async def get_events(name: Optional[str] = None,
                     eventType: Optional[str] = None,
                     taglist: Optional[str] = None,
                     owner: Optional[str] = None,
-                    coordinates: Optional[Coordinates] = None,
+                    coordinates: Optional[str] = None,
+                    distances_range: Optional[str] = None,
                     db=Depends(get_mongo_db)):
-    events = event_repository.get_events(db, name, eventType, taglist, owner, coordinates)
+    events = event_repository.get_events(db, name, eventType, taglist, owner, coordinates, distances_range)
     return {"message": events}
 
 
@@ -82,13 +83,3 @@ async def get_user_reservations(user_id: str, db=Depends(get_mongo_db)):
     except (exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__) 
             
-
-@event_router.get("/near", status_code=status.HTTP_200_OK)
-async def get_near_events(longitude: float, latitude: float, distance: int, db=Depends(get_mongo_db)):
-    try:
-        near_events = event_repository.get_near_events(db, longitude, latitude, distance)
-        return {"message": near_events}
-    except (exceptions.EventInfoException) as error:
-        raise HTTPException(**error.__dict__) 
-            
-

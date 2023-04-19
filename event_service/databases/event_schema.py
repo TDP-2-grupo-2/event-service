@@ -23,7 +23,7 @@ class Event(BaseModel):
 
 
 class Coordinates(BaseModel):
-    latitud: float
-    longitud: float
+    latitude: float
+    longitude: float
     min_distance: int
     max_distance: int

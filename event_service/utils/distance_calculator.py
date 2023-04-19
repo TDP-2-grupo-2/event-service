@@ -1,12 +1,12 @@
-
+import geopy.distance
 
 class DistanceCalculator():
 
-    def calculate(self, lat1, lon1, lat2, lon2):
-        R = 6373.0
-        dlon = lon2 - lon1
-        dlat = lat2 - lat1
-        a = (sin(dlat/2))**2 + cos(lat1) * cos(lat2) * (sin(dlon/2))**2
-        c = 2 * atan2(sqrt(a), sqrt(1-a))
-        distance = R * c
-        return distance
+    def coordinates_in_range(self, base_coordinates: tuple, search_coordinates: tuple, min_distance: int, max_distance: int):
+        calculated_distance = geopy.distance.geodesic(base_coordinates, search_coordinates).km
+        in_range = False
+        if min_distance >= 0:
+            in_range = min_distance <= calculated_distance
+        if max_distance > 0:
+            in_range = in_range and (calculated_distance <= max_distance)
+        return in_range
