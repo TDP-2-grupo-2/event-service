@@ -1,9 +1,9 @@
-import geopy.distance
+from geopy import distance
 
 class DistanceCalculator():
 
     def coordinates_in_range(self, base_coordinates: tuple, search_coordinates: tuple, min_distance: int, max_distance: int):
-        calculated_distance = geopy.distance.geodesic(base_coordinates, search_coordinates).km
+        calculated_distance = distance.distance(base_coordinates, search_coordinates).km
         in_range = False
         if min_distance >= 0:
             in_range = min_distance <= calculated_distance
