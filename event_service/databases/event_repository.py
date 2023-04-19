@@ -92,6 +92,16 @@ def toggle_favourite(db, event_id: str, user_id: str):
     else:
         db["favourites"].delete_one({"user_id": user_id, "event_id": event_id})
         return "Se eliminó como favorito el evento"
+
+def is_favourite_event_of_user(db, event_id, user_id): 
+    event = db["events"].find_one({"_id": ObjectId(event_id)})
+    if event is None:
+            raise exceptions.EventNotFound
+    favourite = db["favourites"].find_one({"user_id": user_id, "event_id": event_id})
+    if favourite is None:
+        return False
+    else:
+        return True
         
 
 def get_favourites(db, user_id: str):
