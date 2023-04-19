@@ -5,8 +5,6 @@ from event_service.app import app
 
 db = config.init_db()
 
-
-
 import pytest
 
 COORDENADAS_CIUDAD_DE_CORDOBA = "-31.399377,-64.3344291"
@@ -45,6 +43,8 @@ json_programming_event = {
             "location": "Av. Paseo Colón 850, C1063 CABA",
             "locationDescription": "Facultad de Ingenieria - UBA", "capacity": 100, "dateEvent": "2023-07-07", "attendance": 0, "eventType": "TECNOLOGIA",
             "tags": [ "PROGRAMACION", "APRENDIZAJE", ], "latitud": 8.9, "longitud": 6.8, "start": "21:00", "end": "22:30" }
+
+
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_create_it():
@@ -397,7 +397,7 @@ def test_WhenTheClientMarksAsFavouriteANonExistingEvent_TheAppReturnsCorrectMess
 
     response_to_favourite = client.patch(f"/events/favourites/{event_id}/user/{user_id}")
 
-    assert response_to_favourite.status_code == status.HTTP_404_NOT_FOUND, response.text
+    assert response_to_favourite.status_code == status.HTTP_404_NOT_FOUND, response_to_favourite.text
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientMarksAsFavouriteTwiceAnExistingEvent_TheEventIsUnMarkedCorrectly_TheAppReturnsCorrectMessage():
@@ -472,6 +472,55 @@ def test_WhenTheClientHasNoFavouriteEvents_TheClientsAsksForFavouriteEventsOfUse
     data = data['message']
 
     assert len(data) == 0
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientMarksAsFavouriteAnExistingEvent_TheClientsAsksIfIsFavouriteEvent_TheAppReturnsTrue():
+    response = client.post("/events/", json=json_rock_music_event)
+    assert response.status_code == status.HTTP_201_CREATED, response.text
+    data = response.json()
+    data = data['message']
+
+    user_id = "1"
+
+    client.patch(f"/events/favourites/{data['_id']['$oid']}/user/{user_id}")
+    response_to_favourite = client.get(f"/events/favourites/{data['_id']['$oid']}/user/{user_id}")
+
+    assert response_to_favourite.status_code == status.HTTP_200_OK, response.text
+    data = response_to_favourite.json()
+    data = data['message']
+
+    assert data == True
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientMarksAsFavouriteAnExistingEventTwice_TheClientsAsksIfIsFavouriteEvent_TheAppReturnsFalse():
+    response = client.post("/events/", json=json_rock_music_event)
+    assert response.status_code == status.HTTP_201_CREATED, response.text
+    data = response.json()
+    data = data['message']
+
+    user_id = "1"
+
+    client.patch(f"/events/favourites/{data['_id']['$oid']}/user/{user_id}")
+    client.patch(f"/events/favourites/{data['_id']['$oid']}/user/{user_id}")
+    response_to_favourite = client.get(f"/events/favourites/{data['_id']['$oid']}/user/{user_id}")
+
+    assert response_to_favourite.status_code == status.HTTP_200_OK, response.text
+    data = response_to_favourite.json()
+    data = data['message']
+
+    assert data == False
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientAsksIfANoneExistingEventIsFavourite_TheAppReturnsCorrectMessage():
+    user_id = "1"
+    event_id = "6439a8d0c392bdf710446d31"
+
+    response_to_favourite = client.get(f"/events/favourites/{event_id}/user/{user_id}")
+
+    assert response_to_favourite.status_code == status.HTTP_404_NOT_FOUND, response_to_favourite.text
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
