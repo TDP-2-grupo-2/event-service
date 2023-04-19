@@ -28,7 +28,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Run unit tests
-        run: python -m pytest
+        run: RUN_ENV='test' python -m pytest
       #----------------------------------------------
       #              upload coverage reports
       #----------------------------------------------
