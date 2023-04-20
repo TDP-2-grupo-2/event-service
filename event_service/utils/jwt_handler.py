@@ -20,7 +20,7 @@ def create_access_token(user_id: int, rol: str) -> str:
     expires_delta = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
     to_encode = {"id": user_id, "rol": rol, "exp": expires_delta}
-    encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, "tdp2", "HS256")
     print(encoded_jwt)
     return encoded_jwt
 
