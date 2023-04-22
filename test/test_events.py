@@ -523,79 +523,6 @@ def test_WhenTheClientAsksIfANoneExistingEventIsFavourite_TheAppReturnsCorrectMe
     assert response_to_favourite.status_code == status.HTTP_404_NOT_FOUND, response_to_favourite.text
 
 
-@pytest.mark.usefixtures("drop_collection_documents")
-def test_WhenTheClientReservesANonExistingEvent_TheAppReturnsCorrectErrorMessage():
-    user_id = "1"
-    event_id = "6439a8d0c392bdf710446d31"
-
-    response_to_reservation = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
-
-
-    assert response_to_reservation.status_code == status.HTTP_404_NOT_FOUND, response.text
-
-
-@pytest.mark.usefixtures("drop_collection_documents")
-def test_WhenTheClientReservesAnExistingEvent_TheEventIsReservedCorrectly_TheAppReturnsCorrectMessage():
-    response = client.post("/events/", json=json_programming_event)
-    data = response.json()
-    data = data['message']
-    user_id = "1"
-    event_id = data['_id']['$oid']
-
-    response_to_reservation = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
-    assert response_to_reservation.status_code == status.HTTP_201_CREATED, response.text
-    data = response_to_reservation.json()
-    data = data['message']
-    assert data == "Se reservo el evento exitosamente"
-
-
-@pytest.mark.usefixtures("drop_collection_documents")
-def test_WhenTheClientReservesAnEventTwice_TheAppReturnsCorrectErrorMessage():
-    response = client.post("/events/", json=json_programming_event)
-    assert response.status_code == status.HTTP_201_CREATED, response.text
-    data = response.json()
-    data = data['message']
-    user_id = "1"
-    event_id = data['_id']['$oid']
-
-    client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
-
-    response_to_reservation = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
-    assert response_to_reservation.status_code == status.HTTP_409_CONFLICT, response.text
-
-@pytest.mark.usefixtures("drop_collection_documents")
-def test_WhenTheClientGetsReservedEventsForUser_ThereAreNon_TheAppReturnsEmptyList():
-    user_id = "1"
-    response_to_reservations = client.get(f"/events/reservations/user/{user_id}")
-    assert response_to_reservations.status_code == status.HTTP_200_OK, response_to_reservations.text
-    data = response_to_reservations.json()
-    data = data['message']
-
-    assert len(data) == 0
-
-
-@pytest.mark.usefixtures("drop_collection_documents")
-def test_WhenTheClientReservesAnExistingEvent_TheClientGetsTheReservedEvents_TheAppReturnsTheEventCorrectly():
-    response = client.post("/events/", json=json_programming_event)
-    assert response.status_code == status.HTTP_201_CREATED, response.text
-
-    data = response.json()
-    data = data['message']
-    user_id = "1"
-    event_id = data['_id']['$oid']
-
-    client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
-    assert response.status_code == status.HTTP_201_CREATED, response.text
-    
-    reservation = client.get(f"/events/reservations/user/{user_id}")
-    assert reservation.status_code == status.HTTP_200_OK, response.text
-    data = reservation.json()
-    data = data['message']
-    assert len(data) == 1
-    assert data[0]['_id']['$oid'] == event_id
-    assert data[0]["name"] == "Aprendé a programar en python!"
-
-
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsBetween0And40KM_NoneMatch_TheAppReturnsAnEmptyList():
@@ -648,4 +575,95 @@ def test_WhenTheClientTriesToGetEventsBetween0And10KM_NoneMatch_TheAppReturnsAnE
     data = data['message']
 
     assert response.status_code == status.HTTP_200_OK
-    assert len(data) == 1
+    assert len(data) == 1 
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientReservesANonExistingEvent_TheAppReturnsCorrectErrorMessage():
+    user_id = "1"
+    event_id = "6439a8d0c392bdf710446d31"
+
+    response_to_reservation = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
+
+
+    assert response_to_reservation.status_code == status.HTTP_404_NOT_FOUND, response.text
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientReservesAnExistingEvent_TheEventIsReservedCorrectly_TheAppReturnsCorrectMessage():
+    response = client.post("/events/", json=json_programming_event)
+    data = response.json()
+    data = data['message']
+    user_id = "1"
+    event_id = data['_id']['$oid']
+
+    response_to_reservation = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
+    assert response_to_reservation.status_code == status.HTTP_201_CREATED, response.text
+    data = response_to_reservation.json()
+    data = data['message']
+    assert type(data) == str
+
+##TODO
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientReservesAnExistingEvent_TheEventClientGetsTheTicket_TheAppReturnsCorrectMessage():
+    response = client.post("/events/", json=json_programming_event)
+    data = response.json()
+    data = data['message']
+    user_id = "1"
+    event_id = data['_id']['$oid']
+
+    response_to_reservation = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
+    assert response_to_reservation.status_code == status.HTTP_201_CREATED, response.text
+    reservation = client.get(f"/events/reservations/user/{user_id}/event/{event_id}")
+    response_to_reservation  = response_to_reservation.json()
+    response_to_reservation = response_to_reservation['message']
+    reservation = reservation.json()
+    reservation = reservation["message"]
+    assert response_to_reservation == reservation
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientReservesAnEventTwice_TheAppReturnsCorrectErrorMessage():
+    response = client.post("/events/", json=json_programming_event)
+    assert response.status_code == status.HTTP_201_CREATED, response.text
+    data = response.json()
+    data = data['message']
+    user_id = "1"
+    event_id = data["_id"]['$oid']
+
+    client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
+    response_to_reservation = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
+    assert response_to_reservation.status_code == status.HTTP_409_CONFLICT, response.text
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientGetsReservedEventsForUser_ThereAreNon_TheAppReturnsEmptyList():
+    user_id = "1"
+    response_to_reservations = client.get(f"/events/reservations/user/{user_id}")
+    assert response_to_reservations.status_code == status.HTTP_200_OK, response_to_reservations.text
+    data = response_to_reservations.json()
+    data = data['message']
+
+    assert len(data) == 0
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientReservesAnExistingEvent_TheClientGetsTheReservedEvents_TheAppReturnsTheEventCorrectly():
+    response = client.post("/events/", json=json_programming_event)
+    assert response.status_code == status.HTTP_201_CREATED, response.text
+
+    data = response.json()
+    data = data['message']
+    user_id = "1"
+    event_id = data['_id']['$oid']
+
+    response = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
+    assert response.status_code == status.HTTP_201_CREATED, response.text
+    
+    reservation = client.get(f"/events/reservations/user/{user_id}")
+    assert reservation.status_code == status.HTTP_200_OK, response.text
+    reservation = reservation.json()
+    reservation = reservation['message']
+    assert len(reservation) == 1
+    assert reservation[0]['_id']['$oid'] == event_id
+    assert reservation[0]["name"] == "Aprendé a programar en python!"
+    

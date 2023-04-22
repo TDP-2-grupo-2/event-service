@@ -91,3 +91,12 @@ async def is_users_favourite_event(event_id: str,user_id: str, db=Depends(get_mo
         return {"message": result}
     except (exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__) 
+
+
+@event_router.get("/reservations/user/{user_id}/event/{event_id}", status_code=status.HTTP_200_OK)
+async def get_event_reservation_for_user(user_id: str, event_id: str, db=Depends(get_mongo_db)):
+    try:
+        result = event_repository.get_event_reservation(db, user_id, event_id)
+        return {"message": result}
+    except (exceptions.ReservationNotFound) as error:
+        raise HTTPException(**error.__dict__)
