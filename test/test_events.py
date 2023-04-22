@@ -586,7 +586,7 @@ def test_WhenTheClientReservesANonExistingEvent_TheAppReturnsCorrectErrorMessage
     response_to_reservation = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
 
 
-    assert response_to_reservation.status_code == status.HTTP_404_NOT_FOUND, response.text
+    assert response_to_reservation.status_code == status.HTTP_404_NOT_FOUND, response_to_reservation.text
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
