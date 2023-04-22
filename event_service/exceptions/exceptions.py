@@ -19,6 +19,11 @@ class EventNotFound(EventInfoException):
         self.status_code = 404
         self.detail = "The event does not exists"
 
+class ReservationNotFound(EventInfoException):
+    def __init__(self):
+        self.status_code = 404
+        self.detail = "There is no reservation associated to this user"
+
 class ReservationAlreadyExists(EventInfoException):
     def __init__(self):
         self.status_code = 409
