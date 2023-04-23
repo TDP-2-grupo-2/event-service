@@ -126,7 +126,7 @@ def get_event_reservation(db, user_id: str, event_id: str):
     if reservation is None:
          print("reservacion no existe")
          raise exceptions.ReservationNotFound
-    return str(reservation["_id"])
+    return json.loads(json_util.dumps(reservation))
      
 
 def reserve_event(db, event_id: str, user_id: str):
@@ -140,6 +140,6 @@ def reserve_event(db, event_id: str, user_id: str):
         new_reservation = {"user_id": user_id, "event_id": event_id}
         db["reservations"].insert_one(new_reservation)
         reservation = db["reservations"].find_one({"user_id": user_id, "event_id": event_id})
-        return str(reservation["_id"])
+        return json.loads(json_util.dumps(reservation))
     else:
         raise exceptions.ReservationAlreadyExists

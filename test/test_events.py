@@ -592,7 +592,7 @@ def test_WhenTheClientReservesANonExistingEvent_TheAppReturnsCorrectErrorMessage
     response_to_reservation = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
 
 
-    assert response_to_reservation.status_code == status.HTTP_404_NOT_FOUND, response_to_reservation.text
+    assert response_to_reservation.status_code == status.HTTP_404_NOT_FOUND
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -607,7 +607,8 @@ def test_WhenTheClientReservesAnExistingEvent_TheEventIsReservedCorrectly_TheApp
     assert response_to_reservation.status_code == status.HTTP_201_CREATED, response.text
     data = response_to_reservation.json()
     data = data['message']
-    assert type(data) == str
+    print(data)
+    assert type(data['_id']['$oid']) == str
 
 ##TODO
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -625,7 +626,7 @@ def test_WhenTheClientReservesAnExistingEvent_TheEventClientGetsTheTicket_TheApp
     response_to_reservation = response_to_reservation['message']
     reservation = reservation.json()
     reservation = reservation["message"]
-    assert response_to_reservation == reservation
+    assert response_to_reservation['_id']['$oid'] == reservation['_id']['$oid']
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
