@@ -7,7 +7,7 @@ load_dotenv(find_dotenv())
 
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = 5
+ACCESS_TOKEN_EXPIRE_MINUTES = 1440 # one day
 
 
 def create_access_token(user_id: int, rol: str) -> str:
@@ -20,6 +20,5 @@ def create_access_token(user_id: int, rol: str) -> str:
 
 
 def decode_token(token: str):
-    print(token)
     decoded_jwt = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
     return decoded_jwt
