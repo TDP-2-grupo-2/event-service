@@ -6,7 +6,7 @@ from bson.objectid import ObjectId
 from event_service.exceptions import exceptions
 from typing import Union, List
 from ..utils.distance_calculator import DistanceCalculator
-from . import attende_repository
+
 
 
 ALPHA = 0.25
@@ -127,7 +127,8 @@ def get_event_reservation(db, user_id: str, event_id: str):
          print("reservacion no existe")
          raise exceptions.ReservationNotFound
     return json.loads(json_util.dumps(reservation))
-     
+
+
 
 def reserve_event(db, event_id: str, user_id: str):
     event = db["events"].find_one({"_id": ObjectId(event_id)})
@@ -136,6 +137,9 @@ def reserve_event(db, event_id: str, user_id: str):
 
     reservation = db["reservations"].find_one({"user_id": user_id, "event_id": event_id})
     if reservation is None:
+        db["events"].update_one(
+            {"_id": ObjectId(event_id)}, {"$set": {'attendance': event['attendance'] + 1}}
+        )
         new_reservation = {"user_id": user_id, "event_id": event_id}
         db["reservations"].insert_one(new_reservation)
         reservation = db["reservations"].find_one({"user_id": user_id, "event_id": event_id})

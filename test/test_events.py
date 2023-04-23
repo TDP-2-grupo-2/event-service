@@ -594,6 +594,21 @@ def test_WhenTheClientReservesANonExistingEvent_TheAppReturnsCorrectErrorMessage
 
     assert response_to_reservation.status_code == status.HTTP_404_NOT_FOUND
 
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientReservesAnExistingEvent_ThenItShouldIncreaseitAttendase():
+    response = client.post("/events/", json=json_programming_event)
+
+    data = response.json()
+    data = data['message']
+    event_id = data['_id']['$oid']
+    user_id = login_user()
+    client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
+    response_event = client.get(f"/events/{event_id}")
+
+    data_event = response_event.json()
+ 
+    assert 1 == data_event['message']['attendance']
+
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientReservesAnExistingEvent_TheEventIsReservedCorrectly_TheAppReturnsCorrectMessage():
