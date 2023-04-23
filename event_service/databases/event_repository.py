@@ -6,7 +6,7 @@ from bson.objectid import ObjectId
 from event_service.exceptions import exceptions
 from typing import Union, List
 from ..utils.distance_calculator import DistanceCalculator
-import re
+from . import attende_repository
 
 
 ALPHA = 0.25
@@ -93,15 +93,17 @@ def toggle_favourite(db, event_id: str, user_id: str):
         db["favourites"].delete_one({"user_id": user_id, "event_id": event_id})
         return "Se eliminó como favorito el evento"
 
-def is_favourite_event_of_user(db, event_id, user_id): 
+def is_favourite_event_of_user(db, event_id, user_id):
+    
     event = db["events"].find_one({"_id": ObjectId(event_id)})
     if event is None:
             raise exceptions.EventNotFound
     favourite = db["favourites"].find_one({"user_id": user_id, "event_id": event_id})
     if favourite is None:
-        return False
+            return False
     else:
         return True
+
         
 
 def get_favourites(db, user_id: str):
@@ -129,6 +131,7 @@ def get_event_reservation(db, user_id: str, event_id: str):
 def reserve_event(db, event_id: str, user_id: str):
     event = db["events"].find_one({"_id": ObjectId(event_id)})
     if event is None:
+            print("event no existe")
             raise exceptions.EventNotFound
 
     reservation = db["reservations"].find_one({"user_id": user_id, "event_id": event_id})
