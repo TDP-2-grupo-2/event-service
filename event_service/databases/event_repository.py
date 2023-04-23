@@ -124,6 +124,7 @@ def get_user_reservations(db, user_id: str):
 def get_event_reservation(db, user_id: str, event_id: str):
     reservation = db["reservations"].find_one({"user_id": user_id, "event_id": event_id})
     if reservation is None:
+         print("reservacion no existe")
          raise exceptions.ReservationNotFound
     return str(reservation["_id"])
      
