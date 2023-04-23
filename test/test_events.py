@@ -2,6 +2,9 @@ from fastapi.testclient import TestClient
 from fastapi import status
 from test import config
 from event_service.app import app
+from event_service.utils import jwt_handler
+
+session = config.init_postg_db(app)
 
 db = config.init_db()
 
@@ -44,7 +47,10 @@ json_programming_event = {
             "locationDescription": "Facultad de Ingenieria - UBA", "capacity": 100, "dateEvent": "2023-07-07", "attendance": 0, "eventType": "TECNOLOGIA",
             "tags": [ "PROGRAMACION", "APRENDIZAJE", ], "latitud": 8.9, "longitud": 6.8, "start": "21:00", "end": "22:30" }
 
-
+def login_user():
+    response = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
+    data = response.json()
+    return data
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_create_it():
@@ -379,7 +385,7 @@ def test_WhenTheClientMarksAsFavouriteAnExistingEvent_TheEventIsMarkedCorrectly_
     data = response.json()
     data = data['message']
 
-    user_id = "1"
+    user_id = login_user()
 
     response_to_favourite = client.patch(f"/events/favourites/{data['_id']['$oid']}/user/{user_id}")
 
@@ -392,7 +398,7 @@ def test_WhenTheClientMarksAsFavouriteAnExistingEvent_TheEventIsMarkedCorrectly_
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientMarksAsFavouriteANonExistingEvent_TheAppReturnsCorrectMessage():
-    user_id = "1"
+    user_id = login_user()
     event_id = "6439a8d0c392bdf710446d31"
 
     response_to_favourite = client.patch(f"/events/favourites/{event_id}/user/{user_id}")
@@ -404,7 +410,7 @@ def test_WhenTheClientMarksAsFavouriteTwiceAnExistingEvent_TheEventIsUnMarkedCor
     response = client.post("/events/", json=json_rock_music_event)
     data = response.json()
     data = data['message']
-    user_id = "1"
+    user_id = login_user()
     event_id = data['_id']['$oid']
 
     response_to_favourite = client.patch(f"/events/favourites/{event_id}/user/{user_id}")
@@ -426,7 +432,7 @@ def test_WhenTheClientMarksAsFavouriteAnExistingEvent_TheClientsAsksForFavourite
     data = response.json()
     data = data['message']
 
-    user_id = "1"
+    user_id = login_user()
     event_id = data['_id']['$oid']
 
     response_to_favourite = client.patch(f"/events/favourites/{event_id}/user/{user_id}")
@@ -446,7 +452,7 @@ def test_WhenTheClientMarksAsFavouriteTwiceAnExistingEvent_TheClientsAsksForFavo
     data = response.json()
     data = data['message']
 
-    user_id = "1"
+    user_id = login_user()
     event_id = data['_id']['$oid']
 
     response_to_favourite = client.patch(f"/events/favourites/{event_id}/user/{user_id}")
@@ -464,7 +470,7 @@ def test_WhenTheClientHasNoFavouriteEvents_TheClientsAsksForFavouriteEventsOfUse
     data = response.json()
     data = data['message']
 
-    user_id = "1"
+    user_id = login_user()
     event_id = data['_id']['$oid']
     
     favourite_events = client.get(f"/events/favourites/{user_id}")
@@ -481,7 +487,7 @@ def test_WhenTheClientMarksAsFavouriteAnExistingEvent_TheClientsAsksIfIsFavourit
     data = response.json()
     data = data['message']
 
-    user_id = "1"
+    user_id = login_user()
 
     client.patch(f"/events/favourites/{data['_id']['$oid']}/user/{user_id}")
     response_to_favourite = client.get(f"/events/favourites/{data['_id']['$oid']}/user/{user_id}")
@@ -500,7 +506,7 @@ def test_WhenTheClientMarksAsFavouriteAnExistingEventTwice_TheClientsAsksIfIsFav
     data = response.json()
     data = data['message']
 
-    user_id = "1"
+    user_id = login_user()
 
     client.patch(f"/events/favourites/{data['_id']['$oid']}/user/{user_id}")
     client.patch(f"/events/favourites/{data['_id']['$oid']}/user/{user_id}")
@@ -515,7 +521,7 @@ def test_WhenTheClientMarksAsFavouriteAnExistingEventTwice_TheClientsAsksIfIsFav
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientAsksIfANoneExistingEventIsFavourite_TheAppReturnsCorrectMessage():
-    user_id = "1"
+    user_id = login_user()
     event_id = "6439a8d0c392bdf710446d31"
 
     response_to_favourite = client.get(f"/events/favourites/{event_id}/user/{user_id}")
@@ -580,7 +586,7 @@ def test_WhenTheClientTriesToGetEventsBetween0And10KM_NoneMatch_TheAppReturnsAnE
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientReservesANonExistingEvent_TheAppReturnsCorrectErrorMessage():
-    user_id = "1"
+    user_id = login_user()
     event_id = "6439a8d0c392bdf710446d31"
 
     response_to_reservation = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
@@ -594,7 +600,7 @@ def test_WhenTheClientReservesAnExistingEvent_TheEventIsReservedCorrectly_TheApp
     response = client.post("/events/", json=json_programming_event)
     data = response.json()
     data = data['message']
-    user_id = "1"
+    user_id = login_user()
     event_id = data['_id']['$oid']
 
     response_to_reservation = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
@@ -609,7 +615,7 @@ def test_WhenTheClientReservesAnExistingEvent_TheEventClientGetsTheTicket_TheApp
     response = client.post("/events/", json=json_programming_event)
     data = response.json()
     data = data['message']
-    user_id = "1"
+    user_id = login_user()
     event_id = data['_id']['$oid']
 
     response_to_reservation = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
@@ -628,7 +634,7 @@ def test_WhenTheClientReservesAnEventTwice_TheAppReturnsCorrectErrorMessage():
     assert response.status_code == status.HTTP_201_CREATED, response.text
     data = response.json()
     data = data['message']
-    user_id = "1"
+    user_id = login_user()
     event_id = data["_id"]['$oid']
 
     client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
@@ -637,7 +643,7 @@ def test_WhenTheClientReservesAnEventTwice_TheAppReturnsCorrectErrorMessage():
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientGetsReservedEventsForUser_ThereAreNon_TheAppReturnsEmptyList():
-    user_id = "1"
+    user_id = login_user()
     response_to_reservations = client.get(f"/events/reservations/user/{user_id}")
     assert response_to_reservations.status_code == status.HTTP_200_OK, response_to_reservations.text
     data = response_to_reservations.json()
@@ -653,7 +659,7 @@ def test_WhenTheClientReservesAnExistingEvent_TheClientGetsTheReservedEvents_The
 
     data = response.json()
     data = data['message']
-    user_id = "1"
+    user_id = login_user()
     event_id = data['_id']['$oid']
 
     response = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
