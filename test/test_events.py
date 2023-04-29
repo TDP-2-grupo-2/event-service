@@ -604,7 +604,7 @@ def test_WhenTheClientReservesAnExistingEvent_ThenItShouldIncreaseitAttendase():
     response_event = client.get(f"/events/{event_id}")
 
     data_event = response_event.json()
- 
+    print(data_event)
     assert 1 == data_event['message']['attendance']
 
 
@@ -682,6 +682,7 @@ def test_WhenTheClientReservesAnExistingEvent_TheClientGetsTheReservedEvents_The
     reservation = client.get(f"/events/reservations/user/{user_id}")
     assert reservation.status_code == status.HTTP_200_OK, response.text
     reservation = reservation.json()
+    print(reservation)
     reservation = reservation['message']
     assert len(reservation) == 1
     assert reservation[0]['_id']['$oid'] == event_id

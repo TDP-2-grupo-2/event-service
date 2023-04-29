@@ -75,6 +75,7 @@ def test_when_getting_a_draft_event_by_onwer_with_no_draft_events_thent_it_shoul
     data = data['message']
 
     assert len(data) == 0
+    
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_when_editing_an_exsting_draft_event_then_it_should_updated():
     response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
