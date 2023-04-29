@@ -24,6 +24,10 @@ def save_event_draft(event:dict, id:int, db):
             {"_id": new_event.inserted_id})
     return json.loads(json_util.dumps(event_created))
 
+def get_draft_events_by_owner(id, db):
+    returned_events = db["events_drafts"].find(filter={'ownerId': id})
+    events = list(json.loads(json_util.dumps(returned_events)))
+    return events
 
 def createEvent(event: dict, db):
     if event.dateEvent < datetime.date.today():
@@ -38,6 +42,7 @@ def createEvent(event: dict, db):
     event_created = db["events"].find_one(
             {"_id": new_event.inserted_id})
     return json.loads(json_util.dumps(event_created))
+
 
 
 def get_event_by_id(id: str, db):

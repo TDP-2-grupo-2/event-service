@@ -34,3 +34,15 @@ async def save_event_draft(rq: Request, event_draft: event_schema.Event_draft,
         return {"message": draft_event_created}
     except exceptions.UserInfoException as error:
         raise HTTPException(**error.__dict__)
+
+@organizer_router.get("/draft_events", status_code=status.HTTP_200_OK)
+async def get_draft_events(rq:Request, event_db: Session= Depends(events_database.get_mongo_db)):
+    try:
+        authentification_handler.is_auth(rq.headers)
+        token = authentification_handler.get_token(rq.headers)
+        id = jwt_handler.decode_token(token)["id"]
+        draft_events = event_repository.get_draft_events_by_owner(id, event_db)
+        return {"message": draft_events}
+    except exceptions.UserInfoException as error:
+        raise HTTPException(**error.__dict__)
+

@@ -32,7 +32,7 @@ def test_when_login_for_the_first_time_an_attende_then_it_returns_its_token():
     assert actual["id"] == expected["id"]
     assert actual["rol"] == expected["rol"]
 
-
+@pytest.mark.usefixtures("drop_collection_documents")
 def test_when_saving_a_draft_event_then_it_does_it():
     response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
     token= response.json()
@@ -41,8 +41,26 @@ def test_when_saving_a_draft_event_then_it_does_it():
     assert response.status_code == status.HTTP_200_OK, response.text
     data = response.json()
     data = data['message']
-    print(data)
     assert data["name"] == "lollapalooza"
     assert data["ownerName"] == "Sol Fontenla"
     assert data['ownerId'] == actual['id']
     assert data['location'] == "Av. Bernabé Márquez 700, B1642 San Isidro, Provincia de Buenos Aires"
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_when_getting_a_draft_event_by_owner_it_should_return_all_drfat_events_created_by_that_owner():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token= response.json()
+    actual= jwt_handler.decode_token(token)
+    client.post("/organizers/save_draft", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {token}"})
+    response = client.get("/organizers/draft_events", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == status.HTTP_200_OK, response.text
+
+    data = response.json()
+    data = data['message']
+
+    assert len(data) == 1
+
+    assert data[0]['ownerName'] == "Sol Fontenla"
+    assert data[0]['ownerId'] == actual['id']
+
+
