@@ -21,6 +21,24 @@ class Event(BaseModel):
     start: datetime.time
     end:datetime.time
 
+class Event_draft(BaseModel):
+    name: Optional[str] = None
+    ownerName: Optional[str] = None
+    description: Optional[str] = None
+    location: Optional[str] = None
+    locationDescription: Optional[str] = None
+    capacity: Optional[int] = None 
+    dateEvent: Optional[datetime.date] = None
+    photos: Union[List[str], None] = None
+    attendance: Optional[int] = 0
+    eventType: Optional[str] = None
+    faqs: Optional[List] = None
+    agenda: Optional[List] = None
+    latitud: Optional[float] = None
+    longitud: Optional[float] = None
+    start: Optional[datetime.time] = None
+    end:Optional[datetime.time] = None
+
 
 class Coordinates(BaseModel):
     latitude: float

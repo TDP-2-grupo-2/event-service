@@ -13,8 +13,19 @@ ALPHA = 0.25
 
 distance_calculator = DistanceCalculator()
 
+def save_event_draft(event:dict, id:int, db):
+    
+    event = jsonable_encoder(event)
+    if event['eventType'] is not None :
+        event['eventType'] = event['eventType'].upper()
+    event['ownerId'] = id
+    new_event = db["events_drafts"].insert_one(event)
+    event_created = db["events_drafts"].find_one(
+            {"_id": new_event.inserted_id})
+    return json.loads(json_util.dumps(event_created))
 
-def createEvent(event: dict, db):
+
+def createEvent(event: dict, owner_id: int, db):
     if event.dateEvent < datetime.date.today():
         raise exceptions.InvalidDate()
     event = jsonable_encoder(event)
