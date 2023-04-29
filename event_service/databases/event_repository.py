@@ -29,6 +29,20 @@ def get_draft_events_by_owner(id, db):
     events = list(json.loads(json_util.dumps(returned_events)))
     return events
 
+def edit_draft_event_by_id(event_id:str, fields:dict,db):
+    
+    event = db["events_drafts"].find_one({"_id": ObjectId(event_id)})
+    if event is None:
+            raise exceptions.EventNotFound
+    
+    updated_event = db["events_drafts"].update_one(
+            {"_id": ObjectId(event_id)}, {"$set": fields}
+    )
+    print(updated_event)
+
+    event_edited = db["events_drafts"].find_one({"_id": ObjectId(event_id)})
+    return json.loads(json_util.dumps(event_edited))
+
 def createEvent(event: dict, db):
     if event.dateEvent < datetime.date.today():
         raise exceptions.InvalidDate()

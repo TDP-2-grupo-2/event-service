@@ -3,6 +3,7 @@ from event_service.databases import organizer_repository, users_schema, users_da
 from event_service.exceptions import exceptions
 from sqlalchemy.orm import Session
 from event_service.utils import jwt_handler, authentification_handler
+from fastapi.encoders import jsonable_encoder
 
 organizer_router = APIRouter()
 
@@ -43,6 +44,16 @@ async def get_draft_events(rq:Request, event_db: Session= Depends(events_databas
         id = jwt_handler.decode_token(token)["id"]
         draft_events = event_repository.get_draft_events_by_owner(id, event_db)
         return {"message": draft_events}
-    except exceptions.UserInfoException as error:
+    except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__)
 
+
+@organizer_router.patch("/draft_events/{event_id}", status_code=status.HTTP_200_OK)
+async def edit_draft_event(rq:Request, event_id: str, draftEventEdit : dict, event_db: Session= Depends(events_database.get_mongo_db)):
+    try:
+ 
+        authentification_handler.is_auth(rq.headers)
+        draft_event = event_repository.edit_draft_event_by_id(event_id, draftEventEdit, event_db)
+        return {"message": draft_event}
+    except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
+        raise HTTPException(**error.__dict__)
