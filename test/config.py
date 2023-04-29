@@ -52,4 +52,8 @@ def clear_db_favourites_collection(db):
 def clear_db_reservations_collection(db):
     result = db["reservations"].delete_many({})
 
+def clear_db_draft_event_collection(db):
+    result = db["events_drafts"].delete_many({})
+
+
 

@@ -25,7 +25,7 @@ def save_event_draft(event:dict, id:int, db):
     return json.loads(json_util.dumps(event_created))
 
 
-def createEvent(event: dict, owner_id: int, db):
+def createEvent(event: dict, db):
     if event.dateEvent < datetime.date.today():
         raise exceptions.InvalidDate()
     event = jsonable_encoder(event)

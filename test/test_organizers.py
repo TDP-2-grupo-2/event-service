@@ -11,9 +11,7 @@ client = TestClient(app)
 
 @pytest.fixture
 def drop_collection_documents():
-    config.clear_db_events_collection(db)
-    config.clear_db_favourites_collection(db)
-    config.clear_db_reservations_collection(db)
+    config.clear_db_draft_event_collection(db)
 
 json_lollapalooza_first_date = {
             "name": "lollapalooza",  "ownerName": "Sol Fontenla",
@@ -34,7 +32,7 @@ def test_when_login_for_the_first_time_an_attende_then_it_returns_its_token():
     assert actual["id"] == expected["id"]
     assert actual["rol"] == expected["rol"]
 
-@pytest.mark.usefixtures("drop_collection_documents")
+
 def test_when_saving_a_draft_event_then_it_does_it():
     response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
     token= response.json()

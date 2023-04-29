@@ -77,8 +77,6 @@ def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_cre
     assert data['agenda'][0]['description'] == 'Arranca banda de rock'
     assert data['agenda'][1]['time'] == "20:00"
     assert data['agenda'][1]['description'] ==  'comienza banda de pop'
-
-
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_given_a_date_that_passed_when_creating_an_event_then_it_should_not_create_it():
 
@@ -689,3 +687,4 @@ def test_WhenTheClientReservesAnExistingEvent_TheClientGetsTheReservedEvents_The
     assert reservation[0]['_id']['$oid'] == event_id
     assert reservation[0]["name"] == "Aprendé a programar en python!"
     
+
