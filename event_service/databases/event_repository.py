@@ -13,6 +13,41 @@ ALPHA = 0.25
 
 distance_calculator = DistanceCalculator()
 
+def save_event_draft(event:dict, id:int, db):
+    
+    event = jsonable_encoder(event)
+    if event['eventType'] is not None :
+        event['eventType'] = event['eventType'].upper()
+    event['ownerId'] = id
+    new_event = db["events_drafts"].insert_one(event)
+    event_created = db["events_drafts"].find_one(
+            {"_id": new_event.inserted_id})
+    return json.loads(json_util.dumps(event_created))
+
+def get_draft_events_by_owner(id, db):
+    returned_events = db["events_drafts"].find(filter={'ownerId': id})
+    events = list(json.loads(json_util.dumps(returned_events)))
+    return events
+
+def edit_draft_event_by_id(event_id:str, fields:dict,db):
+    
+    event = db["events_drafts"].find_one({"_id": ObjectId(event_id)})
+    if event is None:
+            raise exceptions.EventNotFound
+    
+    updated_event = db["events_drafts"].update_one(
+            {"_id": ObjectId(event_id)}, {"$set": fields}
+    )
+    print(updated_event)
+
+    event_edited = db["events_drafts"].find_one({"_id": ObjectId(event_id)})
+    return json.loads(json_util.dumps(event_edited))
+
+def get_draft_event_by_id(event_id, db):
+    event = db["events_drafts"].find_one({"_id": ObjectId(event_id)})
+    if event is None:
+            raise exceptions.EventNotFound
+    return json.loads(json_util.dumps(event))
 
 def createEvent(event: dict, db):
     if event.dateEvent < datetime.date.today():
@@ -27,6 +62,7 @@ def createEvent(event: dict, db):
     event_created = db["events"].find_one(
             {"_id": new_event.inserted_id})
     return json.loads(json_util.dumps(event_created))
+
 
 
 def get_event_by_id(id: str, db):
@@ -54,6 +90,7 @@ def get_events(db, name: Union[str, None] = None,
     pipeline = [{"$match": {}}]
     if (name is not None):
         pipeline.append({"$match": {"name": { "$regex": name, "$options":'i'} }})
+        print(pipeline)
     if (tags is not None): 
         tagList = tags.split(',')
         pipeline.append({"$match": {"tags": {"$all": tagList}}})
@@ -64,6 +101,7 @@ def get_events(db, name: Union[str, None] = None,
     
     events = db["events"].aggregate(pipeline)
     filtered_events = list(json.loads(json_util.dumps(events)))
+
     if (coordinates is not None and distances is not None):
         coordinates_list = coordinates.split(',')
         distances_list = distances.split(',')

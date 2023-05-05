@@ -12,7 +12,6 @@ event_router = APIRouter()
 @event_router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_event(event: Event, db=Depends(get_mongo_db)):
     try:
-       
         created_event = event_repository.createEvent(event, db)
         return {"message": created_event}
     except  (exceptions.EventInfoException) as error:

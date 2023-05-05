@@ -14,6 +14,11 @@ class UserNotFound(UserInfoException):
         self.status_code = 404
         self.detail = "The user does not exists"
 
+class UnauthorizeUser(UserInfoException):
+    def __init__(self):
+        self.status_code = 401
+        self.detail = "The user is not authorize"
+
 class InvalidDate(EventInfoException):
     def __init__(self):
         self.status_code = 409  # conflic
