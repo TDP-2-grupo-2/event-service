@@ -24,33 +24,34 @@ def drop_collection_documents():
 json_rock_music_event = {
             "name": "Music Fest",  "owner": "Agustina Segura",  "description": "Musical de pop, rock y mucho más", 
             "location": "Av. Pres. Figueroa Alcorta 7597, C1428 CABA", "locationDescription": "Estadio River", "capacity": 5000, 
-            "dateEvent": "2023-06-01", "attendance": 0, "eventType": "SHOW","tags": [ "MUSICA", "DIVERSION" ], "latitud": -34.6274931, 
+            "dateEvent": "2023-07-01", "attendance": 0, "eventType": "SHOW","tags": [ "MUSICA", "DIVERSION" ], "latitud": -34.6274931, 
             "longitud": -68.3252097, "start": "19:00", "end": "23:00", "faqs": [{'pregunta':'Como llegar?', 'respuesta':'Por medio del colectivo 152'}],
             "agenda": [{'time': "19:00", 'description': 'Arranca banda de rock'}, {'time': '20:00', 'description': 'comienza banda de pop'}] }
 
 json_lollapalooza_first_date = {
             "name": "lollapalooza",  "owner": "Sol Fontenla",  "description": "Veni a disfrutar del primer dia de esta nueva edición", 
             "location": "Av. Bernabé Márquez 700, B1642 San Isidro, Provincia de Buenos Aires", "locationDescription": "Hipodromo de San Isidro",
-            "capacity": 200000, "dateEvent": "2024-03-28", "attendance": 300, "eventType": "SHOW", "tags": [ "MuSiCa", "DiVeRsIoN", "FESTIVAL" ],
+            "capacity": 200000, "dateEvent": "2024-01-28", "attendance": 300, "eventType": "SHOW", "tags": [ "MuSiCa", "DiVeRsIoN", "FESTIVAL" ],
             "latitud": -34.4811222, "longitud": -58.526158, "start": "11:00", "end": "23:00" }
 
 
 json_theatre_event = {
             "name": "Tootsie",  "owner": "Nico Vazquez",  "description": "La comedia del 2023",
             "location": "Av. Corrientes 1280, C1043AAZ CABA", "locationDescription": "Teatro Lola Membrives", 
-            "capacity": 400, "dateEvent": "2023-04-30", "attendance": 0, "eventType": "TEATRO", 
+            "capacity": 400, "dateEvent": "2023-10-30", "attendance": 0, "eventType": "TEATRO", 
             "tags": [ "COMEDIA", "FAMILIAR", "ENTRETENIMIENTO" ], "latitud": -34.6019915, "longitud": -58.3711065, "start": "21:00", "end": "22:30" }
 
 json_programming_event = {
             "name": "Aprendé a programar en python!",  "owner": "Sol Fontenla",  "description": "Aprende a programar en python desde cero",
             "location": "Av. Paseo Colón 850, C1063 CABA",
-            "locationDescription": "Facultad de Ingenieria - UBA", "capacity": 100, "dateEvent": "2023-07-07", "attendance": 0, "eventType": "TECNOLOGIA",
+            "locationDescription": "Facultad de Ingenieria - UBA", "capacity": 100, "dateEvent": "2023-08-07", "attendance": 0, "eventType": "TECNOLOGIA",
             "tags": [ "PROGRAMACION", "APRENDIZAJE", ], "latitud": 8.9, "longitud": 6.8, "start": "21:00", "end": "22:30" }
 
 def login_user():
     response = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
     data = response.json()
     return data
+
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_create_it():
@@ -65,7 +66,7 @@ def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_cre
     assert data["location"] == "Av. Pres. Figueroa Alcorta 7597, C1428 CABA"
     assert data["locationDescription"] == "Estadio River"
     assert data["capacity"] == 5000
-    assert data["dateEvent"] == "2023-06-01"
+    assert data["dateEvent"] == "2023-07-01"
     assert data["attendance"]== 0
     assert data["latitud"] == -34.6274931
     assert data["longitud"] == -68.3252097
@@ -77,6 +78,7 @@ def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_cre
     assert data['agenda'][0]['description'] == 'Arranca banda de rock'
     assert data['agenda'][1]['time'] == "20:00"
     assert data['agenda'][1]['description'] ==  'comienza banda de pop'
+
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_given_a_date_that_passed_when_creating_an_event_then_it_should_not_create_it():
 
@@ -106,7 +108,7 @@ def test_given_an_event_when_the_event_exists_then_it_should_return_it():
     assert data["location"] == "Av. Pres. Figueroa Alcorta 7597, C1428 CABA"
     assert data["locationDescription"] == "Estadio River"
     assert data["capacity"] == 5000
-    assert data["dateEvent"] == "2023-06-01"
+    assert data["dateEvent"] == "2023-07-01"
     assert data["attendance"]== 0
     assert data["latitud"] == -34.6274931
     assert data["longitud"] == -68.3252097
@@ -197,7 +199,7 @@ def test_WhenTheClientTriesToGetEventsByOwner_OneMatches_TheAppReturnsTheEventCo
     assert data[0]["location"] == "Av. Corrientes 1280, C1043AAZ CABA"
     assert data[0]["locationDescription"] == "Teatro Lola Membrives"
     assert data[0]["capacity"] == 400
-    assert data[0]["dateEvent"] == "2023-04-30"
+    assert data[0]["dateEvent"] == "2023-10-30"
     assert data[0]["attendance"]== 0
     assert data[0]["tags"] == [ "COMEDIA", "FAMILIAR", "ENTRETENIMIENTO" ]
     assert data[0]["latitud"] == -34.6019915 
@@ -214,7 +216,7 @@ def test_WhenTheClientTriesToGetEventsByName_OneMatches_TheAppReturnsTheEventCor
     response = client.get("/events?name=tootsie")
     data = response.json()
     data = data['message']
-
+    print(data)
     assert response.status_code == status.HTTP_200_OK
     assert len(data) == 1
     assert data[0]["name"] == "Tootsie"
@@ -223,7 +225,7 @@ def test_WhenTheClientTriesToGetEventsByName_OneMatches_TheAppReturnsTheEventCor
     assert data[0]["location"] == "Av. Corrientes 1280, C1043AAZ CABA"
     assert data[0]["locationDescription"] == "Teatro Lola Membrives"
     assert data[0]["capacity"] == 400
-    assert data[0]["dateEvent"] == "2023-04-30"
+    assert data[0]["dateEvent"] == "2023-10-30"
     assert data[0]["attendance"]== 0
     assert data[0]["tags"] == [ "COMEDIA", "FAMILIAR", "ENTRETENIMIENTO" ]
     assert data[0]["latitud"] == -34.6019915 
@@ -249,7 +251,7 @@ def test_WhenTheClientTriesToGetEventsByIncompleteName_OneMatches_TheAppReturnsT
     assert data[0]["location"] == "Av. Corrientes 1280, C1043AAZ CABA"
     assert data[0]["locationDescription"] == "Teatro Lola Membrives"
     assert data[0]["capacity"] == 400
-    assert data[0]["dateEvent"] == "2023-04-30"
+    assert data[0]["dateEvent"] == "2023-10-30"
     assert data[0]["attendance"]== 0
     assert data[0]["tags"] == [ "COMEDIA", "FAMILIAR", "ENTRETENIMIENTO" ]
     assert data[0]["latitud"] == -34.6019915 
@@ -353,7 +355,7 @@ def test_WhenTheClientTriesToGetEventsByTypeAndTag_OneMatches_TheAppReturnsTheEv
     assert data[0]["location"] == "Av. Bernabé Márquez 700, B1642 San Isidro, Provincia de Buenos Aires"
     assert data[0]["locationDescription"] == "Hipodromo de San Isidro"
     assert data[0]["capacity"] == 200000
-    assert data[0]["dateEvent"] == "2024-03-28"
+    assert data[0]["dateEvent"] == "2024-01-28"
     assert data[0]["eventType"] == "SHOW"
     assert data[0]["attendance"]== 300
     assert data[0]["tags"] == [ "MUSICA", "DIVERSION", "FESTIVAL" ]

@@ -84,6 +84,7 @@ def get_events(db, name: Union[str, None] = None,
     pipeline = [{"$match": {}}]
     if (name is not None):
         pipeline.append({"$match": {"name": { "$regex": name, "$options":'i'} }})
+        print(pipeline)
     if (tags is not None): 
         tagList = tags.split(',')
         pipeline.append({"$match": {"tags": {"$all": tagList}}})
@@ -94,6 +95,7 @@ def get_events(db, name: Union[str, None] = None,
     
     events = db["events"].aggregate(pipeline)
     filtered_events = list(json.loads(json_util.dumps(events)))
+
     if (coordinates is not None and distances is not None):
         coordinates_list = coordinates.split(',')
         distances_list = distances.split(',')
