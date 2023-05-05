@@ -43,6 +43,12 @@ def edit_draft_event_by_id(event_id:str, fields:dict,db):
     event_edited = db["events_drafts"].find_one({"_id": ObjectId(event_id)})
     return json.loads(json_util.dumps(event_edited))
 
+def get_draft_event_by_id(event_id, db):
+    event = db["events_drafts"].find_one({"_id": ObjectId(event_id)})
+    if event is None:
+            raise exceptions.EventNotFound
+    return json.loads(json_util.dumps(event))
+
 def createEvent(event: dict, db):
     if event.dateEvent < datetime.date.today():
         raise exceptions.InvalidDate()

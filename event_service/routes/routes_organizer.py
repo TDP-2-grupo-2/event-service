@@ -23,7 +23,7 @@ async def login_google(
     except exceptions.UserInfoException as error:
         raise HTTPException(**error.__dict__)
 
-@organizer_router.post("/save_draft", status_code=status.HTTP_200_OK)
+@organizer_router.post("/draft_events", status_code=status.HTTP_200_OK)
 async def save_event_draft(rq: Request, event_draft: event_schema.Event_draft,
                             event_db: Session= Depends(events_database.get_mongo_db)):
     try:
@@ -54,6 +54,15 @@ async def edit_draft_event(rq:Request, event_id: str, draftEventEdit : dict, eve
  
         authentification_handler.is_auth(rq.headers)
         draft_event = event_repository.edit_draft_event_by_id(event_id, draftEventEdit, event_db)
+        return {"message": draft_event}
+    except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
+        raise HTTPException(**error.__dict__)
+    
+@organizer_router.get("/draft_events/{event_id}", status_code=status.HTTP_200_OK)
+async def get_draft_event_by_id(rq:Request, event_id: str, event_db: Session=Depends(events_database.get_mongo_db)):
+    try:
+        authentification_handler.is_auth(rq.headers)
+        draft_event = event_repository.get_draft_event_by_id(event_id, event_db)
         return {"message": draft_event}
     except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__)
