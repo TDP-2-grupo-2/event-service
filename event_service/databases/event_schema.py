@@ -20,6 +20,7 @@ class Event(BaseModel):
     longitud: float
     start: datetime.time
     end:datetime.time
+    status: Optional[str] = None
 
 class Event_draft(BaseModel):
     name: Optional[str] = None

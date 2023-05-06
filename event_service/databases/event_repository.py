@@ -7,8 +7,6 @@ from event_service.exceptions import exceptions
 from typing import Union, List
 from ..utils.distance_calculator import DistanceCalculator
 
-
-
 ALPHA = 0.25
 
 distance_calculator = DistanceCalculator()
@@ -58,6 +56,7 @@ def createEvent(event: dict, db):
         tagsToUpper.append(t.upper())
     event['tags'] = tagsToUpper
     event['eventType'] = event['eventType'].upper()
+    event['status'] = "active"
     new_event = db["events"].insert_one(event)
     event_created = db["events"].find_one(
             {"_id": new_event.inserted_id})
