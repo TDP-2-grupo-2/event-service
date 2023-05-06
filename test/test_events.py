@@ -78,6 +78,8 @@ def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_cre
     assert data['agenda'][0]['description'] == 'Arranca banda de rock'
     assert data['agenda'][1]['time'] == "20:00"
     assert data['agenda'][1]['description'] ==  'comienza banda de pop'
+    assert data['status']=="active"
+
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_given_a_date_that_passed_when_creating_an_event_then_it_should_not_create_it():
@@ -114,6 +116,7 @@ def test_given_an_event_when_the_event_exists_then_it_should_return_it():
     assert data["longitud"] == -68.3252097
     assert data["start"]=="19:00:00"
     assert data["end"]=="23:00:00"
+    assert data['status']=="active"
     
 
 
@@ -206,6 +209,8 @@ def test_WhenTheClientTriesToGetEventsByOwner_OneMatches_TheAppReturnsTheEventCo
     assert data[0]["longitud"] == -58.3711065
     assert data[0]["start"]== "21:00:00"
     assert data[0]["end"]== "22:30:00"
+    assert data[0]['status']=="active"
+
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -232,8 +237,8 @@ def test_WhenTheClientTriesToGetEventsByName_OneMatches_TheAppReturnsTheEventCor
     assert data[0]["longitud"] == -58.3711065
     assert data[0]["start"]== "21:00:00"
     assert data[0]["end"]== "22:30:00"
-
-
+    assert data[0]['status']=="active"
+    
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByIncompleteName_OneMatches_TheAppReturnsTheEventCorrectly():
