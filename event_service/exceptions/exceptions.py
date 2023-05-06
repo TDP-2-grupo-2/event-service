@@ -4,6 +4,14 @@ class EventInfoException(Exception):
 class UserInfoException(Exception):
     ...
 
+class AdminInfoException(Exception):
+    ...
+
+class AdminWrongLoginInformation(AdminInfoException):
+     def __init__(self):
+        self.status_code = 401  # conflic
+        self.detail = "The username/password is incorrect"
+
 class UserWrongLoginInformation(UserInfoException):
     def __init__(self):
         self.status_code = 401  # conflic
