@@ -21,6 +21,7 @@ json_rock_music_event = {
 def drop_collection_documents():
     config.clear_db_draft_event_collection(db)
     config.clear_db_events_collection(db)
+    config.clear_db_reservations_collection(db)
 
 json_lollapalooza_first_date = {
             "name": "lollapalooza",  "ownerName": "Sol Fontenla",

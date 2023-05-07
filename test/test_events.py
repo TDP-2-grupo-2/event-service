@@ -99,10 +99,11 @@ def test_given_a_date_that_passed_when_creating_an_event_then_it_should_not_crea
 def test_given_an_event_when_the_event_exists_then_it_should_return_it():
     token = jwt_handler.create_access_token("1", 'organizer')
     response = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
-
+    assert response.status_code == status.HTTP_201_CREATED, response.text
 
     data = response.json()
     path_end = "/events/" + data['message']['_id']['$oid']
+    print(path_end)
     response = client.get(path_end)
     assert response.status_code == status.HTTP_200_OK, response.text
     data = response.json()
