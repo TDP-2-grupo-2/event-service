@@ -631,7 +631,6 @@ def test_WhenTheClientReservesAnExistingEvent_TheEventIsReservedCorrectly_TheApp
     print(data)
     assert type(data['_id']['$oid']) == str
 
-##TODO
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientReservesAnExistingEvent_TheEventClientGetsTheTicket_TheAppReturnsCorrectMessage():
     response = client.post("/events/", json=json_programming_event)
@@ -648,7 +647,7 @@ def test_WhenTheClientReservesAnExistingEvent_TheEventClientGetsTheTicket_TheApp
     reservation = reservation.json()
     reservation = reservation["message"]
     assert response_to_reservation['_id']['$oid'] == reservation['_id']['$oid']
-
+    assert response_to_reservation['status'] == 'active'
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientReservesAnEventTwice_TheAppReturnsCorrectErrorMessage():
@@ -775,3 +774,41 @@ def test_WhenAnActiveEventIsCanceledAndTheDateHasYetPassed_TheEventIsCorrectlyCa
 
     canceled_event = client.patch(f"/events/cancel/{event_id}")
     assert canceled_event.status_code == status.HTTP_409_CONFLICT, canceled_event.text
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTryingToReserveATicketOfACanceledEvent_ReturnsError():
+    response = client.post("/events/", json=json_rock_music_event)
+    assert response.status_code == status.HTTP_201_CREATED, response.text
+
+    data = response.json()
+    data = data['message']
+    user_id = login_user()
+    event_id = data['_id']['$oid']
+
+
+    client.patch(f"/events/cancel/{event_id}")
+    response_to_reservation = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
+    assert response_to_reservation.status_code == status.HTTP_409_CONFLICT, response_to_reservation.text
+    data = response_to_reservation.json()
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenAnEventIsCanceled_TheTicketsOfThatEventHaveCanceledStatus():
+    response = client.post("/events/", json=json_rock_music_event)
+    assert response.status_code == status.HTTP_201_CREATED, response.text
+
+    data = response.json()
+    data = data['message']
+    user_id = login_user()
+    event_id = data['_id']['$oid']
+
+
+    response_to_reservation = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
+    client.patch(f"/events/cancel/{event_id}")
+    reservation = client.get(f"/events/reservations/user/{user_id}/event/{event_id}")
+    response_to_reservation  = response_to_reservation.json()
+    response_to_reservation = response_to_reservation['message']
+    reservation = reservation.json()
+    reservation = reservation["message"]
+    assert response_to_reservation['_id']['$oid'] == reservation['_id']['$oid']
+    assert reservation['status'] == 'canceled'
+

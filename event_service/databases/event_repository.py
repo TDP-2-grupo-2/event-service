@@ -161,7 +161,6 @@ def get_user_reservations(db, user_id: str):
 def get_event_reservation(db, user_id: str, event_id: str):
     reservation = db["reservations"].find_one({"user_id": user_id, "event_id": event_id})
     if reservation is None:
-         print("reservacion no existe")
          raise exceptions.ReservationNotFound
     return json.loads(json_util.dumps(reservation))
 
@@ -170,20 +169,26 @@ def get_event_reservation(db, user_id: str, event_id: str):
 def reserve_event(db, event_id: str, user_id: str):
     event = db["events"].find_one({"_id": ObjectId(event_id)})
     if event is None:
-            raise exceptions.EventNotFound
+        raise exceptions.EventNotFound
+    if event['status'] != 'active':
+        raise exceptions.EventIsNotActive
 
     reservation = db["reservations"].find_one({"user_id": user_id, "event_id": event_id})
     if reservation is None:
         db["events"].update_one(
             {"_id": ObjectId(event_id)}, {"$set": {'attendance': event['attendance'] + 1}}
         )
-        new_reservation = {"user_id": user_id, "event_id": event_id}
+        new_reservation = {"user_id": user_id, "event_id": event_id, "status": 'active'}
         db["reservations"].insert_one(new_reservation)
         reservation = db["reservations"].find_one({"user_id": user_id, "event_id": event_id})
         return json.loads(json_util.dumps(reservation))
     else:
         raise exceptions.ReservationAlreadyExists
 
+def update_event_tickets_status(db, event_id: str, status): 
+    db["reservations"].update_many({"event_id": event_id}, {"$set": {'status': status}})
+    result=db["reservations"].find_one({"event_id": event_id})
+    print('se catualizaron', result)
 
 def cancel_event(db, event_id: str):
     event = db["events"].find_one({"_id": ObjectId(event_id)})
@@ -201,4 +206,5 @@ def cancel_event(db, event_id: str):
         )
 
     canceled_event = db["events"].find_one({"_id": ObjectId(event_id)})
+    update_event_tickets_status(db, event_id, 'canceled')
     return json.loads(json_util.dumps(canceled_event))
