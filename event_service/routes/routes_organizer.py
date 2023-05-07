@@ -105,12 +105,23 @@ async def cancel_active_event(rq:Request, event_id: str, event_db: Session= Depe
     
 
 @organizer_router.get("/canceled_events", status_code=status.HTTP_200_OK)
-def get_active_events_by_owner(rq:Request, event_db: Session= Depends(events_database.get_mongo_db)):
+def get_canceled_events_by_owner(rq:Request, event_db: Session= Depends(events_database.get_mongo_db)):
     try:
         authentification_handler.is_auth(rq.headers)
         token = authentification_handler.get_token(rq.headers)
         user_id = jwt_handler.decode_token(token)["id"]
         canceled_events = event_repository.get_events_by_owner_with_status(event_db, user_id, 'canceled')
         return {"message": canceled_events}
+    except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
+        raise HTTPException(**error.__dict__)
+    
+@organizer_router.get("/finished_events", status_code=status.HTTP_200_OK)
+def get_finished_events_by_owner(rq:Request, event_db: Session= Depends(events_database.get_mongo_db)):
+    try:
+        authentification_handler.is_auth(rq.headers)
+        token = authentification_handler.get_token(rq.headers)
+        user_id = jwt_handler.decode_token(token)["id"]
+        finished_events = event_repository.get_events_by_owner_with_status(event_db, user_id, 'finished')
+        return {"message": finished_events}
     except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__)
