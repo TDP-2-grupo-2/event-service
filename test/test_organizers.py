@@ -225,14 +225,14 @@ def test_WhenGettingCanceledEventsByOwner_TheOwnerAlreadyCanceledOne_ItShouldRet
     new_event_id = new_event['message']['_id']['$oid']
 
     client.patch(f"/organizers/canceled_events/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
-    active_events = client.get("/organizers/canceled_events", headers={"Authorization": f"Bearer {token}"})
-    assert active_events.status_code == status.HTTP_200_OK, active_events.text
+    canceled_events = client.get("/organizers/canceled_events", headers={"Authorization": f"Bearer {token}"})
+    assert canceled_events.status_code == status.HTTP_200_OK, canceled_events.text
     
-    active_events = active_events.json()
-    active_events = active_events['message']
+    canceled_events = canceled_events.json()
+    canceled_events = canceled_events['message']
 
-    assert len(active_events) == 1
-    assert new_event_id == active_events[0]['_id']['$oid']
+    assert len(canceled_events) == 1
+    assert new_event_id == canceled_events[0]['_id']['$oid']
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenGettingCanceledEventsByOwner_AnotherUserGetsTheEvents_ItShouldReturnAnEmptyList():
@@ -254,3 +254,63 @@ def test_WhenGettingCanceledEventsByOwner_AnotherUserGetsTheEvents_ItShouldRetur
     canceled_events = canceled_events['message']
 
     assert canceled_events == []
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingFinishedEventsByOwner_TheOwnerDoesNotHaveFinishedEventsYet_itShouldReturnAnEmptyList():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+    response = client.get("/organizers/finished_events", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == status.HTTP_200_OK, response.text
+    
+    data = response.json()
+    data = data['message']
+    assert data == []
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingFinishedEventsByOwner_TheOwnerHasOneFinishedEvent_ItShouldReturnTheEvent():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+
+    json_event_with_finished_status = json_rock_music_event.copy()
+    json_event_with_finished_status['status'] = 'finished'
+    json_event_with_finished_status['dateEvent'] = "2023-01-01"
+    json_event_with_finished_status['ownerId'] = jwt_handler.decode_token(token)['id']
+
+    inserted_event = db['events'].insert_one(json_event_with_finished_status)
+    new_event_id = inserted_event.inserted_id
+
+    finished_events = client.get("/organizers/finished_events", headers={"Authorization": f"Bearer {token}"})
+    assert finished_events.status_code == status.HTTP_200_OK, finished_events.text
+    
+    finished_events = finished_events.json()
+    finished_events = finished_events['message']
+
+    assert len(finished_events) == 1
+    assert str(new_event_id) == finished_events[0]['_id']['$oid']
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingFinishedEventsByOwner_AnotherUserGetsTheEvents_ItShouldReturnAnEmptyList():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+    
+    json_event_with_finished_status = json_rock_music_event.copy()
+    json_event_with_finished_status['status'] = 'finished'
+    json_event_with_finished_status['dateEvent'] = "2023-01-01"
+    json_event_with_finished_status['ownerId'] = jwt_handler.decode_token(token)['id']
+
+    inserted_event = db['events'].insert_one(json_event_with_finished_status)
+    new_event_id = inserted_event.inserted_id
+
+
+    another_user_login_response = client.post("/organizers/loginGoogle", json={"email": "agussegura@gmail.com", "name": "Agus Segura"})
+    another_user_token = another_user_login_response.json()
+
+    finished_events = client.get("/organizers/finished_events", headers={"Authorization": f"Bearer {another_user_token}"})
+    assert finished_events.status_code == status.HTTP_200_OK, finished_events.text
+    
+    finished_events = finished_events.json()
+    finished_events = finished_events['message']
+
+    assert finished_events == []
