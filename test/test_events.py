@@ -729,23 +729,6 @@ def test_WhenAnActiveEventIsCanceledAndTheDateHasNotYetPassed_TheEventIsCorrectl
     assert canceled_event['agenda'][1]['description'] ==  'comienza banda de pop'
     assert canceled_event['status'] == "canceled"
 
-""" @pytest.mark.usefixtures("drop_collection_documents")
-def test_WhenAnActiveEventIsCanceledAndTheDateHasYetPassed_TheEventIsCorrectlyCanceled():
-    json_event_with_invalid_date = json_rock_music_event.copy()
-    json_event_with_invalid_date["dateEvent"] = "2023-01-01"
-    response = client.post("/events/", json=json_event_with_invalid_date)
-    assert response.status_code == status.HTTP_201_CREATED, response.text
-
-    data = response.json()
-    data = data['message']
-    event_id = data['_id']['$oid']
-
-    canceled_event = client.patch(f"/events/cancel/{event_id}")
-    assert canceled_event.status_code == status.HTTP_409_CONFLICT, canceled_event.text
-
-
- """
-
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenAnActiveEventIsCanceledAndTheDateHasNotYetPassed_TheEventIsCorrectlyCanceled():
     response = client.post("/events/", json=json_rock_music_event)
@@ -780,3 +763,15 @@ def test_WhenAnActiveEventIsCanceledAndTheDateHasNotYetPassed_TheEventIsCorrectl
     assert canceled_event['agenda'][1]['time'] == "20:00"
     assert canceled_event['agenda'][1]['description'] ==  'comienza banda de pop'
     assert canceled_event['status'] == "canceled"
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenAnActiveEventIsCanceledAndTheDateHasYetPassed_TheEventIsCorrectlyCanceled():
+    json_event_with_invalid_date = json_rock_music_event.copy()
+    json_event_with_invalid_date["dateEvent"] = "2023-01-01"
+    
+    inserted_event = db['events'].insert_one(json_event_with_invalid_date)
+    event_id = inserted_event.inserted_id
+
+    canceled_event = client.patch(f"/events/cancel/{event_id}")
+    assert canceled_event.status_code == status.HTTP_409_CONFLICT, canceled_event.text
