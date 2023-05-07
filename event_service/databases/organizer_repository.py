@@ -17,10 +17,8 @@ def login_google(email: str, name: str, db: Session):
     user = get_organizer_by_email(email, db)
     if user is None:
         ## creo al usuario
-        print("usuario no existe")
         user_created = create_organizer(email, name, db)
     else: 
         ## ya existe en la base
-        print("usuario existe")
         user_created = user
     return user_created

@@ -67,7 +67,6 @@ def test_when_getting_an_extining_draft_event_by_id_then_it_should_return_it():
     response = client.get(f"/organizers/draft_events/{evenet_id}", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_200_OK, response.text
     data = response.json()
-    print(data)
     data = data['message']
     assert data["name"] == "lollapalooza"
     assert data["ownerName"] == "Sol Fontenla"
@@ -157,7 +156,6 @@ def test_WhenGettingActiveEventsByOwner_TheOwnerAlreadyCreatedOne_ItShouldReturn
     token = response.json()
     new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
     new_event = new_event.json()
-    print(new_event)
     new_event_id = new_event['message']['_id']['$oid']
 
     active_events = client.get("/organizers/active_events", headers={"Authorization": f"Bearer {token}"})
@@ -178,7 +176,7 @@ def test_WhenGettingActiveEventsByOwner_TheOwnerCreatedOneAndCancelesIt_ItShould
  
     new_event_id = new_event['message']['_id']['$oid']
 
-    responsss = client.patch(f"/organizers/canceled_events/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
+    client.patch(f"/organizers/canceled_events/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
     
     active_events = client.get("/organizers/active_events", headers={"Authorization": f"Bearer {token}"})
     
@@ -205,6 +203,54 @@ def test_WhenTryingToCancelAnEvent_TheUserCancellingTheEventIsNotTheOwner_ItShou
     data = response_to_cancel.json()
     assert data["detail"] == "The user is not authorize"
 
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingCanceledEventsByOwner_TheOwnerDidNotCancelAnyYet_itShouldReturnAnEmptyList():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+    response = client.get("/organizers/canceled_events", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == status.HTTP_200_OK, response.text
+    
+    data = response.json()
+    data = data['message']
+    assert data == []
 
 
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingCanceledEventsByOwner_TheOwnerAlreadyCanceledOne_ItShouldReturnTheEvent():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = new_event.json()
+    
+    new_event_id = new_event['message']['_id']['$oid']
 
+    client.patch(f"/organizers/canceled_events/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
+    active_events = client.get("/organizers/canceled_events", headers={"Authorization": f"Bearer {token}"})
+    assert active_events.status_code == status.HTTP_200_OK, active_events.text
+    
+    active_events = active_events.json()
+    active_events = active_events['message']
+
+    assert len(active_events) == 1
+    assert new_event_id == active_events[0]['_id']['$oid']
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingCanceledEventsByOwner_AnotherUserGetsTheEvents_ItShouldReturnAnEmptyList():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = new_event.json()
+    
+    new_event_id = new_event['message']['_id']['$oid']
+    client.patch(f"/organizers/canceled_events/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
+
+    another_user_login_response = client.post("/organizers/loginGoogle", json={"email": "agussegura@gmail.com", "name": "Agus Segura"})
+    another_user_token = another_user_login_response.json()
+
+    canceled_events = client.get("/organizers/canceled_events", headers={"Authorization": f"Bearer {another_user_token}"})
+    assert canceled_events.status_code == status.HTTP_200_OK, canceled_events.text
+    
+    canceled_events = canceled_events.json()
+    canceled_events = canceled_events['message']
+
+    assert canceled_events == []

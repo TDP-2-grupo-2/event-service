@@ -90,7 +90,6 @@ async def is_users_favourite_event(event_id: str,token: str, db=Depends(get_mong
         user_id = jwt_handler.decode_token(token)["id"]
         attende_repository.verify_user_exists(user_id, user_db)
         result = event_repository.is_favourite_event_of_user(db, event_id, user_id)
-        print(result)
         return {"message": result}
     except (exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__) 
@@ -102,7 +101,6 @@ async def get_event_reservation_for_user(token: str, event_id: str, db=Depends(g
         user_id = jwt_handler.decode_token(token)["id"]
         attende_repository.verify_user_exists(user_id, user_db)
         result = event_repository.get_event_reservation(db, user_id, event_id)
-        print(result)
         return {"message": result}
     except (exceptions.ReservationNotFound) as error:
         raise HTTPException(**error.__dict__)

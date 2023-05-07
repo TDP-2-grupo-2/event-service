@@ -36,7 +36,6 @@ def edit_draft_event_by_id(event_id:str, fields:dict,db):
     updated_event = db["events_drafts"].update_one(
             {"_id": ObjectId(event_id)}, {"$set": fields}
     )
-    print(updated_event)
 
     event_edited = db["events_drafts"].find_one({"_id": ObjectId(event_id)})
     return json.loads(json_util.dumps(event_edited))
@@ -90,7 +89,6 @@ def get_events(db, name: Union[str, None] = None,
     pipeline = [{"$match": {}}]
     if (name is not None):
         pipeline.append({"$match": {"name": { "$regex": name, "$options":'i'} }})
-        print(pipeline)
     if (tags is not None): 
         tagList = tags.split(',')
         pipeline.append({"$match": {"tags": {"$all": tagList}}})
@@ -186,7 +184,6 @@ def reserve_event(db, event_id: str, user_id: str):
 def update_event_tickets_status(db, event_id: str, status): 
     db["reservations"].update_many({"event_id": event_id}, {"$set": {'status': status}})
     result=db["reservations"].find_one({"event_id": event_id})
-    print('se catualizaron', result)
 
 def cancel_event(db, event_id: str, user_id: str):
     event = db["events"].find_one({"_id": ObjectId(event_id)})

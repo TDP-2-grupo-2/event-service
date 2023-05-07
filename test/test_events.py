@@ -103,7 +103,6 @@ def test_given_an_event_when_the_event_exists_then_it_should_return_it():
 
     data = response.json()
     path_end = "/events/" + data['message']['_id']['$oid']
-    print(path_end)
     response = client.get(path_end)
     assert response.status_code == status.HTTP_200_OK, response.text
     data = response.json()
@@ -230,7 +229,6 @@ def test_WhenTheClientTriesToGetEventsByName_OneMatches_TheAppReturnsTheEventCor
     response = client.get("/events?name=tootsie")
     data = response.json()
     data = data['message']
-    print(data)
     assert response.status_code == status.HTTP_200_OK
     assert len(data) == 1
     assert data[0]["name"] == "Tootsie"
@@ -639,7 +637,6 @@ def test_WhenTheClientReservesAnExistingEvent_ThenItShouldIncreaseitAttendase():
     response_event = client.get(f"/events/{event_id}")
 
     data_event = response_event.json()
-    print(data_event)
     assert 1 == data_event['message']['attendance']
 
 
@@ -656,7 +653,6 @@ def test_WhenTheClientReservesAnExistingEvent_TheEventIsReservedCorrectly_TheApp
     assert response_to_reservation.status_code == status.HTTP_201_CREATED, response.text
     data = response_to_reservation.json()
     data = data['message']
-    print(data)
     assert type(data['_id']['$oid']) == str
 
 
@@ -721,7 +717,7 @@ def test_WhenTheClientReservesAnExistingEvent_TheClientGetsTheReservedEvents_The
     reservation = client.get(f"/events/reservations/user/{user_id}")
     assert reservation.status_code == status.HTTP_200_OK, response.text
     reservation = reservation.json()
-    print(reservation)
+    (reservation)
     reservation = reservation['message']
     assert len(reservation) == 1
     assert reservation[0]['_id']['$oid'] == event_id
