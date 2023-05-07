@@ -9,15 +9,6 @@ from typing import Optional, List
 
 event_router = APIRouter()
 
-@event_router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_event(event: Event, db=Depends(get_mongo_db)):
-    try:
-        created_event = event_repository.createEvent(event, db)
-        return {"message": created_event}
-    except  (exceptions.EventInfoException) as error:
-        raise HTTPException(**error.__dict__)
-
-
 @event_router.get("/{id}", status_code=status.HTTP_200_OK)
 async def get_event_by_id(id:str, db=Depends(get_mongo_db)):
     try:
@@ -116,12 +107,3 @@ async def get_event_reservation_for_user(token: str, event_id: str, db=Depends(g
     except (exceptions.ReservationNotFound) as error:
         raise HTTPException(**error.__dict__)
     
-
-@event_router.patch("/cancel/{event_id}", status_code=status.HTTP_200_OK)
-async def cancel_active_event(event_id: str, db=Depends(get_mongo_db)):
-    try:
-        canceled_event = event_repository.cancel_event(db, event_id)
-        return {"message": canceled_event}
-
-    except (exceptions.EventNotFound, exceptions.AlreadyFinalizedEvent) as error:
-        raise HTTPException(**error.__dict__)
