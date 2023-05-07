@@ -68,7 +68,7 @@ async def get_draft_event_by_id(rq:Request, event_id: str, event_db: Session=Dep
     except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__)
 
-@organizer_router.get("/events/active", status_code=status.HTTP_200_OK)
+@organizer_router.get("/active_events", status_code=status.HTTP_200_OK)
 def get_active_events_by_owner(rq:Request, event_db: Session= Depends(events_database.get_mongo_db)):
     try:
         authentification_handler.is_auth(rq.headers)
@@ -91,7 +91,7 @@ async def create_event(rq:Request, event: Event, event_db: Session= Depends(even
         raise HTTPException(**error.__dict__)
 
 
-@organizer_router.patch("/events/cancel/{event_id}", status_code=status.HTTP_200_OK)
+@organizer_router.patch("/canceled_events/{event_id}", status_code=status.HTTP_200_OK)
 async def cancel_active_event(rq:Request, event_id: str, event_db: Session= Depends(events_database.get_mongo_db)):
     try:
         authentification_handler.is_auth(rq.headers)

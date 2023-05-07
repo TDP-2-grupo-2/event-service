@@ -142,7 +142,7 @@ def test_when_editing_an_exsting_draft_event_then_it_should_updated():
 def test_WhenGettingActiveEventsByOwner_TheOwnerDidNotCreateAnyYet_itShouldReturnAnEmptyList():
     response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
     token = response.json()
-    response = client.get("/organizers/events/active", headers={"Authorization": f"Bearer {token}"})
+    response = client.get("/organizers/active_events", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_200_OK, response.text
     
     data = response.json()
@@ -159,7 +159,7 @@ def test_WhenGettingActiveEventsByOwner_TheOwnerAlreadyCreatedOne_ItShouldReturn
     print(new_event)
     new_event_id = new_event['message']['_id']['$oid']
 
-    active_events = client.get("/organizers/events/active", headers={"Authorization": f"Bearer {token}"})
+    active_events = client.get("/organizers/active_events", headers={"Authorization": f"Bearer {token}"})
     assert active_events.status_code == status.HTTP_200_OK, active_events.text
     
     active_events = active_events.json()
@@ -177,9 +177,9 @@ def test_WhenGettingActiveEventsByOwner_TheOwnerCreatedOneAndCancelesIt_ItShould
  
     new_event_id = new_event['message']['_id']['$oid']
 
-    responsss = client.patch(f"/organizers/events/cancel/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
+    responsss = client.patch(f"/organizers/canceled_events/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
     
-    active_events = client.get("/organizers/events/active", headers={"Authorization": f"Bearer {token}"})
+    active_events = client.get("/organizers/active_events", headers={"Authorization": f"Bearer {token}"})
     
     active_events = active_events.json()
     active_events = active_events['message']
@@ -199,7 +199,7 @@ def test_WhenTryingToCancelAnEvent_TheUserCancellingTheEventIsNotTheOwner_ItShou
  
     new_event_id = new_event['message']['_id']['$oid']
 
-    response_to_cancel = client.patch(f"/organizers/events/cancel/{new_event_id}", headers={"Authorization": f"Bearer {another_user_token}"})
+    response_to_cancel = client.patch(f"/organizers/canceled_events/{new_event_id}", headers={"Authorization": f"Bearer {another_user_token}"})
     assert response_to_cancel.status_code == status.HTTP_401_UNAUTHORIZED, response_to_cancel.text
     data = response_to_cancel.json()
     assert data["detail"] == "The user is not authorize"

@@ -737,7 +737,7 @@ def test_WhenAnActiveEventIsCanceledAndTheDateHasNotYetPassed_TheEventIsCorrectl
     data = data['message']
     event_id = data['_id']['$oid']
 
-    canceled_event = client.patch(f"/orgainzers/events/cancel/{event_id}", headers={"Authorization": f"Bearer {token}"})
+    canceled_event = client.patch(f"/orgainzers/canceled_events/{event_id}", headers={"Authorization": f"Bearer {token}"})
     assert canceled_event.status_code == status.HTTP_200_OK, canceled_event.text
     canceled_event = canceled_event.json()
     canceled_event = canceled_event['message']
@@ -771,8 +771,8 @@ def test_WhenAnActiveEventIsCanceledAndTheDateHasNotYetPassed_TheEventIsCorrectl
     data = data['message']
     event_id = data['_id']['$oid']
 
-    client.patch(f"/organizers/events/cancel/{event_id}", headers={"Authorization": f"Bearer {token}"})
-    canceled_event = client.patch(f"/organizers/events/cancel/{event_id}", headers={"Authorization": f"Bearer {token}"})
+    client.patch(f"/organizers/canceled_events/{event_id}", headers={"Authorization": f"Bearer {token}"})
+    canceled_event = client.patch(f"/organizers/canceled_events/{event_id}", headers={"Authorization": f"Bearer {token}"})
 
     assert canceled_event.status_code == status.HTTP_200_OK, canceled_event.text
     canceled_event = canceled_event.json()
@@ -808,7 +808,7 @@ def test_WhenAnActiveEventIsCanceledAndTheDateHasYetPassed_TheEventIsCorrectlyCa
     inserted_event = db['events'].insert_one(json_event_with_invalid_date)
     event_id = inserted_event.inserted_id
 
-    canceled_event = client.patch(f"/organizers/events/cancel/{event_id}", headers={"Authorization": f"Bearer {token}"})
+    canceled_event = client.patch(f"/organizers/canceled_events/{event_id}", headers={"Authorization": f"Bearer {token}"})
     assert canceled_event.status_code == status.HTTP_409_CONFLICT, canceled_event.text
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -823,7 +823,7 @@ def test_WhenTryingToReserveATicketOfACanceledEvent_ReturnsError():
     event_id = data['_id']['$oid']
 
 
-    client.patch(f"/organizers/events/cancel/{event_id}", headers={"Authorization": f"Bearer {token}"})
+    client.patch(f"/organizers/canceled_events/{event_id}", headers={"Authorization": f"Bearer {token}"})
     response_to_reservation = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
     assert response_to_reservation.status_code == status.HTTP_409_CONFLICT, response_to_reservation.text
     data = response_to_reservation.json()
@@ -841,7 +841,7 @@ def test_WhenAnEventIsCanceled_TheTicketsOfThatEventHaveCanceledStatus():
 
 
     response_to_reservation = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
-    client.patch(f"/organizers/events/cancel/{event_id}", headers={"Authorization": f"Bearer {token}"})
+    client.patch(f"/organizers/canceled_events/{event_id}", headers={"Authorization": f"Bearer {token}"})
     reservation = client.get(f"/events/reservations/user/{user_id}/event/{event_id}")
     response_to_reservation  = response_to_reservation.json()
     response_to_reservation = response_to_reservation['message']
