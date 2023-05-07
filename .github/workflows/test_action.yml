@@ -33,8 +33,8 @@ jobs:
       - name: Run unit tests
         run: RUN_ENV='test' python -m pytest
         env: 
-          - JWT_SECRET_KEY=${{secrets.JWT_SECRET_KEY}}
-          - ALGORITHM=${{secrets.ALGORITHM}}
+          JWT_SECRET_KEY: ${{secrets.JWT_SECRET_KEY}}
+          ALGORITHM: ${{secrets.ALGORITHM}}
       #----------------------------------------------
       #              upload coverage reports
       #----------------------------------------------
