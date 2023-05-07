@@ -188,7 +188,7 @@ def test_WhenGettingActiveEventsByOwner_TheOwnerCreatedOneAndCancelesIt_ItShould
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
-def test_WhenTryingToCancelAn_TheUserCancellingTheEventIsNotTheOwner_ItShouldReturnError():
+def test_WhenTryingToCancelAnEvent_TheUserCancellingTheEventIsNotTheOwner_ItShouldReturnError():
     response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
     token = response.json()
     new_event = client.post("/organizers/event/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
@@ -200,7 +200,7 @@ def test_WhenTryingToCancelAn_TheUserCancellingTheEventIsNotTheOwner_ItShouldRet
     new_event_id = new_event['message']['_id']['$oid']
 
     response_to_cancel = client.patch(f"/organizers/events/cancel/{new_event_id}", headers={"Authorization": f"Bearer {another_user_token}"})
-    assert response_to_cancel.status_code == status.HTTP_409_CONFLICT, response_to_cancel.text
+    assert response_to_cancel.status_code == status.HTTP_401_UNAUTHORIZED, response_to_cancel.text
     data = response_to_cancel.json()
     assert data["detail"] == "The user is not authorize"
 
