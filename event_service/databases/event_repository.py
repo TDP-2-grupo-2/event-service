@@ -47,13 +47,14 @@ def get_draft_event_by_id(event_id, db):
             raise exceptions.EventNotFound
     return json.loads(json_util.dumps(event))
 
-def createEvent(event: dict, db):
+def createEvent(owner_id: str, event: dict, db):
     if event.dateEvent < datetime.date.today():
         raise exceptions.InvalidDate()
     event = jsonable_encoder(event)
     tagsToUpper = []
     for t in event['tags']:
         tagsToUpper.append(t.upper())
+    event['ownerId'] = owner_id
     event['tags'] = tagsToUpper
     event['eventType'] = event['eventType'].upper()
     event['status'] = "active"
@@ -139,16 +140,14 @@ def is_favourite_event_of_user(db, event_id, user_id):
     if favourite is None:
             return False
     else:
-        return True
-
-        
+        return True 
 
 def get_favourites(db, user_id: str):
     favourites = db["favourites"].find({"user_id": user_id})
     events = []
     for fav in favourites:
         events.append(get_event_by_id(fav["event_id"], db))
-    return events 
+    return events
         
 def get_user_reservations(db, user_id: str):
     reservations = db["reservations"].find({"user_id": user_id})
@@ -163,7 +162,6 @@ def get_event_reservation(db, user_id: str, event_id: str):
     if reservation is None:
          raise exceptions.ReservationNotFound
     return json.loads(json_util.dumps(reservation))
-
 
 
 def reserve_event(db, event_id: str, user_id: str):
@@ -190,10 +188,13 @@ def update_event_tickets_status(db, event_id: str, status):
     result=db["reservations"].find_one({"event_id": event_id})
     print('se catualizaron', result)
 
-def cancel_event(db, event_id: str):
+def cancel_event(db, event_id: str, user_id: str):
     event = db["events"].find_one({"_id": ObjectId(event_id)})
     if event is None:
             raise exceptions.EventNotFound
+    
+    if event['ownerId'] != user_id:
+        raise exceptions.UnauthorizeUser
 
     event_date = datetime.datetime.strptime(event['dateEvent'], "%Y-%m-%d").date()
     if event_date < datetime.date.today(): 
@@ -208,3 +209,8 @@ def cancel_event(db, event_id: str):
     canceled_event = db["events"].find_one({"_id": ObjectId(event_id)})
     update_event_tickets_status(db, event_id, 'canceled')
     return json.loads(json_util.dumps(canceled_event))
+
+
+def get_events_by_owner_with_status(db, user_id: str, status: str):
+    events_by_owner = db['events'].find({"ownerId": user_id, "status": status})
+    return list(json.loads(json_util.dumps(events_by_owner)))

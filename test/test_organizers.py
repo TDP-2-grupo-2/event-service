@@ -9,9 +9,19 @@ session = config.init_postg_db(app)
 db = config.init_db()
 client = TestClient(app)
 
+json_rock_music_event = {
+            "name": "Music Fest",  "owner": "Agustina Segura",  "description": "Musical de pop, rock y mucho más", 
+            "location": "Av. Pres. Figueroa Alcorta 7597, C1428 CABA", "locationDescription": "Estadio River", "capacity": 5000, 
+            "dateEvent": "2023-07-01", "attendance": 0, "eventType": "SHOW","tags": [ "MUSICA", "DIVERSION" ], "latitud": -34.6274931, 
+            "longitud": -68.3252097, "start": "19:00", "end": "23:00", "faqs": [{'pregunta':'Como llegar?', 'respuesta':'Por medio del colectivo 152'}],
+            "agenda": [{'time': "19:00", 'description': 'Arranca banda de rock'}, {'time': '20:00', 'description': 'comienza banda de pop'}] }
+
+
 @pytest.fixture
 def drop_collection_documents():
     config.clear_db_draft_event_collection(db)
+    config.clear_db_events_collection(db)
+    config.clear_db_reservations_collection(db)
 
 json_lollapalooza_first_date = {
             "name": "lollapalooza",  "ownerName": "Sol Fontenla",
@@ -115,7 +125,7 @@ def test_when_editing_an_exsting_draft_event_then_it_should_updated():
     info = response.json()
     info = info['message']
     event_id = info['_id']['$oid']
-    print(event_id)
+
     response = client.patch(f"/organizers/draft_events/{event_id}", 
                                 json={"capacity": 100, "eventType": "TEATRO"}, 
                                 headers={"Authorization": f"Bearer {token}"})
@@ -124,6 +134,77 @@ def test_when_editing_an_exsting_draft_event_then_it_should_updated():
     
     data = response.json()
     data = data['message']
-    print(data)
+
     assert data['capacity'] == 100
     assert data['eventType'] == "TEATRO"
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingActiveEventsByOwner_TheOwnerDidNotCreateAnyYet_itShouldReturnAnEmptyList():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+    response = client.get("/organizers/active_events", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == status.HTTP_200_OK, response.text
+    
+    data = response.json()
+    data = data['message']
+    assert data == []
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingActiveEventsByOwner_TheOwnerAlreadyCreatedOne_ItShouldReturnTheEvent():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = new_event.json()
+    print(new_event)
+    new_event_id = new_event['message']['_id']['$oid']
+
+    active_events = client.get("/organizers/active_events", headers={"Authorization": f"Bearer {token}"})
+    assert active_events.status_code == status.HTTP_200_OK, active_events.text
+    
+    active_events = active_events.json()
+    active_events = active_events['message']
+
+    assert len(active_events) == 1
+    assert new_event_id == active_events[0]['_id']['$oid']
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingActiveEventsByOwner_TheOwnerCreatedOneAndCancelesIt_ItShouldReturnAnEmptyList():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = new_event.json()
+ 
+    new_event_id = new_event['message']['_id']['$oid']
+
+    responsss = client.patch(f"/organizers/canceled_events/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
+    
+    active_events = client.get("/organizers/active_events", headers={"Authorization": f"Bearer {token}"})
+    
+    active_events = active_events.json()
+    active_events = active_events['message']
+
+    assert active_events == []
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTryingToCancelAnEvent_TheUserCancellingTheEventIsNotTheOwner_ItShouldReturnError():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = new_event.json()
+
+    another_user_login_response = client.post("/organizers/loginGoogle", json={"email": "agussegura@gmail.com", "name": "Agus Segura"})
+    another_user_token = another_user_login_response.json()
+ 
+    new_event_id = new_event['message']['_id']['$oid']
+
+    response_to_cancel = client.patch(f"/organizers/canceled_events/{new_event_id}", headers={"Authorization": f"Bearer {another_user_token}"})
+    assert response_to_cancel.status_code == status.HTTP_401_UNAUTHORIZED, response_to_cancel.text
+    data = response_to_cancel.json()
+    assert data["detail"] == "The user is not authorize"
+
+
+
+
