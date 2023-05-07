@@ -31,6 +31,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Run unit tests
+        env: 
+          - JWT_SECRET_KEY=${{secrets.JWT_SECRET_KEY}}
+          - ALGORITHM=${{secrets.ALGORITHM}}
         run: RUN_ENV='test' python -m pytest
       #----------------------------------------------
       #              upload coverage reports
