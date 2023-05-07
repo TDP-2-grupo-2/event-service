@@ -183,3 +183,22 @@ def reserve_event(db, event_id: str, user_id: str):
         return json.loads(json_util.dumps(reservation))
     else:
         raise exceptions.ReservationAlreadyExists
+
+
+def cancel_event(db, event_id: str):
+    event = db["events"].find_one({"_id": ObjectId(event_id)})
+    if event is None:
+            raise exceptions.EventNotFound
+
+    event_date = datetime.datetime.strptime(event['dateEvent'], "%Y-%m-%d").date()
+    if event_date < datetime.date.today(): 
+        # TODO: aca se mueve de base porque esta finalizado
+        raise exceptions.AlreadyFinalizedEvent 
+    
+    if event['status'] == 'active':
+        db["events"].update_one(
+                {"_id": ObjectId(event_id)}, {"$set": {'status': 'canceled'}}
+        )
+
+    canceled_event = db["events"].find_one({"_id": ObjectId(event_id)})
+    return json.loads(json_util.dumps(canceled_event))

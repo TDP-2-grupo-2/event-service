@@ -115,3 +115,13 @@ async def get_event_reservation_for_user(token: str, event_id: str, db=Depends(g
         return {"message": result}
     except (exceptions.ReservationNotFound) as error:
         raise HTTPException(**error.__dict__)
+    
+
+@event_router.patch("/cancel/{event_id}", status_code=status.HTTP_200_OK)
+async def cancel_active_event(event_id: str, db=Depends(get_mongo_db)):
+    try:
+        canceled_event = event_repository.cancel_event(db, event_id)
+        return {"message": canceled_event}
+
+    except (exceptions.EventNotFound, exceptions.AlreadyFinalizedEvent) as error:
+        raise HTTPException(**error.__dict__)

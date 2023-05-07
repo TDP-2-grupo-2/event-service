@@ -4,6 +4,11 @@ class EventInfoException(Exception):
 class UserInfoException(Exception):
     ...
 
+class AlreadyFinalizedEvent(EventInfoException):
+    def __init__(self):
+        self.status_code = 409  # conflic
+        self.detail = "Cannot cancel already finalized event"
+
 class UserWrongLoginInformation(UserInfoException):
     def __init__(self):
         self.status_code = 401  # conflic
