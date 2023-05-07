@@ -12,6 +12,11 @@ class AdminWrongLoginInformation(AdminInfoException):
         self.status_code = 401  # conflic
         self.detail = "The username/password is incorrect"
 
+class AlreadyFinalizedEvent(EventInfoException):
+    def __init__(self):
+        self.status_code = 409  # conflic
+        self.detail = "Cannot cancel already finalized event"
+
 class UserWrongLoginInformation(UserInfoException):
     def __init__(self):
         self.status_code = 401  # conflic
@@ -37,6 +42,10 @@ class EventNotFound(EventInfoException):
         self.status_code = 404
         self.detail = "The event does not exists"
 
+class EventIsNotActive(EventInfoException):
+    def __init__(self):
+        self.status_code = 409
+        self.detail = "The event is not active"
 
 class ReservationNotFound(EventInfoException):
     def __init__(self):

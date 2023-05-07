@@ -1,3 +1,4 @@
+import datetime
 from fastapi.testclient import TestClient
 from fastapi import status
 from test import config
@@ -630,7 +631,6 @@ def test_WhenTheClientReservesAnExistingEvent_TheEventIsReservedCorrectly_TheApp
     print(data)
     assert type(data['_id']['$oid']) == str
 
-##TODO
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientReservesAnExistingEvent_TheEventClientGetsTheTicket_TheAppReturnsCorrectMessage():
     response = client.post("/events/", json=json_programming_event)
@@ -647,7 +647,7 @@ def test_WhenTheClientReservesAnExistingEvent_TheEventClientGetsTheTicket_TheApp
     reservation = reservation.json()
     reservation = reservation["message"]
     assert response_to_reservation['_id']['$oid'] == reservation['_id']['$oid']
-
+    assert response_to_reservation['status'] == 'active'
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientReservesAnEventTwice_TheAppReturnsCorrectErrorMessage():
@@ -695,4 +695,120 @@ def test_WhenTheClientReservesAnExistingEvent_TheClientGetsTheReservedEvents_The
     assert reservation[0]['_id']['$oid'] == event_id
     assert reservation[0]["name"] == "Aprendé a programar en python!"
     
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenAnActiveEventIsCanceledAndTheDateHasNotYetPassed_TheEventIsCorrectlyCanceled():
+    response = client.post("/events/", json=json_rock_music_event)
+    assert response.status_code == status.HTTP_201_CREATED, response.text
+
+    data = response.json()
+    data = data['message']
+    event_id = data['_id']['$oid']
+
+    canceled_event = client.patch(f"/events/cancel/{event_id}")
+    assert canceled_event.status_code == status.HTTP_200_OK, canceled_event.text
+    canceled_event = canceled_event.json()
+    canceled_event = canceled_event['message']
+    assert canceled_event["name"] == "Music Fest"
+    assert canceled_event["owner"] == "Agustina Segura"
+    assert canceled_event["description"] == "Musical de pop, rock y mucho más"
+    assert canceled_event["location"] == "Av. Pres. Figueroa Alcorta 7597, C1428 CABA"
+    assert canceled_event["locationDescription"] == "Estadio River"
+    assert canceled_event["capacity"] == 5000
+    assert canceled_event["dateEvent"] == "2023-07-01"
+    assert canceled_event["attendance"]== 0
+    assert canceled_event["latitud"] == -34.6274931
+    assert canceled_event["longitud"] == -68.3252097
+    assert canceled_event["start"]=="19:00:00"
+    assert canceled_event["end"]=="23:00:00"
+    assert canceled_event['faqs'][0]['pregunta'] == 'Como llegar?'
+    assert canceled_event['faqs'][0]['respuesta'] == 'Por medio del colectivo 152'
+    assert canceled_event['agenda'][0]['time'] == "19:00"
+    assert canceled_event['agenda'][0]['description'] == 'Arranca banda de rock'
+    assert canceled_event['agenda'][1]['time'] == "20:00"
+    assert canceled_event['agenda'][1]['description'] ==  'comienza banda de pop'
+    assert canceled_event['status'] == "canceled"
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenAnActiveEventIsCanceledAndTheDateHasNotYetPassed_TheEventIsCorrectlyCanceled():
+    response = client.post("/events/", json=json_rock_music_event)
+    assert response.status_code == status.HTTP_201_CREATED, response.text
+
+    data = response.json()
+    data = data['message']
+    event_id = data['_id']['$oid']
+
+    client.patch(f"/events/cancel/{event_id}")
+    canceled_event = client.patch(f"/events/cancel/{event_id}")
+
+    assert canceled_event.status_code == status.HTTP_200_OK, canceled_event.text
+    canceled_event = canceled_event.json()
+    canceled_event = canceled_event['message']
+    assert canceled_event["name"] == "Music Fest"
+    assert canceled_event["owner"] == "Agustina Segura"
+    assert canceled_event["description"] == "Musical de pop, rock y mucho más"
+    assert canceled_event["location"] == "Av. Pres. Figueroa Alcorta 7597, C1428 CABA"
+    assert canceled_event["locationDescription"] == "Estadio River"
+    assert canceled_event["capacity"] == 5000
+    assert canceled_event["dateEvent"] == "2023-07-01"
+    assert canceled_event["attendance"]== 0
+    assert canceled_event["latitud"] == -34.6274931
+    assert canceled_event["longitud"] == -68.3252097
+    assert canceled_event["start"]=="19:00:00"
+    assert canceled_event["end"]=="23:00:00"
+    assert canceled_event['faqs'][0]['pregunta'] == 'Como llegar?'
+    assert canceled_event['faqs'][0]['respuesta'] == 'Por medio del colectivo 152'
+    assert canceled_event['agenda'][0]['time'] == "19:00"
+    assert canceled_event['agenda'][0]['description'] == 'Arranca banda de rock'
+    assert canceled_event['agenda'][1]['time'] == "20:00"
+    assert canceled_event['agenda'][1]['description'] ==  'comienza banda de pop'
+    assert canceled_event['status'] == "canceled"
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenAnActiveEventIsCanceledAndTheDateHasYetPassed_TheEventIsCorrectlyCanceled():
+    json_event_with_invalid_date = json_rock_music_event.copy()
+    json_event_with_invalid_date["dateEvent"] = "2023-01-01"
+    
+    inserted_event = db['events'].insert_one(json_event_with_invalid_date)
+    event_id = inserted_event.inserted_id
+
+    canceled_event = client.patch(f"/events/cancel/{event_id}")
+    assert canceled_event.status_code == status.HTTP_409_CONFLICT, canceled_event.text
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTryingToReserveATicketOfACanceledEvent_ReturnsError():
+    response = client.post("/events/", json=json_rock_music_event)
+    assert response.status_code == status.HTTP_201_CREATED, response.text
+
+    data = response.json()
+    data = data['message']
+    user_id = login_user()
+    event_id = data['_id']['$oid']
+
+
+    client.patch(f"/events/cancel/{event_id}")
+    response_to_reservation = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
+    assert response_to_reservation.status_code == status.HTTP_409_CONFLICT, response_to_reservation.text
+    data = response_to_reservation.json()
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenAnEventIsCanceled_TheTicketsOfThatEventHaveCanceledStatus():
+    response = client.post("/events/", json=json_rock_music_event)
+    assert response.status_code == status.HTTP_201_CREATED, response.text
+
+    data = response.json()
+    data = data['message']
+    user_id = login_user()
+    event_id = data['_id']['$oid']
+
+
+    response_to_reservation = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
+    client.patch(f"/events/cancel/{event_id}")
+    reservation = client.get(f"/events/reservations/user/{user_id}/event/{event_id}")
+    response_to_reservation  = response_to_reservation.json()
+    response_to_reservation = response_to_reservation['message']
+    reservation = reservation.json()
+    reservation = reservation["message"]
+    assert response_to_reservation['_id']['$oid'] == reservation['_id']['$oid']
+    assert reservation['status'] == 'canceled'
 
