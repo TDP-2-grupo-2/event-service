@@ -32,7 +32,11 @@ jobs:
           pip install -r requirements.txt
       - name: Run unit tests
         run: | 
-          pytest test/test_events.py
+          python -m pytest test/test_events.py
+          python -m pytest test/test_organizers.py
+          python -m pytest test/test_admin.py
+          python -m pytest test/test_attendee.py
+
 
         env: 
           JWT_SECRET_KEY: ${{secrets.JWT_SECRET_KEY}}

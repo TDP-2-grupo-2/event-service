@@ -137,6 +137,7 @@ def test_given_an_event_when_the_event_does_not_exist_then_it_should_not_return_
 def test_given_an_exiting_event_when_i_want_to_deleted_then_it_should_do_it():
     token = jwt_handler.create_access_token("1", 'organizer')
     response = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == status.HTTP_200_OK, response.text
     data = response.json()
     path_end = "/events/" + data['message']['_id']['$oid']
     response = client.delete(path_end)
