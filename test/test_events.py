@@ -57,7 +57,7 @@ def login_user():
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_create_it():
     token = jwt_handler.create_access_token("1", 'organizer')
-    response = client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_201_CREATED, response.text
     data = response.json()
     data = data['message']
