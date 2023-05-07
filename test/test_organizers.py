@@ -154,7 +154,7 @@ def test_WhenGettingActiveEventsByOwner_TheOwnerDidNotCreateAnyYet_itShouldRetur
 def test_WhenGettingActiveEventsByOwner_TheOwnerAlreadyCreatedOne_ItShouldReturnTheEvent():
     response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
     token = response.json()
-    new_event = client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
     new_event = new_event.json()
     print(new_event)
     new_event_id = new_event['message']['_id']['$oid']
@@ -172,7 +172,7 @@ def test_WhenGettingActiveEventsByOwner_TheOwnerAlreadyCreatedOne_ItShouldReturn
 def test_WhenGettingActiveEventsByOwner_TheOwnerCreatedOneAndCancelesIt_ItShouldReturnAnEmptyList():
     response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
     token = response.json()
-    new_event = client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
     new_event = new_event.json()
  
     new_event_id = new_event['message']['_id']['$oid']
@@ -191,7 +191,7 @@ def test_WhenGettingActiveEventsByOwner_TheOwnerCreatedOneAndCancelesIt_ItShould
 def test_WhenTryingToCancelAnEvent_TheUserCancellingTheEventIsNotTheOwner_ItShouldReturnError():
     response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
     token = response.json()
-    new_event = client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
     new_event = new_event.json()
 
     another_user_login_response = client.post("/organizers/loginGoogle", json={"email": "agussegura@gmail.com", "name": "Agus Segura"})

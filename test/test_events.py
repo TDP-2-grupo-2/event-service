@@ -88,7 +88,7 @@ def test_given_a_date_that_passed_when_creating_an_event_then_it_should_not_crea
     token = jwt_handler.create_access_token("1", 'organizer')
     json_event_with_invalid_date = json_rock_music_event.copy()
     json_event_with_invalid_date["dateEvent"] = "2023-01-01"
-    response = client.post("/organizers/active_events/", json=json_event_with_invalid_date, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_event_with_invalid_date, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_409_CONFLICT, response.text
     data = response.json()
 
@@ -98,7 +98,7 @@ def test_given_a_date_that_passed_when_creating_an_event_then_it_should_not_crea
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_given_an_event_when_the_event_exists_then_it_should_return_it():
     token = jwt_handler.create_access_token("1", 'organizer')
-    response = client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
 
 
     data = response.json()
@@ -135,7 +135,7 @@ def test_given_an_event_when_the_event_does_not_exist_then_it_should_not_return_
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_given_an_exiting_event_when_i_want_to_deleted_then_it_should_do_it():
     token = jwt_handler.create_access_token("1", 'organizer')
-    response = client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
     data = response.json()
     path_end = "/events/" + data['message']['_id']['$oid']
     response = client.delete(path_end)
@@ -166,9 +166,9 @@ def test_WhenTheClientTriesToGetAllTheEvents_ThereAreNoEventsYet_TheAppReturnsAn
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetAllTheEvents_ThereAreThreeEvents_TheAppReturnsAListWithAllThreeEvents():
     token = jwt_handler.create_access_token("1", 'organizer')
-    client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_programming_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_programming_event, headers={"Authorization": f"Bearer {token}"})
 
     response = client.get("/events/")
     data = response.json()
@@ -180,8 +180,8 @@ def test_WhenTheClientTriesToGetAllTheEvents_ThereAreThreeEvents_TheAppReturnsAL
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByName_NoneMatch_TheAppReturnsAnEmptyList():
     token = jwt_handler.create_access_token("1", 'organizer')
-    client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
 
     response = client.get("/events?name=Festival")
     data = response.json()
@@ -194,8 +194,8 @@ def test_WhenTheClientTriesToGetEventsByName_NoneMatch_TheAppReturnsAnEmptyList(
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByOwner_OneMatches_TheAppReturnsTheEventCorrectly():
     token = jwt_handler.create_access_token("1", 'organizer')
-    client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
 
     response = client.get("/events?owner=Nico Vazquez")
     data = response.json()
@@ -223,8 +223,8 @@ def test_WhenTheClientTriesToGetEventsByOwner_OneMatches_TheAppReturnsTheEventCo
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByName_OneMatches_TheAppReturnsTheEventCorrectly():
     token = jwt_handler.create_access_token("1", 'organizer')
-    client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
 
     response = client.get("/events?name=tootsie")
     data = response.json()
@@ -251,8 +251,8 @@ def test_WhenTheClientTriesToGetEventsByName_OneMatches_TheAppReturnsTheEventCor
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByIncompleteName_OneMatches_TheAppReturnsTheEventCorrectly():
     token = jwt_handler.create_access_token("1", 'organizer')
-    client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
     response = client.get("/events?name=oot")
     data = response.json()
     data = data['message']
@@ -277,8 +277,8 @@ def test_WhenTheClientTriesToGetEventsByIncompleteName_OneMatches_TheAppReturnsT
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByTags_NoneMatch_TheAppReturnsAnEmptyList():
     token = jwt_handler.create_access_token("1", 'organizer')
-    client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
 
     response = client.get("/events", params={"taglist": "APRENDIZAJE"})
     data = response.json()
@@ -291,8 +291,8 @@ def test_WhenTheClientTriesToGetEventsByTags_NoneMatch_TheAppReturnsAnEmptyList(
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByTwoTags_NoneMatch_TheAppReturnsAnEmptyList():
     token = jwt_handler.create_access_token("1", 'organizer')
-    client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
 
     response = client.get("/events", params={"taglist": "APRENDIZAJE,DIVERSION"})
     data = response.json()
@@ -305,9 +305,9 @@ def test_WhenTheClientTriesToGetEventsByTwoTags_NoneMatch_TheAppReturnsAnEmptyLi
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByManyTags_ManyMatch_TheAppReturnsTheEventsCorrectly():
     token = jwt_handler.create_access_token("1", 'organizer')
-    client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {token}"})
 
     response = client.get("/events", params={"taglist": "MUSICA,DIVERSION"})
     data = response.json()
@@ -325,8 +325,8 @@ def test_WhenTheClientTriesToGetEventsByManyTags_ManyMatch_TheAppReturnsTheEvent
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByType_NoneMatch_TheAppReturnsAnEmptyList():
     token = jwt_handler.create_access_token("1", 'organizer')
-    client.post("/organizers/evactive_eventsent/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
 
     response = client.get("/events", params={"eventType": "CINE"})
     data = response.json()
@@ -339,9 +339,9 @@ def test_WhenTheClientTriesToGetEventsByType_NoneMatch_TheAppReturnsAnEmptyList(
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByType_TwoMatch_TheAppReturnsTheEventsCorrectly():
     token = jwt_handler.create_access_token("1", 'organizer')
-    client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {token}"})
 
     response = client.get("/events", params={"eventType": "SHOW"})
     data = response.json()
@@ -359,9 +359,9 @@ def test_WhenTheClientTriesToGetEventsByType_TwoMatch_TheAppReturnsTheEventsCorr
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByTypeAndTag_OneMatches_TheAppReturnsTheEventCorrectly():
     token = jwt_handler.create_access_token("1", 'organizer')
-    client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {token}"})
 
     response = client.get("/events", params={"eventType": "SHOW", "taglist": "MUSICA,FESTIVAL"})
     data = response.json()
@@ -387,9 +387,9 @@ def test_WhenTheClientTriesToGetEventsByTypeAndTag_OneMatches_TheAppReturnsTheEv
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsByTypeTagAndName_NoneMatches_TheAppReturnsAnEmptyList():
     token = jwt_handler.create_access_token("1", 'organizer')
-    client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {token}"})
 
     response = client.get("/events", params={"eventType": "SHOW", "taglist": "MUSICA,FESTIVAL", "name":"Primavera Sound"})
     data = response.json()
@@ -402,7 +402,7 @@ def test_WhenTheClientTriesToGetEventsByTypeTagAndName_NoneMatches_TheAppReturns
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientMarksAsFavouriteAnExistingEvent_TheEventIsMarkedCorrectly_TheAppReturnsCorrectMessage():
     token = jwt_handler.create_access_token("1", 'organizer')
-    response = client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_201_CREATED, response.text
     data = response.json()
     data = data['message']
@@ -431,7 +431,7 @@ def test_WhenTheClientMarksAsFavouriteANonExistingEvent_TheAppReturnsCorrectMess
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientMarksAsFavouriteTwiceAnExistingEvent_TheEventIsUnMarkedCorrectly_TheAppReturnsCorrectMessage():
     token = jwt_handler.create_access_token("1", 'organizer')
-    response = client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
     data = response.json()
     data = data['message']
     user_id = login_user()
@@ -452,7 +452,7 @@ def test_WhenTheClientMarksAsFavouriteTwiceAnExistingEvent_TheEventIsUnMarkedCor
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientMarksAsFavouriteAnExistingEvent_TheClientsAsksForFavouriteEventsOfUser_TheAppReturnsTheEventCorrectly():
     token = jwt_handler.create_access_token("1", 'organizer')
-    response = client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_201_CREATED, response.text
     data = response.json()
     data = data['message']
@@ -473,7 +473,7 @@ def test_WhenTheClientMarksAsFavouriteAnExistingEvent_TheClientsAsksForFavourite
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientMarksAsFavouriteTwiceAnExistingEvent_TheClientsAsksForFavouriteEventsOfUser_TheAppReturnsEmptyList():
     token = jwt_handler.create_access_token("1", 'organizer')
-    response = client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_201_CREATED, response.text
     data = response.json()
     data = data['message']
@@ -492,7 +492,7 @@ def test_WhenTheClientMarksAsFavouriteTwiceAnExistingEvent_TheClientsAsksForFavo
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientHasNoFavouriteEvents_TheClientsAsksForFavouriteEventsOfUser_TheAppReturnsEmptyList():
     token = jwt_handler.create_access_token("1", 'organizer')
-    response = client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
     data = response.json()
     data = data['message']
 
@@ -509,7 +509,7 @@ def test_WhenTheClientHasNoFavouriteEvents_TheClientsAsksForFavouriteEventsOfUse
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientMarksAsFavouriteAnExistingEvent_TheClientsAsksIfIsFavouriteEvent_TheAppReturnsTrue():
     token = jwt_handler.create_access_token("1", 'organizer')
-    response = client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_201_CREATED, response.text
     data = response.json()
     data = data['message']
@@ -529,7 +529,7 @@ def test_WhenTheClientMarksAsFavouriteAnExistingEvent_TheClientsAsksIfIsFavourit
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientMarksAsFavouriteAnExistingEventTwice_TheClientsAsksIfIsFavouriteEvent_TheAppReturnsFalse():
     token = jwt_handler.create_access_token("1", 'organizer')
-    response = client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_201_CREATED, response.text
     data = response.json()
     data = data['message']
@@ -560,9 +560,9 @@ def test_WhenTheClientAsksIfANoneExistingEventIsFavourite_TheAppReturnsCorrectMe
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsBetween0And40KM_NoneMatch_TheAppReturnsAnEmptyList():
     token = jwt_handler.create_access_token("1", 'organizer')
-    client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {token}"})
 
     response = client.get("/events", params={"coordinates": COORDENADAS_CIUDAD_DE_CORDOBA, "distances_range": "0,40"})
     data = response.json()
@@ -575,9 +575,9 @@ def test_WhenTheClientTriesToGetEventsBetween0And40KM_NoneMatch_TheAppReturnsAnE
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsBetween0And40KM_TwoMatch_TheAppReturnsTheEventsCorrectly():
     token = jwt_handler.create_access_token("1", 'organizer')
-    client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {token}"})
 
     response = client.get("/events", params={"coordinates": COORDENAS_OBELISCO, "distances_range": "0,40"})
     data = response.json()
@@ -590,8 +590,8 @@ def test_WhenTheClientTriesToGetEventsBetween0And40KM_TwoMatch_TheAppReturnsTheE
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsBetween10And40KM_NoneMatch_TheAppReturnsAnEmptyList():
     token = jwt_handler.create_access_token("1", 'organizer')
-    client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
 
     response = client.get("/events", params={"coordinates": COORDENAS_OBELISCO, "distances_range": "10,40"})
     data = response.json()
@@ -603,9 +603,9 @@ def test_WhenTheClientTriesToGetEventsBetween10And40KM_NoneMatch_TheAppReturnsAn
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientTriesToGetEventsBetween0And10KM_NoneMatch_TheAppReturnsAnEmptyList():
     token = jwt_handler.create_access_token("1", 'organizer')
-    client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
-    client.post("/organizers/active_events/", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {token}"})
 
     response = client.get("/events", params={"coordinates": COORDENAS_OBELISCO, "distances_range": "0,10"})
     data = response.json()
@@ -628,7 +628,7 @@ def test_WhenTheClientReservesANonExistingEvent_TheAppReturnsCorrectErrorMessage
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientReservesAnExistingEvent_ThenItShouldIncreaseitAttendase():
     token = jwt_handler.create_access_token("1", 'organizer')
-    response = client.post("/organizers/active_events/", json=json_programming_event, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_programming_event, headers={"Authorization": f"Bearer {token}"})
 
     data = response.json()
     data = data['message']
@@ -645,7 +645,7 @@ def test_WhenTheClientReservesAnExistingEvent_ThenItShouldIncreaseitAttendase():
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientReservesAnExistingEvent_TheEventIsReservedCorrectly_TheAppReturnsCorrectMessage():
     token = jwt_handler.create_access_token("1", 'organizer')
-    response = client.post("/organizers/active_events/", json=json_programming_event, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_programming_event, headers={"Authorization": f"Bearer {token}"})
     data = response.json()
     data = data['message']
     user_id = login_user()
@@ -662,7 +662,7 @@ def test_WhenTheClientReservesAnExistingEvent_TheEventIsReservedCorrectly_TheApp
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientReservesAnExistingEvent_TheEventClientGetsTheTicket_TheAppReturnsCorrectMessage():
     token = jwt_handler.create_access_token("1", 'organizer')
-    response = client.post("/organizers/active_events/", json=json_programming_event, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_programming_event, headers={"Authorization": f"Bearer {token}"})
     data = response.json()
     data = data['message']
     user_id = login_user()
@@ -681,7 +681,7 @@ def test_WhenTheClientReservesAnExistingEvent_TheEventClientGetsTheTicket_TheApp
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientReservesAnEventTwice_TheAppReturnsCorrectErrorMessage():
     token = jwt_handler.create_access_token("1", 'organizer')
-    response = client.post("/organizers/active_events/", json=json_programming_event, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_programming_event, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_201_CREATED, response.text
     data = response.json()
     data = data['message']
@@ -706,7 +706,7 @@ def test_WhenTheClientGetsReservedEventsForUser_ThereAreNon_TheAppReturnsEmptyLi
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientReservesAnExistingEvent_TheClientGetsTheReservedEvents_TheAppReturnsTheEventCorrectly():
     token = jwt_handler.create_access_token("1", 'organizer')
-    response = client.post("/organizers/active_events/", json=json_programming_event, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_programming_event, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_201_CREATED, response.text
 
     data = response.json()
@@ -730,7 +730,7 @@ def test_WhenTheClientReservesAnExistingEvent_TheClientGetsTheReservedEvents_The
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenAnActiveEventIsCanceledAndTheDateHasNotYetPassed_TheEventIsCorrectlyCanceled():
     token = jwt_handler.create_access_token("1", 'organizer')
-    response = client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_201_CREATED, response.text
 
     data = response.json()
@@ -764,7 +764,7 @@ def test_WhenAnActiveEventIsCanceledAndTheDateHasNotYetPassed_TheEventIsCorrectl
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenAnActiveEventIsCanceledAndTheDateHasNotYetPassed_TheEventIsCorrectlyCanceled():
     token = jwt_handler.create_access_token("1", 'organizer')
-    response = client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_201_CREATED, response.text
 
     data = response.json()
@@ -814,7 +814,7 @@ def test_WhenAnActiveEventIsCanceledAndTheDateHasYetPassed_TheEventIsCorrectlyCa
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTryingToReserveATicketOfACanceledEvent_ReturnsError():
     token = jwt_handler.create_access_token("1", 'organizer')
-    response = client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_201_CREATED, response.text
 
     data = response.json()
@@ -831,7 +831,7 @@ def test_WhenTryingToReserveATicketOfACanceledEvent_ReturnsError():
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenAnEventIsCanceled_TheTicketsOfThatEventHaveCanceledStatus():
     token = jwt_handler.create_access_token("1", 'organizer')
-    response = client.post("/organizers/active_events/", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_201_CREATED, response.text
 
     data = response.json()
