@@ -79,7 +79,7 @@ def get_active_events_by_owner(rq:Request, event_db: Session= Depends(events_dat
     except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__)
     
-@organizer_router.post("/event", status_code=status.HTTP_201_CREATED)
+@organizer_router.post("/active_events", status_code=status.HTTP_201_CREATED)
 async def create_event(rq:Request, event: Event, event_db: Session= Depends(events_database.get_mongo_db)):
     try:
         authentification_handler.is_auth(rq.headers)
