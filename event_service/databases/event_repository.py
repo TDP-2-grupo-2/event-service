@@ -83,6 +83,13 @@ def delete_event_with_id(id: str, db):
             raise exceptions.EventNotFound
     return deleted_event
 
+def set_finished_events(db):
+    today = datetime.date.today().isoformat()
+
+    query = {"status": "active", "dateEvent": {"$lt": today}}
+    update = {"$set": {"status": "finished"}}
+
+    db["events"].update_many(query, update)
 
 def get_events(db, name: Union[str, None] = None,
                 eventType: Union[str, None] = None,
@@ -91,7 +98,9 @@ def get_events(db, name: Union[str, None] = None,
                 coordinates: Union[str, None] = None,
                 distances: Union[str, None] = None):
 
-    pipeline = [{"$match": {}}]
+    set_finished_events(db)
+
+    pipeline = [{"$match": {"status": "active"}}]
     if (name is not None):
         pipeline.append({"$match": {"name": { "$regex": name, "$options":'i'} }})
     if (tags is not None): 
@@ -214,5 +223,6 @@ def cancel_event(db, event_id: str, user_id: str):
 
 
 def get_events_by_owner_with_status(db, user_id: str, status: str):
+    set_finished_events(db)
     events_by_owner = db['events'].find({"ownerId": user_id, "status": status})
     return list(json.loads(json_util.dumps(events_by_owner)))
