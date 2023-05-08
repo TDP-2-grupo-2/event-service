@@ -389,3 +389,19 @@ def test_WhenGettingFinishedEventsByOwner_AnotherUserGetsTheEvents_ItShouldRetur
     finished_events = finished_events['message']
 
     assert finished_events == []
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheOrganizerTriesToGetItsEvents_ThereIsOnlyOneWhichDateAlreadyPassed_TheAppReturnsAnEmptyList():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+
+    json_rock_music_event_already_passed = json_rock_music_event.copy()
+    json_rock_music_event_already_passed['dateEvent'] = "2022-01-01"
+    db['events'].insert_one(json_rock_music_event_already_passed)
+
+    response = client.get("/organizers/active_events", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    data = data['message']
+    assert data == []

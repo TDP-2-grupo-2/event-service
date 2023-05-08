@@ -245,6 +245,19 @@ def test_WhenTheClientTriesToGetEventsByName_OneMatches_TheAppReturnsTheEventCor
     assert data[0]["start"]== "21:00:00"
     assert data[0]["end"]== "22:30:00"
     assert data[0]['status']=="active"
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenTheClientTriesToGetEvents_ThereIsOnlyOneWhichDateAlreadyPassed_TheAppReturnsAnEmptyList():
+    token = jwt_handler.create_access_token("1", 'organizer')
+    json_rock_music_event_already_passed = json_rock_music_event.copy()
+    json_rock_music_event_already_passed['dateEvent'] = "2022-01-01"
+    db['events'].insert_one(json_rock_music_event_already_passed)
+
+    response = client.get("/events?")
+    data = response.json()
+    data = data['message']
+    assert response.status_code == status.HTTP_200_OK
+    assert data == []
     
 
 @pytest.mark.usefixtures("drop_collection_documents")
