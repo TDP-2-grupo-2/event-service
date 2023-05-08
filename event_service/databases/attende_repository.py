@@ -10,6 +10,8 @@ def verify_user_exists(id:int, db:Session):
     if user is None:
         raise exceptions.UserNotFound
     
+def delete_all_data():
+    user_model.query.delete()
 
 def create_attende(email: str, name: str, db: Session):
     db_attende = user_model.Attende(email=email, name=name)

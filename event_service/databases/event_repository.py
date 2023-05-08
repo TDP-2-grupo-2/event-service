@@ -226,3 +226,10 @@ def get_events_by_owner_with_status(db, user_id: str, status: str):
     set_finished_events(db)
     events_by_owner = db['events'].find({"ownerId": user_id, "status": status})
     return list(json.loads(json_util.dumps(events_by_owner)))
+
+
+def delete_all_data(db):
+    db["reservations"].delete_many({})
+    db["events"].delete_many({})
+    db["favourites"].delete_many({})
+     #db["events_drafts"].delete_many({})
