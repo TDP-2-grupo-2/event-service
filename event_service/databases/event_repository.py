@@ -87,7 +87,7 @@ def delete_event_with_id(id: str, db):
 def get_events(db, name: Union[str, None] = None,
                 eventType: Union[str, None] = None,
                 tags: Union[str, None] = None,
-                owner: Union[str, None] = None,
+                ownerName: Union[str, None] = None,
                 coordinates: Union[str, None] = None,
                 distances: Union[str, None] = None):
 
@@ -99,8 +99,8 @@ def get_events(db, name: Union[str, None] = None,
         pipeline.append({"$match": {"tags": {"$all": tagList}}})
     if (eventType is not None):
         pipeline.append({"$match": {"eventType": { "$regex": eventType, "$options":'i'} }})
-    if(owner is not None):
-        pipeline.append({"$match": {"owner": { "$regex": owner, "$options":'i'} }})
+    if(ownerName is not None):
+        pipeline.append({"$match": {"ownerName": { "$regex": ownerName, "$options":'i'} }})
     
     events = db["events"].aggregate(pipeline)
     filtered_events = list(json.loads(json_util.dumps(events)))
