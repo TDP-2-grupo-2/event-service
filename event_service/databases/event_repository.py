@@ -222,9 +222,12 @@ def cancel_event(db, event_id: str, user_id: str):
     return json.loads(json_util.dumps(canceled_event))
 
 
-def get_events_by_owner_with_status(db, user_id: str, status: str):
+def get_events_by_owner_with_status(db, user_id: str, status: str = None):
     set_finished_events(db)
-    events_by_owner = db['events'].find({"ownerId": user_id, "status": status})
+    query = {"ownerId": user_id}
+    if status is not None:
+        query["status"] = status
+    events_by_owner = db['events'].find(query)
     return list(json.loads(json_util.dumps(events_by_owner)))
 
 

@@ -125,3 +125,15 @@ def get_finished_events_by_owner(rq:Request, event_db: Session= Depends(events_d
         return {"message": finished_events}
     except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__)
+    
+
+@organizer_router.get("/events", status_code=status.HTTP_200_OK)
+def get_active_events_by_owner(rq:Request, event_db: Session= Depends(events_database.get_mongo_db)):
+    try:
+        authentification_handler.is_auth(rq.headers)
+        token = authentification_handler.get_token(rq.headers)
+        user_id = jwt_handler.decode_token(token)["id"]
+        active_events = event_repository.get_events_by_owner_with_status(event_db, user_id)
+        return {"message": active_events}
+    except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
+        raise HTTPException(**error.__dict__)

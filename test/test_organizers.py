@@ -405,3 +405,21 @@ def test_WhenTheOrganizerTriesToGetItsEvents_ThereIsOnlyOneWhichDateAlreadyPasse
     data = response.json()
     data = data['message']
     assert data == []
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingActiveEventsByOwner_TheOwnerAlreadyCreatedOne_ItShouldReturnTheEvent():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = new_event.json()
+    new_event_id = new_event['message']['_id']['$oid']
+
+    active_events = client.get("/organizers/events", headers={"Authorization": f"Bearer {token}"})
+    assert active_events.status_code == status.HTTP_200_OK, active_events.text
+    
+    active_events = active_events.json()
+    active_events = active_events['message']
+
+    assert len(active_events) == 1
+    assert new_event_id == active_events[0]['_id']['$oid']
