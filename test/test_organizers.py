@@ -10,12 +10,11 @@ db = config.init_db()
 client = TestClient(app)
 
 json_rock_music_event = {
-            "name": "Music Fest",  "owner": "Agustina Segura",  "description": "Musical de pop, rock y mucho más", 
+            "name": "Music Fest",  "ownerName": "Agustina Segura",  "description": "Musical de pop, rock y mucho más", 
             "location": "Av. Pres. Figueroa Alcorta 7597, C1428 CABA", "locationDescription": "Estadio River", "capacity": 5000, 
             "dateEvent": "2023-07-01", "attendance": 0, "eventType": "SHOW","tags": [ "MUSICA", "DIVERSION" ], "latitud": -34.6274931, 
-            "longitud": -68.3252097, "start": "19:00", "end": "23:00", "faqs": [{'pregunta':'Como llegar?', 'respuesta':'Por medio del colectivo 152'}],
+            "longitud": -68.3252097, "start": "19:00", "end": "23:00", "tags":["DIVERSION"], "faqs": [{'pregunta':'Como llegar?', 'respuesta':'Por medio del colectivo 152'}],
             "agenda": [{'time': "19:00", 'description': 'Arranca banda de rock'}, {'time': '20:00', 'description': 'comienza banda de pop'}] }
-
 
 @pytest.fixture
 def drop_collection_documents():
@@ -139,6 +138,81 @@ def test_when_editing_an_exsting_draft_event_then_it_should_updated():
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
+def test_GivenADraftEvent_WhenTheClientPublishesIt_ItPublishedItCorrectly():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json() 
+    actual_user = jwt_handler.decode_token(token)
+
+    draft_event = client.post("/organizers/draft_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    draft_event = draft_event.json()
+    draft_event = draft_event['message']
+
+    draft_response = client.get(f"/organizers/draft_events/{draft_event['_id']['$oid']}", headers={"Authorization": f"Bearer {token}"})
+
+    draft_response = draft_response.json()
+    draft_response = draft_response['message']
+    draft_response['draftId'] = draft_response['_id']['$oid']
+    del draft_response['_id']
+
+
+    new_event = client.post("/organizers/active_events", json=draft_response, headers={"Authorization": f"Bearer {token}"})
+    assert new_event.status_code == status.HTTP_201_CREATED, new_event.text
+    new_event = new_event.json()
+    new_event = new_event['message']
+
+
+    assert new_event["name"] == "Music Fest"
+    assert new_event["ownerName"] == "Agustina Segura"
+    assert new_event['ownerId'] == actual_user['id']
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_GivenADraftEvent_WhenTheClientPublishesItWiThMissingFields_ItReturnsError():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json() 
+
+    draft_event = client.post("/organizers/draft_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    draft_event = draft_event.json()
+    draft_event = draft_event['message']
+
+    draft_response = client.get(f"/organizers/draft_events/{draft_event['_id']['$oid']}", headers={"Authorization": f"Bearer {token}"})
+
+    draft_response = draft_response.json()
+    draft_response = draft_response['message']
+    draft_response['draftId'] = draft_response['_id']['$oid']
+    del draft_response['_id']
+    del draft_response['tags']
+    del draft_response['name']
+    del draft_response['ownerName']
+
+
+    new_event = client.post("/organizers/active_events", json=draft_response, headers={"Authorization": f"Bearer {token}"})
+    assert new_event.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY, new_event.text
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_GivenADraftEvent_WhenTheClientPublishesIt_TheDraftIsRemoved():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json() 
+
+    draft_event = client.post("/organizers/draft_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    draft_event = draft_event.json()
+    draft_event = draft_event['message']
+
+    draft_response = client.get(f"/organizers/draft_events/{draft_event['_id']['$oid']}", headers={"Authorization": f"Bearer {token}"})
+
+    draft_response = draft_response.json()
+    draft_response = draft_response['message']
+    draft_response['draftId'] = draft_response['_id']['$oid']
+    del draft_response['_id']
+
+    client.post("/organizers/active_events", json=draft_response, headers={"Authorization": f"Bearer {token}"})
+    
+    old_draft = client.get(f"/organizers/draft_events/{draft_event['_id']['$oid']}", headers={"Authorization": f"Bearer {token}"})
+    assert old_draft.status_code == status.HTTP_404_NOT_FOUND, old_draft.text
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenGettingActiveEventsByOwner_TheOwnerDidNotCreateAnyYet_itShouldReturnAnEmptyList():
     response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
     token = response.json()
@@ -166,6 +240,7 @@ def test_WhenGettingActiveEventsByOwner_TheOwnerAlreadyCreatedOne_ItShouldReturn
 
     assert len(active_events) == 1
     assert new_event_id == active_events[0]['_id']['$oid']
+
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenGettingActiveEventsByOwner_TheOwnerCreatedOneAndCancelesIt_ItShouldReturnAnEmptyList():
