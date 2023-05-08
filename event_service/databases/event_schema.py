@@ -4,7 +4,7 @@ import datetime
 
 class Event(BaseModel):
     name: str
-    owner: str
+    ownerName: str
     description: str
     location: str
     locationDescription: str
@@ -21,6 +21,7 @@ class Event(BaseModel):
     start: datetime.time
     end:datetime.time
     status: Optional[str] = None
+    draftId: Optional[str] = None
 
 class Event_draft(BaseModel):
     name: Optional[str] = None
@@ -36,6 +37,7 @@ class Event_draft(BaseModel):
     faqs: Optional[List] = None
     agenda: Optional[List] = None
     latitud: Optional[float] = None
+    tags: Optional[List[str]] = None
     longitud: Optional[float] = None
     start: Optional[datetime.time] = None
     end:Optional[datetime.time] = None

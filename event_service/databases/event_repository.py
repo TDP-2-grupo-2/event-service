@@ -46,6 +46,9 @@ def get_draft_event_by_id(event_id, db):
             raise exceptions.EventNotFound
     return json.loads(json_util.dumps(event))
 
+def remove_draft_event(db, event_id: str):
+    db["events_drafts"].delete_one({"_id": ObjectId(event_id)})
+
 def createEvent(owner_id: str, event: dict, db):
     if event.dateEvent < datetime.date.today():
         raise exceptions.InvalidDate()
@@ -60,6 +63,8 @@ def createEvent(owner_id: str, event: dict, db):
     new_event = db["events"].insert_one(event)
     event_created = db["events"].find_one(
             {"_id": new_event.inserted_id})
+    if event['draftId'] is not None:
+        remove_draft_event(db, event['draftId'])
     return json.loads(json_util.dumps(event_created))
 
 
