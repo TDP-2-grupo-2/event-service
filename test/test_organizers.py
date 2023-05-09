@@ -1,3 +1,4 @@
+from bson import ObjectId
 from fastapi.testclient import TestClient
 from fastapi import status
 import pytest
@@ -15,7 +16,6 @@ json_rock_music_event = {
             "dateEvent": "2023-07-01", "attendance": 0, "eventType": "SHOW","tags": [ "MUSICA", "DIVERSION" ], "latitud": -34.6274931, 
             "longitud": -68.3252097, "start": "19:00", "end": "23:00", "tags":["DIVERSION"], "faqs": [{'pregunta':'Como llegar?', 'respuesta':'Por medio del colectivo 152'}],
             "agenda": [{'time': "19:00", 'description': 'Arranca banda de rock'}, {'time': '20:00', 'description': 'comienza banda de pop'}] }
-
 @pytest.fixture
 def drop_collection_documents():
     config.clear_db_draft_event_collection(db)
@@ -26,7 +26,6 @@ json_lollapalooza_first_date = {
             "name": "lollapalooza",  "ownerName": "Sol Fontenla",
             "location": "Av. Bernabé Márquez 700, B1642 San Isidro, Provincia de Buenos Aires",
             "capacity": 10000}
-
 
 def test_when_login_for_the_first_time_an_attende_then_it_returns_its_token():
 
@@ -40,6 +39,7 @@ def test_when_login_for_the_first_time_an_attende_then_it_returns_its_token():
     }
     assert actual["id"] == expected["id"]
     assert actual["rol"] == expected["rol"]
+
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_when_saving_a_draft_event_then_it_does_it():
@@ -80,7 +80,7 @@ def test_when_getting_a_not_extining_draft_event_by_id_then_it_should_not_return
     response = client.get(f"/organizers/draft_events/5428bd284042b5da2e28b6a1", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_404_NOT_FOUND
     data = response.json()
-    assert data["detail"] == "The event does not exists"
+    assert data["detail"] == "Este evento no existe"
 
 
 
@@ -407,6 +407,7 @@ def test_WhenTheOrganizerTriesToGetItsEvents_ThereIsOnlyOneWhichDateAlreadyPasse
     assert data == []
 
 
+
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenGettingActiveEventsByOwner_TheOwnerAlreadyCreatedOne_ItShouldReturnTheEvent():
     response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
@@ -423,3 +424,165 @@ def test_WhenGettingActiveEventsByOwner_TheOwnerAlreadyCreatedOne_ItShouldReturn
 
     assert len(active_events) == 1
     assert new_event_id == active_events[0]['_id']['$oid']
+ 
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenValidatingATicketFromAnEventThatDoesNotExist_TheTicketIsNotValid_ItShouldReturnError():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = new_event.json()
+    new_event_id = new_event["message"]['_id']['$oid']
+    random_user = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
+    random_user_id = random_user.json()
+
+    response_to_reservation = client.post(f"/events/reservations/user/{random_user_id}/event/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
+    response_to_reservation = response_to_reservation.json()
+
+    ticket_id = response_to_reservation["message"]['_id']['$oid']
+    non_existing_event_id = "645a3fc2ea405ca4e60e411a"
+    validation_response = client.patch(f"/organizers/events/{non_existing_event_id}/ticket_validation/{ticket_id}", headers={"Authorization": f"Bearer {token}"})
+
+    assert validation_response.status_code == status.HTTP_404_NOT_FOUND, response.text
+    validation_response = validation_response.json()
+    assert validation_response["detail"] == "Este evento no existe"
+    
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenValidatingATicketThatDoesNotExist_TheTicketIsNotValid_ItShouldReturnError():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = new_event.json()
+    new_event_id = new_event["message"]['_id']['$oid']
+    fake_ticket_id = "645a3fc2ea405ca4e60e411a"
+    validation_response = client.patch(f"/organizers/events/{new_event_id}/ticket_validation/{fake_ticket_id}", headers={"Authorization": f"Bearer {token}"})
+
+    assert validation_response.status_code == status.HTTP_409_CONFLICT, validation_response.text
+    validation_response = validation_response.json()
+    assert validation_response["detail"] == "Este ticket no pertenece a este evento"
+
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenValidatingATicketFromAnEventThatExists_TheTicketIsValidAndHasNotBeenUsedYet_ItShouldReturnThatIsValid():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = new_event.json()
+    new_event_id = new_event["message"]['_id']['$oid']
+    random_user = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
+    random_user_id = random_user.json()
+
+    response_to_reservation = client.post(f"/events/reservations/user/{random_user_id}/event/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
+    response_to_reservation = response_to_reservation.json()
+
+    ticket_id = response_to_reservation["message"]['_id']['$oid']
+    validation_response = client.patch(f"/organizers/events/{new_event_id}/ticket_validation/{ticket_id}", headers={"Authorization": f"Bearer {token}"})
+
+    assert validation_response.status_code == status.HTTP_200_OK, response.text
+    validation_response = validation_response.json()
+    validation_response = validation_response["message"]
+    assert validation_response['_id']['$oid'] == ticket_id
+    #TODO: devolver el token en esta posicion
+    #assert validation_response['user_id'] == random_user_id
+    assert validation_response['event_id'] == new_event_id
+    assert validation_response['status'] == 'used'
+
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenValidatingATicketFromAnEventThatExists_TheTicketIsValidAndHasBeenUsed_ItShouldReturnThatIsNotValid():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = new_event.json()
+    new_event_id = new_event["message"]['_id']['$oid']
+
+    random_user = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
+    random_user_id = random_user.json()
+
+    response_to_reservation = client.post(f"/events/reservations/user/{random_user_id}/event/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
+    response_to_reservation = response_to_reservation.json()
+
+    ticket_id = response_to_reservation["message"]['_id']['$oid']
+    client.patch(f"/organizers/events/{new_event_id}/ticket_validation/{ticket_id}", headers={"Authorization": f"Bearer {token}"})
+    validation_response = client.patch(f"/organizers/events/{new_event_id}/ticket_validation/{ticket_id}", headers={"Authorization": f"Bearer {token}"})
+
+    assert validation_response.status_code == status.HTTP_409_CONFLICT, response.text
+    validation_response = validation_response.json()
+    assert validation_response["detail"] == "Este ticket ya fue utilizado"
+    
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenValidatingATicketFromAnEventThatExists_TheEventHasAlreadyFinished_ItShouldReturnThatIsNotValid():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = new_event.json()
+    new_event_id = new_event["message"]['_id']['$oid']
+    
+    random_user = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
+    random_user_id = random_user.json()
+
+    response_to_reservation = client.post(f"/events/reservations/user/{random_user_id}/event/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
+    response_to_reservation = response_to_reservation.json()
+
+    db['events'].update_one({'_id': ObjectId(new_event_id)}, {"$set": {'status': 'finished', 'dateEvent': "2023-01-01"}})
+   
+    ticket_id = response_to_reservation["message"]['_id']['$oid']
+    validation_response = client.patch(f"/organizers/events/{new_event_id}/ticket_validation/{ticket_id}", headers={"Authorization": f"Bearer {token}"})
+
+    assert validation_response.status_code == status.HTTP_409_CONFLICT, response.text
+    validation_response = validation_response.json()
+    assert validation_response["detail"] == "Este evento ya finalizo"
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenValidatingATicketFromAnEventThatExists_TheEventHasBeenCanceled_ItShouldReturnThatIsNotValid():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = new_event.json()
+    new_event_id = new_event["message"]['_id']['$oid']
+    
+    random_user = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
+    random_user_id = random_user.json()
+
+    response_to_reservation = client.post(f"/events/reservations/user/{random_user_id}/event/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
+    response_to_reservation = response_to_reservation.json()
+
+    client.patch(f"/organizers/canceled_events/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
+   
+    ticket_id = response_to_reservation["message"]['_id']['$oid']
+    validation_response = client.patch(f"/organizers/events/{new_event_id}/ticket_validation/{ticket_id}", headers={"Authorization": f"Bearer {token}"})
+
+    assert validation_response.status_code == status.HTTP_409_CONFLICT, response.text
+    validation_response = validation_response.json()
+    assert validation_response["detail"] == "Este evento fue cancelado"
+
+""" @pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenValidatingATicketFromAnEventThatExists_TheEventHasBeenCanceled_ItShouldReturnThatIsNotValid():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = new_event.json()
+    new_event_id = new_event["message"]['_id']['$oid']
+    
+    random_user = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
+    random_user_id = random_user.json()
+
+    response_to_reservation = client.post(f"/events/reservations/user/{random_user_id}/event/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
+    response_to_reservation = response_to_reservation.json()
+
+    client.patch(f"/organizers/suspended_events/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
+   
+    ticket_id = response_to_reservation["message"]['_id']['$oid']
+    validation_response = client.patch(f"/organizers/events/{new_event_id}/ticket_validation/{ticket_id}", headers={"Authorization": f"Bearer {token}"})
+
+    assert validation_response.status_code == status.HTTP_409_CONFLICT, response.text
+    validation_response = validation_response.json()
+    assert validation_response["detail"] == "Este evento fue suspendido" """

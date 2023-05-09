@@ -188,12 +188,17 @@ def reserve_event(db, event_id: str, user_id: str):
         db["events"].update_one(
             {"_id": ObjectId(event_id)}, {"$set": {'attendance': event['attendance'] + 1}}
         )
-        new_reservation = {"user_id": user_id, "event_id": event_id, "status": 'active'}
+        new_reservation = {"user_id": user_id, "event_id": event_id, "status": 'to_be_used'}
         db["reservations"].insert_one(new_reservation)
         reservation = db["reservations"].find_one({"user_id": user_id, "event_id": event_id})
         return json.loads(json_util.dumps(reservation))
     else:
         raise exceptions.ReservationAlreadyExists
+
+def update_event_ticket_status(db, ticket_id: str, status: str):
+    db["reservations"].update_one({"_id": ObjectId(ticket_id)}, {"$set": {'status': status}})
+    ticket = db["reservations"].find_one({"_id": ObjectId(ticket_id)})
+    return json.loads(json_util.dumps(ticket))
 
 def update_event_tickets_status(db, event_id: str, status): 
     db["reservations"].update_many({"event_id": event_id}, {"$set": {'status': status}})
@@ -236,3 +241,35 @@ def delete_all_data(db):
     db["events"].delete_many({})
     db["favourites"].delete_many({})
      #db["events_drafts"].delete_many({})
+
+def validate_event_ticket(db, user_id: str, event_id: str, ticket_id: str):
+     # casos
+     # el evento no existe error
+         
+    event = get_event_by_id(event_id, db)
+    if event["ownerId"] != user_id:
+         raise exceptions.UnauthorizeUser
+             
+     # el usuario no tiene un ticket para el evento error
+    event_ticket = db["reservations"].find_one({"event_id": event_id, "_id": ObjectId(ticket_id)})
+    if event_ticket is None:
+         raise exceptions.TicketIsNotValid
+    
+     #el ticket esta activo y no usado  
+    if event['status'] == 'active' and event_ticket['status'] == 'to_be_used':
+        # da ok y se pasa a usado
+        return update_event_ticket_status(db, ticket_id, 'used')
+        
+     #el ticket esta activo y usado  
+    elif event['status'] == 'active' and event_ticket['status'] == 'used':  
+        # error
+        raise exceptions.TicketAlreadyUsed 
+    elif event['status'] == 'canceled':
+        raise exceptions.EventIsCanceled
+    elif event['status'] == 'finished':
+        raise exceptions.AlreadyFinalizedEvent
+    elif event['status'] == 'suspended':
+        raise exceptions.EventIsSuspended
+    
+    # el evento tiene algun otro estado 
+        #error

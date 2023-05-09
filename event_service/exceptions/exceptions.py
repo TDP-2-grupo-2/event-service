@@ -15,7 +15,7 @@ class AdminWrongLoginInformation(AdminInfoException):
 class AlreadyFinalizedEvent(EventInfoException):
     def __init__(self):
         self.status_code = 409  # conflic
-        self.detail = "Cannot cancel already finalized event"
+        self.detail = "Este evento ya finalizo"
 
 class UserWrongLoginInformation(UserInfoException):
     def __init__(self):
@@ -40,7 +40,7 @@ class InvalidDate(EventInfoException):
 class EventNotFound(EventInfoException):
     def __init__(self):
         self.status_code = 404
-        self.detail = "The event does not exists"
+        self.detail = "Este evento no existe"
 
 class EventIsNotActive(EventInfoException):
     def __init__(self):
@@ -56,3 +56,23 @@ class ReservationAlreadyExists(EventInfoException):
     def __init__(self):
         self.status_code = 409
         self.detail = "Already existing reservation"
+
+class TicketIsNotValid(EventInfoException):
+    def __init__(self):
+        self.status_code = 409
+        self.detail = "Este ticket no pertenece a este evento"
+
+class TicketAlreadyUsed(EventInfoException):
+    def __init__(self):
+        self.status_code = 409
+        self.detail = "Este ticket ya fue utilizado"
+
+class EventIsSuspended(EventInfoException): 
+    def __init__(self):
+        self.status_code = 409
+        self.detail = "Este evento fue suspendido"
+
+class EventIsCanceled(EventInfoException): 
+    def __init__(self):
+        self.status_code = 409
+        self.detail = "Este evento fue cancelado"
