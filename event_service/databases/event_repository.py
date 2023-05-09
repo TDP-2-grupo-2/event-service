@@ -243,24 +243,18 @@ def delete_all_data(db):
      #db["events_drafts"].delete_many({})
 
 def validate_event_ticket(db, user_id: str, event_id: str, ticket_id: str):
-     # casos
-     # el evento no existe error
          
     event = get_event_by_id(event_id, db)
     if event["ownerId"] != user_id:
          raise exceptions.UnauthorizeUser
              
-     # el usuario no tiene un ticket para el evento error
     event_ticket = db["reservations"].find_one({"event_id": event_id, "_id": ObjectId(ticket_id)})
     if event_ticket is None:
          raise exceptions.TicketIsNotValid
     
-     #el ticket esta activo y no usado  
     if event['status'] == 'active' and event_ticket['status'] == 'to_be_used':
-        # da ok y se pasa a usado
         return update_event_ticket_status(db, ticket_id, 'used')
         
-     #el ticket esta activo y usado  
     elif event['status'] == 'active' and event_ticket['status'] == 'used':  
         # error
         raise exceptions.TicketAlreadyUsed 
@@ -270,6 +264,22 @@ def validate_event_ticket(db, user_id: str, event_id: str, ticket_id: str):
         raise exceptions.AlreadyFinalizedEvent
     elif event['status'] == 'suspended':
         raise exceptions.EventIsSuspended
+
+def suspend_event(db, event_id: str):
+    event = db["events"].find_one({"_id": ObjectId(event_id)})
+    if event is None:
+            raise exceptions.EventNotFound
+
+    event_date = datetime.datetime.strptime(event['dateEvent'], "%Y-%m-%d").date()
+    if event_date < datetime.date.today(): 
+        raise exceptions.AlreadyFinalizedEvent 
     
-    # el evento tiene algun otro estado 
-        #error
+    if event['status'] == 'active':
+        db["events"].update_one(
+                {"_id": ObjectId(event_id)}, {"$set": {'status': 'suspended'}}
+        )
+
+    suspended_event = db["events"].find_one({"_id": ObjectId(event_id)})
+    # no es necesario esto porque al validar el ticket se chequea el status del evento
+    # update_event_tickets_status(db, event_id, 'suspended')
+    return json.loads(json_util.dumps(suspended_event))

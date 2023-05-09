@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from event_service.databases import admin_repository, users_schema
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from event_service.databases import admin_repository, event_repository, events_database, users_schema
 from event_service.exceptions import exceptions
-
+from sqlalchemy.orm import Session
+from event_service.utils import jwt_handler, authentification_handler
 
 admin_router = APIRouter()
 
@@ -15,3 +16,18 @@ async def login (adminLogin: users_schema.adminLogin):
     except exceptions.AdminInfoException as error:
         raise HTTPException(**error.__dict__)
 
+
+@admin_router.patch("/suspended_events/{event_id}", status_code=status.HTTP_200_OK)
+async def cancel_active_event(rq:Request, event_id: str, event_db: Session= Depends(events_database.get_mongo_db)):
+    try:
+        authentification_handler.is_auth(rq.headers)
+        token = authentification_handler.get_token(rq.headers)
+        decoded_token = jwt_handler.decode_token(token)
+        if decoded_token["rol"] != 'admin':
+            raise exceptions.UnauthorizeUser
+        canceled_event = event_repository.suspend_event(event_db, event_id)
+        return {"message": canceled_event}
+
+    except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
+        raise HTTPException(**error.__dict__)
+    
