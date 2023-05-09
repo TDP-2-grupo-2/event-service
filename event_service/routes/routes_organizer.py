@@ -49,6 +49,15 @@ async def get_draft_events(rq:Request, event_db: Session= Depends(events_databas
     except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__)
 
+@organizer_router.patch("/active_events/{event_id}", status_code = status.HTTP_200_OK)
+async def edit_active_events(rq:Request, event_id:str, activeEventEdit: dict, event_db:Session= Depends(events_database.get_mongo_db)):
+    try:
+        authentification_handler.is_auth(rq.headers)
+        active_event = event_repository.edit_active_event_by_id(event_id, activeEventEdit, event_db)
+        return {"message": active_event}
+    except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
+        raise HTTPException(**error.__dict__) 
+
 
 @organizer_router.patch("/draft_events/{event_id}", status_code=status.HTTP_200_OK)
 async def edit_draft_event(rq:Request, event_id: str, draftEventEdit : dict, event_db: Session= Depends(events_database.get_mongo_db)):

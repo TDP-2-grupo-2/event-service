@@ -139,10 +139,47 @@ def test_when_editing_an_exsting_draft_event_then_it_should_updated():
     assert response.status_code == status.HTTP_200_OK, response.text
     
     data = response.json()
+    print(data)
     data = data['message']
 
     assert data['capacity'] == 100
     assert data['eventType'] == "TEATRO"
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_when_editing_an_exsting_active_event_then_it_should_updated():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token= response.json()
+    response = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    info = response.json()
+    print(info)
+    info = info['message']
+    event_id = info['_id']['$oid']
+
+    response = client.patch(f"/organizers/active_events/{event_id}", 
+                                json={"descripcion": "Primer dia en el lolla", "start": "20:00"}, 
+                                headers={"Authorization": f"Bearer {token}"})
+    
+    assert response.status_code == status.HTTP_200_OK, response.text
+    
+    data = response.json()
+    print(data)
+    data = data['message']
+
+    assert data['descripcion'] == "Primer dia en el lolla"
+    assert data['start'] == "20:00"
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_when_editing_an_non_exsting_active_event_then_it_should_not_be_updated():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token= response.json()
+
+    response = client.patch(f"/organizers/active_events/6439a8d0c392bdf710446d31", 
+                                json={"descripcion": "Primer dia en el lolla", "start": "20:00"}, 
+                                headers={"Authorization": f"Bearer {token}"})
+    
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    
+
 
 
 @pytest.mark.usefixtures("drop_collection_documents")

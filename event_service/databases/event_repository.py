@@ -40,6 +40,19 @@ def edit_draft_event_by_id(event_id:str, fields:dict,db):
     event_edited = db["events_drafts"].find_one({"_id": ObjectId(event_id)})
     return json.loads(json_util.dumps(event_edited))
 
+def edit_active_event_by_id(event_id:str, fields:dict,db):
+    
+    event = db["events"].find_one({"_id": ObjectId(event_id)})
+    if event is None:
+            raise exceptions.EventNotFound
+    
+    updated_event = db["events"].update_one(
+            {"_id": ObjectId(event_id)}, {"$set": fields}
+    )
+
+    event_edited = db["events"].find_one({"_id": ObjectId(event_id)})
+    return json.loads(json_util.dumps(event_edited))
+
 def get_draft_event_by_id(event_id, db):
     event = db["events_drafts"].find_one({"_id": ObjectId(event_id)})
     if event is None:
