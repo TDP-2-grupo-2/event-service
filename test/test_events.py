@@ -129,7 +129,7 @@ def test_given_an_event_when_the_event_does_not_exist_then_it_should_not_return_
     assert response.status_code == status.HTTP_404_NOT_FOUND, response.text
     data = response.json()
 
-    assert data["detail"] == "The event does not exists"
+    assert data["detail"] == "Este evento no existe"
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -150,7 +150,7 @@ def test_given_an_event_that_dont_exists_when_i_want_to_delete_it_then_it_should
     assert response.status_code == status.HTTP_404_NOT_FOUND, response.text
     data = response.json()
 
-    assert data["detail"] == "The event does not exists"
+    assert data["detail"] == "Este evento no existe"
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -686,7 +686,7 @@ def test_WhenTheClientReservesAnExistingEvent_TheEventClientGetsTheTicket_TheApp
     reservation = reservation.json()
     reservation = reservation["message"]
     assert response_to_reservation['_id']['$oid'] == reservation['_id']['$oid']
-    assert response_to_reservation['status'] == 'active'
+    assert response_to_reservation['status'] == 'to_be_used'
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientReservesAnEventTwice_TheAppReturnsCorrectErrorMessage():
