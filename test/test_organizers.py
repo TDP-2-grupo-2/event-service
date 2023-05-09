@@ -10,6 +10,14 @@ session = config.init_postg_db(app)
 db = config.init_db()
 client = TestClient(app)
 
+json_programming_event = {
+            "name": "Aprendé a programar en python!",  "ownerName": "Sol Fontenla",  "description": "Aprende a programar en python desde cero",
+            "location": "Av. Paseo Colón 850, C1063 CABA",
+            "locationDescription": "Facultad de Ingenieria - UBA", "capacity": 100, "dateEvent": "2023-08-07", "attendance": 0, "eventType": "TECNOLOGIA",
+            "tags": [ "PROGRAMACION", "APRENDIZAJE", ], "latitud": 8.9, "longitud": 6.8, "start": "21:00", "end": "22:30" }
+
+
+
 json_rock_music_event = {
             "name": "Music Fest",  "ownerName": "Agustina Segura",  "description": "Musical de pop, rock y mucho más", 
             "location": "Av. Pres. Figueroa Alcorta 7597, C1428 CABA", "locationDescription": "Estadio River", "capacity": 5000, 
@@ -216,7 +224,7 @@ def test_GivenADraftEvent_WhenTheClientPublishesIt_TheDraftIsRemoved():
 def test_WhenGettingActiveEventsByOwner_TheOwnerDidNotCreateAnyYet_itShouldReturnAnEmptyList():
     response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
     token = response.json()
-    response = client.get("/organizers/active_events", headers={"Authorization": f"Bearer {token}"})
+    response = client.get("/organizers/events", params={"status": "active"}, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_200_OK, response.text
     
     data = response.json()
@@ -232,7 +240,7 @@ def test_WhenGettingActiveEventsByOwner_TheOwnerAlreadyCreatedOne_ItShouldReturn
     new_event = new_event.json()
     new_event_id = new_event['message']['_id']['$oid']
 
-    active_events = client.get("/organizers/active_events", headers={"Authorization": f"Bearer {token}"})
+    active_events = client.get("/organizers/events", params={"status": "active"}, headers={"Authorization": f"Bearer {token}"})
     assert active_events.status_code == status.HTTP_200_OK, active_events.text
     
     active_events = active_events.json()
@@ -253,7 +261,7 @@ def test_WhenGettingActiveEventsByOwner_TheOwnerCreatedOneAndCancelesIt_ItShould
 
     client.patch(f"/organizers/canceled_events/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
     
-    active_events = client.get("/organizers/active_events", headers={"Authorization": f"Bearer {token}"})
+    active_events = client.get("/organizers/events", params={'status': 'active'}, headers={"Authorization": f"Bearer {token}"})
     
     active_events = active_events.json()
     active_events = active_events['message']
@@ -282,7 +290,7 @@ def test_WhenTryingToCancelAnEvent_TheUserCancellingTheEventIsNotTheOwner_ItShou
 def test_WhenGettingCanceledEventsByOwner_TheOwnerDidNotCancelAnyYet_itShouldReturnAnEmptyList():
     response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
     token = response.json()
-    response = client.get("/organizers/canceled_events", headers={"Authorization": f"Bearer {token}"})
+    response = client.get("/organizers/events", params={"status": "canceled"},  headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_200_OK, response.text
     
     data = response.json()
@@ -300,7 +308,7 @@ def test_WhenGettingCanceledEventsByOwner_TheOwnerAlreadyCanceledOne_ItShouldRet
     new_event_id = new_event['message']['_id']['$oid']
 
     client.patch(f"/organizers/canceled_events/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
-    canceled_events = client.get("/organizers/canceled_events", headers={"Authorization": f"Bearer {token}"})
+    canceled_events = client.get("/organizers/events", params={"status": "canceled"}, headers={"Authorization": f"Bearer {token}"})
     assert canceled_events.status_code == status.HTTP_200_OK, canceled_events.text
     
     canceled_events = canceled_events.json()
@@ -322,7 +330,7 @@ def test_WhenGettingCanceledEventsByOwner_AnotherUserGetsTheEvents_ItShouldRetur
     another_user_login_response = client.post("/organizers/loginGoogle", json={"email": "agussegura@gmail.com", "name": "Agus Segura"})
     another_user_token = another_user_login_response.json()
 
-    canceled_events = client.get("/organizers/canceled_events", headers={"Authorization": f"Bearer {another_user_token}"})
+    canceled_events = client.get("/organizers/events", params={"status": "canceled"}, headers={"Authorization": f"Bearer {another_user_token}"})
     assert canceled_events.status_code == status.HTTP_200_OK, canceled_events.text
     
     canceled_events = canceled_events.json()
@@ -335,7 +343,7 @@ def test_WhenGettingCanceledEventsByOwner_AnotherUserGetsTheEvents_ItShouldRetur
 def test_WhenGettingFinishedEventsByOwner_TheOwnerDoesNotHaveFinishedEventsYet_itShouldReturnAnEmptyList():
     response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
     token = response.json()
-    response = client.get("/organizers/finished_events", headers={"Authorization": f"Bearer {token}"})
+    response = client.get("/organizers/events", params={"status": "finished"}, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_200_OK, response.text
     
     data = response.json()
@@ -356,7 +364,7 @@ def test_WhenGettingFinishedEventsByOwner_TheOwnerHasOneFinishedEvent_ItShouldRe
     inserted_event = db['events'].insert_one(json_event_with_finished_status)
     new_event_id = inserted_event.inserted_id
 
-    finished_events = client.get("/organizers/finished_events", headers={"Authorization": f"Bearer {token}"})
+    finished_events = client.get("/organizers/events", params={"status": "finished"}, headers={"Authorization": f"Bearer {token}"})
     assert finished_events.status_code == status.HTTP_200_OK, finished_events.text
     
     finished_events = finished_events.json()
@@ -382,7 +390,7 @@ def test_WhenGettingFinishedEventsByOwner_AnotherUserGetsTheEvents_ItShouldRetur
     another_user_login_response = client.post("/organizers/loginGoogle", json={"email": "agussegura@gmail.com", "name": "Agus Segura"})
     another_user_token = another_user_login_response.json()
 
-    finished_events = client.get("/organizers/finished_events", headers={"Authorization": f"Bearer {another_user_token}"})
+    finished_events = client.get("/organizers/events", params={"status": "finished"}, headers={"Authorization": f"Bearer {another_user_token}"})
     assert finished_events.status_code == status.HTTP_200_OK, finished_events.text
     
     finished_events = finished_events.json()
@@ -400,7 +408,7 @@ def test_WhenTheOrganizerTriesToGetItsEvents_ThereIsOnlyOneWhichDateAlreadyPasse
     json_rock_music_event_already_passed['dateEvent'] = "2022-01-01"
     db['events'].insert_one(json_rock_music_event_already_passed)
 
-    response = client.get("/organizers/active_events", headers={"Authorization": f"Bearer {token}"})
+    response = client.get("/organizers/events", params={"status": "active"}, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     data = data['message']
@@ -587,3 +595,58 @@ def test_WhenValidatingATicketFromAnEventThatExists_TheEventHasBeenSuspended_ItS
     assert validation_response.status_code == status.HTTP_409_CONFLICT, response.text
     validation_response = validation_response.json()
     assert validation_response["detail"] == "Este evento fue suspendido"
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingSuspendedEventsByOwner_TheOwnerHasNoSuspendedEventsYet_itShouldReturnAnEmptyList():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+    response = client.get("/organizers/events", params={"status": "suspended"}, headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == status.HTTP_200_OK, response.text
+    
+    data = response.json()
+    data = data['message']
+    assert data == []
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingSuspendedEventsByOwner_TheOwnerHasOneSuspendedEvent_itShouldReturnTheEvent():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = new_event.json()
+    new_event_id = new_event['message']['_id']['$oid']
+    
+    db['events'].update_one({'_id': ObjectId(new_event_id)}, {"$set": {'status': 'suspended'}})
+
+    suspended_events = client.get("/organizers/events", params={"status": "suspended"}, headers={"Authorization": f"Bearer {token}"})
+    assert suspended_events.status_code == status.HTTP_200_OK, suspended_events.text
+    
+    suspended_events = suspended_events.json()
+    suspended_events = suspended_events['message']
+
+    assert len(suspended_events) == 1
+    assert new_event_id == suspended_events[0]['_id']['$oid']
+ 
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingSuspendedEventsByOwner_TheOwnerHasOneFromTwoSuspendedEvents_itShouldReturnTheEvent():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    token = response.json()
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = client.post("/organizers/active_events", json=json_programming_event, headers={"Authorization": f"Bearer {token}"})
+
+    new_event = new_event.json()
+    print(new_event)
+    new_event_id = new_event['message']['_id']['$oid']
+    
+    db['events'].update_one({'_id': ObjectId(new_event_id)}, {"$set": {'status': 'suspended'}})
+
+    suspended_events = client.get("/organizers/events", params={"status": "suspended"}, headers={"Authorization": f"Bearer {token}"})
+    assert suspended_events.status_code == status.HTTP_200_OK, suspended_events.text
+    
+    suspended_events = suspended_events.json()
+    suspended_events = suspended_events['message']
+
+    assert len(suspended_events) == 1
+    assert new_event_id == suspended_events[0]['_id']['$oid']
