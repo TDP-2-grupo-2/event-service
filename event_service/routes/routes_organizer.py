@@ -149,3 +149,4 @@ def get_active_events_by_owner(rq:Request, event_id: str, ticket_id:str,  event_
         return {"message": active_events}
     except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__)
+    
