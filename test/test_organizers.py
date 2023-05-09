@@ -563,8 +563,9 @@ def test_WhenValidatingATicketFromAnEventThatExists_TheEventHasBeenCanceled_ItSh
     validation_response = validation_response.json()
     assert validation_response["detail"] == "Este evento fue cancelado"
 
-""" @pytest.mark.usefixtures("drop_collection_documents")
-def test_WhenValidatingATicketFromAnEventThatExists_TheEventHasBeenCanceled_ItShouldReturnThatIsNotValid():
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenValidatingATicketFromAnEventThatExists_TheEventHasBeenSuspended_ItShouldReturnThatIsNotValid():
     response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
     token = response.json()
 
@@ -578,11 +579,11 @@ def test_WhenValidatingATicketFromAnEventThatExists_TheEventHasBeenCanceled_ItSh
     response_to_reservation = client.post(f"/events/reservations/user/{random_user_id}/event/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
     response_to_reservation = response_to_reservation.json()
 
-    client.patch(f"/organizers/suspended_events/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
+    db['events'].update_one({'_id': ObjectId(new_event_id)}, {"$set": {'status': 'suspended'}})
    
     ticket_id = response_to_reservation["message"]['_id']['$oid']
     validation_response = client.patch(f"/organizers/events/{new_event_id}/ticket_validation/{ticket_id}", headers={"Authorization": f"Bearer {token}"})
 
     assert validation_response.status_code == status.HTTP_409_CONFLICT, response.text
     validation_response = validation_response.json()
-    assert validation_response["detail"] == "Este evento fue suspendido" """
+    assert validation_response["detail"] == "Este evento fue suspendido"
