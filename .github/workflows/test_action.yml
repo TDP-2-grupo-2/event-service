@@ -4,7 +4,7 @@ on:
   push:
     branches: 
     - '*'         # matches every branch that doesn't contain a '/'
-    - "!fix**"
+    #- "!fix**"
 
 jobs:
   test:
