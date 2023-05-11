@@ -29,7 +29,7 @@ def init_postg_db(app):
 
 
 def init_db():
-    client = MongoClient( 'mongodb+srv://events:events@eventscluster.hgv9toh.mongodb.net/?retryWrites=true&w=majority', 8000)
+    client = MongoClient( "mongodb://localhost:27017/")
     db_test = client['events']
     def override_get_db():
         try:
