@@ -38,22 +38,8 @@ services:
         - events-mongo:/data/db
     restart: on-failure
 
-  reports-mongo: 
-    image: mongo:latest
-    ports: 
-      - "27018:27017"
-    environment:
-        - MONGO_INITDB_ROOT_USERNAME=${MONGO_REPORTS_INITDB_ROOT_USERNAME}
-        - MONGO_INITDB_ROOT_PASSWORD=${MONGO_REPORTS_INITDB_ROOT_PASSWORD}
-        - MONGO_INITDB_DATABASE=${MONGO_REPORTS_INITDB_DATABASE}
-    volumes:
-        - reports-mongo:/data/db
-    restart: on-failure
-
-
 volumes:
   users-postgres:
   event_service:
   events-mongo:
-  reports-mongo:
 
