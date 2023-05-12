@@ -42,10 +42,6 @@ class Event_draft(BaseModel):
     start: Optional[datetime.time] = None
     end:Optional[datetime.time] = None
 
-
-
-    
-
 class Coordinates(BaseModel):
     latitude: float
     longitude: float

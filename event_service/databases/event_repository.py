@@ -76,6 +76,7 @@ def createEvent(owner_id: str, event: dict, db):
     new_event = db["events"].insert_one(event)
     event_created = db["events"].find_one(
             {"_id": new_event.inserted_id})
+    print(event_created)
     if event['draftId'] is not None:
         remove_draft_event(db, event['draftId'])
     return json.loads(json_util.dumps(event_created))
@@ -83,9 +84,12 @@ def createEvent(owner_id: str, event: dict, db):
 
 
 def get_event_by_id(id: str, db):
+    print('entrara')
     event = db["events"].find_one({"_id": ObjectId(id)})
     if event is None:
             raise exceptions.EventNotFound
+    print('va a salir')
+    
     return json.loads(json_util.dumps(event))
 
 
