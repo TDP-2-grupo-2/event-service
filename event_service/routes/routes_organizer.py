@@ -125,3 +125,15 @@ def get_active_events_by_owner(rq:Request, event_id: str, ticket_id:str,  event_
     except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__)
     
+
+@organizer_router.get("/isBlock", status_code=status.HTTP_200_OK)
+def isOrganizerBlocked(rq:Request, db: Session = Depends(users_database.get_postg_db)):
+    try:
+        authentification_handler.is_auth(rq.headers)
+        token = authentification_handler.get_token(rq.headers)
+        user_id = jwt_handler.decode_token(token)["id"]
+        isBlock = organizer_repository.isOrganizerBlock(db, user_id)
+        return {"message": isBlock}
+    except (exceptions.UserInfoException) as error:
+        raise HTTPException(**error.__dict__)
+    
