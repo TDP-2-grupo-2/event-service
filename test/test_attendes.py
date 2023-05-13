@@ -12,7 +12,14 @@ events_db = config.init_db()
 
 client = TestClient(app)
 
-non_existing_event_report = {"event_id": "6439a8d0c392bdf710446d31", "event_name": "Concierto", "event_description": "Concierto de rock", "report_date": "2024-01-28", "reason": "seems fake" }
+non_existing_event_report = {"event_id": "6439a8d0c392bdf710446d31", 
+                             "event_name": "Concierto", 
+                             "event_description": "Concierto de rock", 
+                             "report_date": "2024-01-28", 
+                             "reason": "seems fake", 
+                             "user_email": "agustina@gmail.com", 
+                             "user_name": "agustina segura",
+                             "organizer_name": "fake organizer"}
 
 json_rock_music_event = {
             "name": "Music Fest",  "ownerName": "Agustina Segura",  "description": "Musical de pop, rock y mucho más", 
@@ -74,19 +81,25 @@ def test_whenAUserTriesToReportAnExistingEvent_theReportCanBeCompleted_theAppRet
         "event_name": "Concierto", 
         "event_description": "Concierto de rock",
         "report_date": datetime.date.today().isoformat(),
-        "reason": "seems fake"
+        "reason": "seems fake",
+        "user_email": "agustina@gmail.com", 
+        "user_name": "agustina segura",
+        "organizer_name": "sol fontenla"
     }
     report_event_response = client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
     assert report_event_response.status_code == status.HTTP_201_CREATED, report_event_response.text
     data = report_event_response.json()
     data = data['message']
+    print(data)
 
     assert data['event_id'] == report['event_id']
     assert data['event_name'] == report['event_name']
     assert data['event_description'] == report['event_description']
     assert data['report_date'] == report['report_date']
     assert data['reason'] == report['reason']
-
+    assert data['user_email'] == report['user_email']
+    assert data['user_name'] == report['user_name']
+    assert data['organizer_name'] == report['organizer_name']
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -107,7 +120,10 @@ def test_whenAUserAlreadyReportedAnExistingEvent_theReportCannotBeCompleted_theA
         "event_name": "Concierto", 
         "event_description": "Concierto de rock",
         "report_date": datetime.date.today().isoformat(),
-        "reason": "seems fake"
+        "reason": "seems fake",
+        "user_email": "agustina@gmail.com", 
+        "user_name": "agustina segura",
+        "organizer_name": "sol fontenla"
     }
 
     client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})

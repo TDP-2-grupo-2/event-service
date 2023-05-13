@@ -19,11 +19,11 @@ def save_event_draft(event:dict, id:int, db):
     event['ownerId'] = id
     new_event = db["events_drafts"].insert_one(event)
     event_created = db["events_drafts"].find_one(
-            {"_id": new_event.inserted_id})
+            filter={"_id": new_event.inserted_id}, projection={'ownerId':0})
     return json.loads(json_util.dumps(event_created))
 
 def get_draft_events_by_owner(id, db):
-    returned_events = db["events_drafts"].find(filter={'ownerId': id})
+    returned_events = db["events_drafts"].find(filter={'ownerId': id}, projection={'ownerId':0})
     events = list(json.loads(json_util.dumps(returned_events)))
     return events
 
@@ -37,7 +37,7 @@ def edit_draft_event_by_id(event_id:str, fields:dict,db):
             {"_id": ObjectId(event_id)}, {"$set": fields}
     )
 
-    event_edited = db["events_drafts"].find_one({"_id": ObjectId(event_id)})
+    event_edited = db["events_drafts"].find_one(filter={"_id": ObjectId(event_id)}, projection={'ownerId':0})
     return json.loads(json_util.dumps(event_edited))
 
 def edit_active_event_by_id(event_id:str, fields:dict,db):
@@ -50,11 +50,11 @@ def edit_active_event_by_id(event_id:str, fields:dict,db):
             {"_id": ObjectId(event_id)}, {"$set": fields}
     )
 
-    event_edited = db["events"].find_one({"_id": ObjectId(event_id)})
+    event_edited = db["events"].find_one(filter={"_id": ObjectId(event_id)}, projection={'ownerId':0})
     return json.loads(json_util.dumps(event_edited))
 
 def get_draft_event_by_id(event_id, db):
-    event = db["events_drafts"].find_one({"_id": ObjectId(event_id)})
+    event = db["events_drafts"].find_one(filter={"_id": ObjectId(event_id)}, projection={'ownerId':0})
     if event is None:
             raise exceptions.EventNotFound
     return json.loads(json_util.dumps(event))
@@ -75,7 +75,7 @@ def createEvent(owner_id: str, event: dict, db):
     event['status'] = "active"
     new_event = db["events"].insert_one(event)
     event_created = db["events"].find_one(
-            {"_id": new_event.inserted_id})
+            filter={"_id": new_event.inserted_id}, projection={'ownerId':0})
     if event['draftId'] is not None:
         remove_draft_event(db, event['draftId'])
     return json.loads(json_util.dumps(event_created))
@@ -114,7 +114,7 @@ def get_events(db, name: Union[str, None] = None,
 
     set_finished_events(db)
 
-    pipeline = [{"$match": {"status": "active"}}]
+    pipeline = [{"$match": {"status": "active"}}, { "$project" : { "ownerId": 0}}]
     if (name is not None):
         pipeline.append({"$match": {"name": { "$regex": name, "$options":'i'} }})
     if (tags is not None): 

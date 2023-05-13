@@ -62,7 +62,6 @@ def test_when_saving_a_draft_event_then_it_does_it():
     data = data['message']
     assert data["name"] == "lollapalooza"
     assert data["ownerName"] == "Sol Fontenla"
-    assert data['ownerId'] == actual['id']
     assert data['location'] == "Av. Bernabé Márquez 700, B1642 San Isidro, Provincia de Buenos Aires"
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -79,7 +78,6 @@ def test_when_getting_an_extining_draft_event_by_id_then_it_should_return_it():
     data = data['message']
     assert data["name"] == "lollapalooza"
     assert data["ownerName"] == "Sol Fontenla"
-    assert data['ownerId'] == actual['id']
     assert data['location'] == "Av. Bernabé Márquez 700, B1642 San Isidro, Provincia de Buenos Aires"
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -109,7 +107,6 @@ def test_when_getting_a_draft_event_by_owner_it_should_return_all_drfat_events_c
     assert len(data) == 1
 
     assert data[0]['ownerName'] == "Sol Fontenla"
-    assert data[0]['ownerId'] == actual['id']
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_when_getting_a_draft_event_by_onwer_with_no_draft_events_thent_it_should_return_an_empty_list():
@@ -210,7 +207,6 @@ def test_GivenADraftEvent_WhenTheClientPublishesIt_ItPublishedItCorrectly():
 
     assert new_event["name"] == "Music Fest"
     assert new_event["ownerName"] == "Agustina Segura"
-    assert new_event['ownerId'] == actual_user['id']
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -399,6 +395,7 @@ def test_WhenGettingFinishedEventsByOwner_TheOwnerHasOneFinishedEvent_ItShouldRe
     json_event_with_finished_status['status'] = 'finished'
     json_event_with_finished_status['dateEvent'] = "2023-01-01"
     json_event_with_finished_status['ownerId'] = jwt_handler.decode_token(token)['id']
+    print(json_event_with_finished_status)
 
     inserted_event = db['events'].insert_one(json_event_with_finished_status)
     new_event_id = inserted_event.inserted_id
@@ -420,7 +417,6 @@ def test_WhenGettingFinishedEventsByOwner_AnotherUserGetsTheEvents_ItShouldRetur
     json_event_with_finished_status = json_rock_music_event.copy()
     json_event_with_finished_status['status'] = 'finished'
     json_event_with_finished_status['dateEvent'] = "2023-01-01"
-    json_event_with_finished_status['ownerId'] = jwt_handler.decode_token(token)['id']
 
     inserted_event = db['events'].insert_one(json_event_with_finished_status)
     new_event_id = inserted_event.inserted_id
