@@ -76,7 +76,6 @@ def createEvent(owner_id: str, event: dict, db):
     new_event = db["events"].insert_one(event)
     event_created = db["events"].find_one(
             {"_id": new_event.inserted_id})
-    print(event_created)
     if event['draftId'] is not None:
         remove_draft_event(db, event['draftId'])
     return json.loads(json_util.dumps(event_created))
@@ -84,11 +83,9 @@ def createEvent(owner_id: str, event: dict, db):
 
 
 def get_event_by_id(id: str, db):
-    print('entrara')
     event = db["events"].find_one({"_id": ObjectId(id)})
     if event is None:
             raise exceptions.EventNotFound
-    print('va a salir')
     
     return json.loads(json_util.dumps(event))
 
@@ -194,9 +191,9 @@ def get_event_reservation(db, user_id: str, event_id: str):
 
 
 def reserve_event(db, event_id: str, user_id: str):
-    event = db["events"].find_one({"_id": ObjectId(event_id)})
-    if event is None:
-        raise exceptions.EventNotFound
+    event = get_event_by_id(event_id, db)
+    #TODO cambiar esto por find por id
+
     if event['status'] != 'active':
         raise exceptions.EventIsNotActive
 
@@ -205,7 +202,16 @@ def reserve_event(db, event_id: str, user_id: str):
         db["events"].update_one(
             {"_id": ObjectId(event_id)}, {"$set": {'attendance': event['attendance'] + 1}}
         )
-        new_reservation = {"user_id": user_id, "event_id": event_id, "status": 'to_be_used'}
+
+        new_reservation = {
+            "user_id": user_id, 
+            "event_id": event_id, 
+            "status": 'to_be_used', 
+            "event_name": event['name'],
+            "event_date": event['dateEvent'],
+            "event_start_time": event['start'],
+        }
+
         db["reservations"].insert_one(new_reservation)
         reservation = db["reservations"].find_one({"user_id": user_id, "event_id": event_id})
         return json.loads(json_util.dumps(reservation))
@@ -231,7 +237,7 @@ def cancel_event(db, event_id: str, user_id: str):
 
     event_date = datetime.datetime.strptime(event['dateEvent'], "%Y-%m-%d").date()
     if event_date < datetime.date.today(): 
-        # TODO: aca se mueve de base porque esta finalizado
+        update_event_tickets_status(db, event_id, 'finalized')
         raise exceptions.AlreadyFinalizedEvent 
     
     if event['status'] == 'active':
@@ -289,6 +295,7 @@ def suspend_event(db, event_id: str):
 
     event_date = datetime.datetime.strptime(event['dateEvent'], "%Y-%m-%d").date()
     if event_date < datetime.date.today(): 
+        update_event_tickets_status(db, event_id, 'finalized')
         raise exceptions.AlreadyFinalizedEvent 
     
     if event['status'] == 'active':
@@ -297,6 +304,11 @@ def suspend_event(db, event_id: str):
         )
 
     suspended_event = db["events"].find_one({"_id": ObjectId(event_id)})
-    # no es necesario esto porque al validar el ticket se chequea el status del evento
-    # update_event_tickets_status(db, event_id, 'suspended')
+    update_event_tickets_status(db, event_id, 'suspended')
     return json.loads(json_util.dumps(suspended_event))
+
+def get_events_happening_tomorrow(events_db):
+    today = datetime.date.today()
+    tomorrows_date = (today + datetime.timedelta(days=1)).isoformat()
+    tomorrow_events = events_db["reservations"].find(filter={"event_date": tomorrows_date, "status": 'to_be_used'}, projection={'status': 0})
+    return list(json.loads(json_util.dumps(tomorrow_events)))

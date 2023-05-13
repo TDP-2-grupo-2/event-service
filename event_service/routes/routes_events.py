@@ -9,6 +9,15 @@ from typing import Optional, List
 
 event_router = APIRouter()
 
+@event_router.get("/tomorrow", status_code=status.HTTP_200_OK)
+async def get_events_happening_tomorrow(events_db=Depends(get_mongo_db)):
+    try:
+        result = event_repository.get_events_happening_tomorrow(events_db)
+        return {"message": result}
+    except (exceptions.ReservationNotFound) as error:
+        raise HTTPException(**error.__dict__)
+
+
 @event_router.get("/{id}", status_code=status.HTTP_200_OK)
 async def get_event_by_id(id:str, db=Depends(get_mongo_db)):
     try:
@@ -105,3 +114,6 @@ async def get_event_reservation_for_user(token: str, event_id: str, db=Depends(g
     except (exceptions.ReservationNotFound) as error:
         raise HTTPException(**error.__dict__)
     
+
+
+

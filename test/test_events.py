@@ -1,4 +1,5 @@
 import datetime
+from bson import ObjectId
 from fastapi.testclient import TestClient
 from fastapi import status
 from test import config
@@ -53,7 +54,7 @@ def login_user():
     data = response.json()
     return data
 
-
+ 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_given_a_new_event_when_an_organizer_wants_to_created_then_it_should_create_it():
     token = jwt_handler.create_access_token("1", 'organizer')
@@ -687,6 +688,9 @@ def test_WhenTheClientReservesAnExistingEvent_TheEventClientGetsTheTicket_TheApp
     reservation = reservation["message"]
     assert response_to_reservation['_id']['$oid'] == reservation['_id']['$oid']
     assert response_to_reservation['status'] == 'to_be_used'
+    assert response_to_reservation['event_name'] == "Aprendé a programar en python!"
+    assert response_to_reservation['event_date'] == "2023-08-07"
+    assert response_to_reservation['event_start_time'] == "21:00:00"
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTheClientReservesAnEventTwice_TheAppReturnsCorrectErrorMessage():
@@ -859,3 +863,195 @@ def test_WhenAnEventIsCanceled_TheTicketsOfThatEventHaveCanceledStatus():
     reservation = reservation["message"]
     assert response_to_reservation['_id']['$oid'] == reservation['_id']['$oid']
     assert reservation['status'] == 'canceled'
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingTomorrowEvents_ThereAreNon_TheAppReturnsEmptyList():
+    response_to_reservations = client.get(f"/events/tomorrow")
+    assert response_to_reservations.status_code == status.HTTP_200_OK, response_to_reservations.text
+    data = response_to_reservations.json()
+    data = data['message']
+
+    assert len(data) == 0
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingTomorrowEvents_TheRegisteredEventsDoNotHappenTomorrow_TheAppReturnsEmptyList():
+    token = jwt_handler.create_access_token("1", 'organizer')
+    today = datetime.date.today()
+    three_days_from_today = (today + datetime.timedelta(days=3)).isoformat()
+    json_rock_music_event_copy = json_rock_music_event.copy()
+    json_rock_music_event_copy['dateEvent'] = three_days_from_today
+    json_theatre_event_copy = json_theatre_event.copy()
+    json_theatre_event_copy['dateEvent'] = three_days_from_today
+
+    client.post("/organizers/active_events", json=json_rock_music_event_copy, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_theatre_event_copy, headers={"Authorization": f"Bearer {token}"})
+
+    response_to_reservations = client.get(f"/events/tomorrow")
+    assert response_to_reservations.status_code == status.HTTP_200_OK, response_to_reservations.text
+    data = response_to_reservations.json()
+    data = data['message']
+
+    assert len(data) == 0
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingTomorrowEvents_OneOfTheRegisteredEventsIsTomorrowButHasNoReservationsYet_TheAppReturnsEmptyList():
+    token = jwt_handler.create_access_token("1", 'organizer')
+    today = datetime.date.today()
+    three_days_from_today = (today + datetime.timedelta(days=3)).isoformat()
+    tomorrows_date = (today + datetime.timedelta(days=1)).isoformat()
+    json_rock_music_event_copy = json_rock_music_event.copy()
+    json_rock_music_event_copy['dateEvent'] = tomorrows_date
+    json_theatre_event_copy = json_theatre_event.copy()
+    json_theatre_event_copy['dateEvent'] = three_days_from_today
+
+    client.post("/organizers/active_events", json=json_rock_music_event_copy, headers={"Authorization": f"Bearer {token}"})
+    client.post("/organizers/active_events", json=json_theatre_event_copy, headers={"Authorization": f"Bearer {token}"})
+
+    response_to_reservations = client.get(f"/events/tomorrow")
+    assert response_to_reservations.status_code == status.HTTP_200_OK, response_to_reservations.text
+    data = response_to_reservations.json()
+    data = data['message']
+
+    assert len(data) == 0
+ 
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingTomorrowEvents_OneOfTheRegisteredEventsIsTomorrowAndHasOneReservation_TheAppReturnsTheReservation():
+    token = jwt_handler.create_access_token("1", 'organizer')
+    today = datetime.date.today()
+    three_days_from_today = (today + datetime.timedelta(days=3)).isoformat()
+    tomorrows_date = (today + datetime.timedelta(days=1)).isoformat()
+    json_rock_music_event_copy = json_rock_music_event.copy()
+    json_rock_music_event_copy['dateEvent'] = tomorrows_date
+    json_theatre_event_copy = json_theatre_event.copy()
+    json_theatre_event_copy['dateEvent'] = three_days_from_today
+
+    create_event_response = client.post("/organizers/active_events", json=json_rock_music_event_copy, headers={"Authorization": f"Bearer {token}"})
+    create_event_response = create_event_response.json()
+    create_event_response = create_event_response['message']
+    event_id = create_event_response['_id']['$oid']
+
+    user_id = login_user()
+    client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
+    client.get(f"/events/{event_id}")
+
+    client.post("/organizers/active_events", json=json_theatre_event_copy, headers={"Authorization": f"Bearer {token}"})
+
+    response_to_reservations = client.get(f"/events/tomorrow")
+    assert response_to_reservations.status_code == status.HTTP_200_OK, response_to_reservations.text
+    data = response_to_reservations.json()
+    data = data['message']
+
+    assert len(data) == 1
+    assert data[0]['event_date'] == tomorrows_date
+    assert data[0]['event_start_time'] == "19:00:00"
+    assert data[0]['event_name'] == "Music Fest"
+    assert data[0]['event_id'] == event_id
+    assert data[0]['user_id'] == 1
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingTomorrowEvents_OneOfTheRegisteredEventsIsTomorrowAndHasOneReservationButWasCanceled_TheAppReturnsTheReservation():
+    token = jwt_handler.create_access_token("1", 'organizer')
+    today = datetime.date.today()
+    three_days_from_today = (today + datetime.timedelta(days=3)).isoformat()
+    tomorrows_date = (today + datetime.timedelta(days=1)).isoformat()
+    json_rock_music_event_copy = json_rock_music_event.copy()
+    json_rock_music_event_copy['dateEvent'] = tomorrows_date
+    json_theatre_event_copy = json_theatre_event.copy()
+    json_theatre_event_copy['dateEvent'] = three_days_from_today
+
+    create_event_response = client.post("/organizers/active_events", json=json_rock_music_event_copy, headers={"Authorization": f"Bearer {token}"})
+    create_event_response = create_event_response.json()
+    create_event_response = create_event_response['message']
+    event_id = create_event_response['_id']['$oid']
+
+    user_id = login_user()
+    client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
+    client.get(f"/events/{event_id}")
+    client.patch(f"/organizers/canceled_events/{event_id}", headers={"Authorization": f"Bearer {token}"})
+
+    client.post("/organizers/active_events", json=json_theatre_event_copy, headers={"Authorization": f"Bearer {token}"})
+
+    response_to_reservations = client.get(f"/events/tomorrow")
+
+    data = response_to_reservations.json()
+    data = data['message']
+
+    assert len(data) == 0
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingTomorrowEvents_ThereIsOneButHasBeenSuspended_TheAppReturnsEmptyList():
+    token = jwt_handler.create_access_token("1", 'organizer')
+    today = datetime.date.today()
+    tomorrows_date = (today + datetime.timedelta(days=1)).isoformat()
+    json_rock_music_event_copy = json_rock_music_event.copy()
+    json_rock_music_event_copy['dateEvent'] = tomorrows_date
+
+    create_event_response = client.post("/organizers/active_events", json=json_rock_music_event_copy, headers={"Authorization": f"Bearer {token}"})
+    create_event_response = create_event_response.json()
+    create_event_response = create_event_response['message']
+    event_id = create_event_response['_id']['$oid']
+    db['events'].update_one({'_id': ObjectId(event_id)}, {"$set": {'status': 'suspended'}})
+
+    client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
+
+    response_to_reservations = client.get(f"/events/tomorrow")
+    data = response_to_reservations.json()
+    data = data['message']
+
+    assert len(data) == 0
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingTomorrowEvents_ThereIsOneFinalized_TheAppReturnsEmptyList():
+    token = jwt_handler.create_access_token("1", 'organizer')
+    today = datetime.date.today()
+    yesterday = (today + datetime.timedelta(days=-1)).isoformat()
+
+    create_event_response = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    create_event_response = create_event_response.json()
+    create_event_response = create_event_response['message']
+    event_id = create_event_response['_id']['$oid']
+    db['events'].update_one({'_id': ObjectId(event_id)}, {"$set": {'dateEvent': yesterday}})
+
+    client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {token}"})
+
+    response_to_reservations = client.get(f"/events/tomorrow")
+    data = response_to_reservations.json()
+    data = data['message']
+    
+    assert len(data) == 0
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenGettingTomorrowEvents_BothOfTheRegisteredEventsIsTomorrowAndHasOneReservation_TheAppReturnsTheReservation():
+    token = jwt_handler.create_access_token("1", 'organizer')
+    today = datetime.date.today()
+    tomorrows_date = (today + datetime.timedelta(days=1)).isoformat()
+    json_rock_music_event_copy = json_rock_music_event.copy()
+    json_rock_music_event_copy['dateEvent'] = tomorrows_date
+    json_theatre_event_copy = json_theatre_event.copy()
+    json_theatre_event_copy['dateEvent'] = tomorrows_date
+
+    create_event_response = client.post("/organizers/active_events", json=json_rock_music_event_copy, headers={"Authorization": f"Bearer {token}"})
+    create_event_response = create_event_response.json()
+    create_event_response = create_event_response['message']
+    first_event_id = create_event_response['_id']['$oid']
+
+    user_id = login_user()
+    client.post(f"/events/reservations/user/{user_id}/event/{first_event_id}")
+
+    create_event_response = client.post("/organizers/active_events", json=json_theatre_event_copy, headers={"Authorization": f"Bearer {token}"})
+    create_event_response = create_event_response.json()
+    create_event_response = create_event_response['message']
+    second_event_id = create_event_response['_id']['$oid']
+    client.post(f"/events/reservations/user/{user_id}/event/{second_event_id}")
+
+
+    response_to_reservations = client.get(f"/events/tomorrow")
+    
+    assert response_to_reservations.status_code == status.HTTP_200_OK, response_to_reservations.text
+    data = response_to_reservations.json()
+    data = data['message']
+
+    assert len(data) == 2
