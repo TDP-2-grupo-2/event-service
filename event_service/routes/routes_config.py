@@ -12,5 +12,5 @@ async def delete_events(events_db=Depends(get_mongo_db)):
     event_repository.delete_all_data(events_db)
 
 @config_router.delete("/databases/users", status_code=status.HTTP_200_OK)
-async def delete_attendees(users_db=Depends(users_database.get_postg_db)):
-    attende_repository.delete_all_data()
+async def delete_attendees():
+    users_database.delete_all_data()
