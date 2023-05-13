@@ -96,3 +96,33 @@ def test_WhenTryingToSuspendAnActiveEvent_TheUserSuspendingTheEventIsAdmin_ItSho
     assert response_to_suspend['_id']['$oid'] == new_event_id
     assert response_to_suspend['status'] == 'suspended'
 
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_when_an_admin_is_trying_to_susped_an_organizer_then_it_should_suspend_the_organizer():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    data = response.json()
+    actual = jwt_handler.decode_token(data)
+    organizer_id = actual['id']
+    response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
+    admin_token = response.json()["message"]
+
+    blockResponse = client.patch(f"/admins/suspended_organizers/{organizer_id}",headers={"Authorization": f"Bearer {admin_token}"})
+
+    assert blockResponse.status_code == status.HTTP_200_OK
+
+    blockResponse = blockResponse.json()['message']
+    print(blockResponse)
+    assert blockResponse['isBlock'] == True
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_when_an_admin_is_trying_to_susped_an_organizer_tha_not_exits_then_it_should_not_suspend_the_organizer():
+    response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
+    admin_token = response.json()["message"]
+
+    blockResponse = client.patch(f"/admins/suspended_organizers/100",headers={"Authorization": f"Bearer {admin_token}"})
+
+    assert blockResponse.status_code == status.HTTP_404_NOT_FOUND
+    blockResponse = blockResponse.json()
+    assert blockResponse['detail'] == "The user does not exists"
+
+
