@@ -7,6 +7,9 @@ class UserInfoException(Exception):
 class AdminInfoException(Exception):
     ...
 
+class ReportsInfoException(Exception):
+    ...
+
 class AdminWrongLoginInformation(AdminInfoException):
      def __init__(self):
         self.status_code = 401  # conflic
@@ -76,3 +79,8 @@ class EventIsCanceled(EventInfoException):
     def __init__(self):
         self.status_code = 409
         self.detail = "Este evento fue cancelado"
+
+class AlreadyReportedEvent(ReportsInfoException):
+    def __init__(self):
+        self.status_code = 409  # conflic
+        self.detail = "Este evento ya fue reportado por este usuario"

@@ -2,7 +2,7 @@ from pymongo import MongoClient
 import sys
 sys.path.append("../")
 from event_service.app import app
-from event_service.databases import events_database, user_model, users_database
+from event_service.databases import events_database, reports_database, user_model, users_database
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -41,6 +41,19 @@ def init_db():
     app.dependency_overrides[events_database.get_mongo_db] = override_get_db
     return db_test
 
+def init_reports_db():
+    client = MongoClient( "mongodb://localhost:27017/")
+    db_test = client['reports']
+    def override_get_db():
+        try:
+            db = db_test
+            yield db
+        finally:
+            db
+
+    app.dependency_overrides[reports_database.get_reports_db] = override_get_db
+    return db_test
+
 
 def clear_db_events_collection(db):
     result = db["events"].delete_many({})
@@ -55,5 +68,6 @@ def clear_db_reservations_collection(db):
 def clear_db_draft_event_collection(db):
     result = db["events_drafts"].delete_many({})
 
-
+def clear_db_events_reports_collection(db):
+    result = db["event_reports"].delete_many({})
 
