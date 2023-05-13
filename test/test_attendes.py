@@ -64,7 +64,7 @@ def test_whenAUserTriesToReportANonExistingEvent_theReportCannotBeCompleted_theA
     
 
 @pytest.mark.usefixtures("drop_collection_documents")
-def test_whenAUserTriesToReportAnExistingEvent_theReportCanBeCompleted_theAppReturnsError():
+def test_whenAUserTriesToReportAnExistingEvent_theReportCanBeCompleted_theAppReturnsTheCorrectReport():
 
     organizer_response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
     organizer_token = organizer_response.json()
@@ -90,7 +90,6 @@ def test_whenAUserTriesToReportAnExistingEvent_theReportCanBeCompleted_theAppRet
     assert report_event_response.status_code == status.HTTP_201_CREATED, report_event_response.text
     data = report_event_response.json()
     data = data['message']
-    print(data)
 
     assert data['event_id'] == report['event_id']
     assert data['event_name'] == report['event_name']
