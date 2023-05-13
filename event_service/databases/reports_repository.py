@@ -20,7 +20,7 @@ def report_event(user_reporter_id: str, event_report: dict, reports_db: Session,
     print(event_report["user_reporter_id"],  event_report["organizer_id"] )
 
     new_event_report = reports_db["event_reports"].insert_one(event_report)
-    report_created = reports_db["event_reports"].find_one({"_id": new_event_report.inserted_id})
+    report_created = reports_db["event_reports"].find_one(filter={"_id": new_event_report.inserted_id}, projection={'organizer_id':0, 'user_reporter_id':0})
     return json.loads(json_util.dumps(report_created))
 
 
