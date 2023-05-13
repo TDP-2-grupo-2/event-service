@@ -12,7 +12,7 @@ events_db = config.init_db()
 
 client = TestClient(app)
 
-non_existing_event_report = {"event_id": "6439a8d0c392bdf710446d31", "report_date": "2024-01-28", "reason": "seems fake" }
+non_existing_event_report = {"event_id": "6439a8d0c392bdf710446d31", "event_name": "Concierto", "event_description": "Concierto de rock", "report_date": "2024-01-28", "reason": "seems fake" }
 
 json_rock_music_event = {
             "name": "Music Fest",  "ownerName": "Agustina Segura",  "description": "Musical de pop, rock y mucho más", 
@@ -71,6 +71,8 @@ def test_whenAUserTriesToReportAnExistingEvent_theReportCanBeCompleted_theAppRet
 
     report = {
         "event_id": new_event_id,
+        "event_name": "Concierto", 
+        "event_description": "Concierto de rock",
         "report_date": datetime.date.today().isoformat(),
         "reason": "seems fake"
     }
@@ -80,6 +82,8 @@ def test_whenAUserTriesToReportAnExistingEvent_theReportCanBeCompleted_theAppRet
     data = data['message']
 
     assert data['event_id'] == report['event_id']
+    assert data['event_name'] == report['event_name']
+    assert data['event_description'] == report['event_description']
     assert data['report_date'] == report['report_date']
     assert data['reason'] == report['reason']
 
@@ -100,6 +104,8 @@ def test_whenAUserAlreadyReportedAnExistingEvent_theReportCannotBeCompleted_theA
 
     report = {
         "event_id": new_event_id,
+        "event_name": "Concierto", 
+        "event_description": "Concierto de rock",
         "report_date": datetime.date.today().isoformat(),
         "reason": "seems fake"
     }

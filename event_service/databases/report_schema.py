@@ -3,5 +3,8 @@ import datetime
 
 class EventReport(BaseModel):
     event_id: str
+    event_name: str
+    event_description: str
     report_date: datetime.date
     reason: str
+    
