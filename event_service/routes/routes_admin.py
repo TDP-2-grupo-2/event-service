@@ -38,7 +38,7 @@ async def cancel_active_event(rq:Request, event_id: str, event_db: Session = Dep
 
 @admin_router.get("/reports/attendees", status_code=status.HTTP_200_OK)
 async def get_reporting_attendees(rq:Request, from_date: datetime.date = None, to_date: datetime.date = None, reports_db: Session = Depends(reports_database.get_reports_db)):
-  try:
+    try:
         authentification_handler.is_auth(rq.headers)
         token = authentification_handler.get_token(rq.headers)
         decoded_token = jwt_handler.decode_token(token)
@@ -46,7 +46,7 @@ async def get_reporting_attendees(rq:Request, from_date: datetime.date = None, t
             raise exceptions.UnauthorizeUser
         reports_by_attendee = reports_repository.get_reporting_attendees(reports_db, from_date, to_date)
         return {"message": reports_by_attendee}
-   except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
+    except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__)
 
 @admin_router.patch("/suspended_organizers/{organizer_id}", status_code=status.HTTP_200_OK)
