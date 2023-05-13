@@ -685,3 +685,13 @@ def test_WhenGettingSuspendedEventsByOwner_TheOwnerHasOneFromTwoSuspendedEvents_
 
     assert len(suspended_events) == 1
     assert new_event_id == suspended_events[0]['_id']['$oid']
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_when_an_organizer_is_not_block_then_it_should_return_it_is_not_block():
+    response = client.post("/organizers/loginGoogle", json={"email": "agustinasegura@gmail.com", "name": "Agsutina Segura"})
+    token = response.json()
+    response = client.get("/organizers/isBlock", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == status.HTTP_200_OK
+    
+    data = response.json()['message']
+    assert data == False

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from event_service.databases import admin_repository, event_repository, events_database, users_schema
+from event_service.databases import admin_repository, event_repository, events_database, users_schema, organizer_repository, users_database
 from event_service.exceptions import exceptions
 from sqlalchemy.orm import Session
 from event_service.utils import jwt_handler, authentification_handler
@@ -30,4 +30,18 @@ async def cancel_active_event(rq:Request, event_id: str, event_db: Session= Depe
 
     except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__)
+    
+@admin_router.patch("/suspended_organizers/{organizer_id}", status_code=status.HTTP_200_OK)
+async def suspend_organizer(rq:Request, organizer_id, user_db: Session = Depends(users_database.get_postg_db)):
+    try:
+        authentification_handler.is_auth(rq.headers)
+        token = authentification_handler.get_token(rq.headers)
+        decoded_token = jwt_handler.decode_token(token)
+        if decoded_token["rol"] != 'admin':
+            raise exceptions.UnauthorizeUser
+        suspend_organizer = organizer_repository.suspend_organizer(user_db, organizer_id)
+        return {"message": suspend_organizer}
+    except (exceptions.UserInfoException) as error:
+        raise HTTPException(**error.__dict__)
+    
     
