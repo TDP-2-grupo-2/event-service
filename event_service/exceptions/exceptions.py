@@ -13,7 +13,7 @@ class ReportsInfoException(Exception):
 class AdminWrongLoginInformation(AdminInfoException):
      def __init__(self):
         self.status_code = 401  # conflic
-        self.detail = "The username/password is incorrect"
+        self.detail = "El usuario/contraseña es incorrecta"
 
 
 
@@ -25,27 +25,27 @@ class AlreadyFinalizedEvent(EventInfoException):
 class UserIsBlock(UserInfoException):
     def __init__(self):
         self.status_code = 409  # conflic
-        self.detail = "The user is blocked"
+        self.detail = "Usted ha sido bloqueado, sus eventos activos han sido cancelados. Por favor contactese al mail admin@gmail.com"
 
 class UserWrongLoginInformation(UserInfoException):
     def __init__(self):
         self.status_code = 401  # conflic
-        self.detail = "The username/password is incorrect"
+        self.detail = "El usuario/contraseña es incorrecta"
 
 class UserNotFound(UserInfoException):
     def __init__(self):
         self.status_code = 404
-        self.detail = "The user does not exists"
+        self.detail = "El usuario no existe"
 
 class UnauthorizeUser(UserInfoException):
     def __init__(self):
         self.status_code = 401
-        self.detail = "The user is not authorize"
+        self.detail = "El usuario no esta autorizado"
 
 class InvalidDate(EventInfoException):
     def __init__(self):
         self.status_code = 409  # conflic
-        self.detail = "the chosen date has passed"
+        self.detail = "La fecha elegida ha pasado"
 
 class EventNotFound(EventInfoException):
     def __init__(self):
@@ -55,17 +55,17 @@ class EventNotFound(EventInfoException):
 class EventIsNotActive(EventInfoException):
     def __init__(self):
         self.status_code = 409
-        self.detail = "The event is not active"
+        self.detail = "El evento no esta activo"
 
 class ReservationNotFound(EventInfoException):
     def __init__(self):
         self.status_code = 404
-        self.detail = "There is no reservation associated to this user"
+        self.detail = "No existe reservacion asociada con este usuario"
 
 class ReservationAlreadyExists(EventInfoException):
     def __init__(self):
         self.status_code = 409
-        self.detail = "Already existing reservation"
+        self.detail = "Ya existe una reservacion"
 
 class TicketIsNotValid(EventInfoException):
     def __init__(self):
