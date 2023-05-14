@@ -323,12 +323,14 @@ def get_reservations_for_event(db, event_id: str):
 def suspend_organizers_events_and_reservations(db, organizer_id):
     events = get_events_by_owner_with_status(db, organizer_id, "active")
     print("eventos q tengo")
-    print(events)
+    #print(events)
     reservations = []
     for event in events:
-        print(event)
         aux = suspend_event(db, event['_id']["$oid"])
-        print(aux)
-        reservations.push(get_reservations_for_event(db,  event['_id']["$oid"])["_id"]["$oid"])
-        print(reservations)
+        reservation = get_reservations_for_event(db,  event['_id']["$oid"])
+        for reserv in reservation:
+             print(reserv)
+             reservations.append(reserv['_id']["$oid"])
+       
+        #print(reservations)
     return reservations
