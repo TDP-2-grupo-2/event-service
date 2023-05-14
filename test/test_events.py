@@ -93,7 +93,7 @@ def test_given_a_date_that_passed_when_creating_an_event_then_it_should_not_crea
     assert response.status_code == status.HTTP_409_CONFLICT, response.text
     data = response.json()
 
-    assert data["detail"] == "the chosen date has passed"
+    assert data["detail"] == "La fecha elegida ha pasado"
 
 
 @pytest.mark.usefixtures("drop_collection_documents")

@@ -90,7 +90,7 @@ def test_whenAUserTriesToReportAnExistingEvent_theReportCanBeCompleted_theAppRet
     assert report_event_response.status_code == status.HTTP_201_CREATED, report_event_response.text
     data = report_event_response.json()
     data = data['message']
-
+    print(data)
     assert data['event_id'] == report['event_id']
     assert data['event_name'] == report['event_name']
     assert data['event_description'] == report['event_description']
@@ -131,7 +131,7 @@ def test_whenAUserAlreadyReportedAnExistingEvent_theReportCannotBeCompleted_theA
     assert report_event_response.status_code == status.HTTP_409_CONFLICT, report_event_response.text
     reponse_text = report_event_response.json()
     reponse_text = reponse_text['detail']
-
+    print(reponse_text)
     assert reponse_text == "Este evento ya fue reportado por este usuario"
 
 

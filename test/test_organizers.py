@@ -66,7 +66,7 @@ def test_when_login__a_suspended_organizer_it_should_not_returns_its_token():
     assert response.status_code == status.HTTP_409_CONFLICT
     data = response.json()
     print(data)
-    assert data["detail"] == "The user is blocked"
+    assert data["detail"] == "Usted ha sido bloqueado, sus eventos activos han sido cancelados. Por favor contactese al mail admin@gmail.com"
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -337,7 +337,8 @@ def test_WhenTryingToCancelAnEvent_TheUserCancellingTheEventIsNotTheOwner_ItShou
     response_to_cancel = client.patch(f"/organizers/canceled_events/{new_event_id}", headers={"Authorization": f"Bearer {another_user_token}"})
     assert response_to_cancel.status_code == status.HTTP_401_UNAUTHORIZED, response_to_cancel.text
     data = response_to_cancel.json()
-    assert data["detail"] == "The user is not authorize"
+    print(data)
+    assert data["detail"] == "El usuario no esta autorizado"
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenGettingCanceledEventsByOwner_TheOwnerDidNotCancelAnyYet_itShouldReturnAnEmptyList():
