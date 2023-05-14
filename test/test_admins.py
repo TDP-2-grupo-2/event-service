@@ -728,6 +728,54 @@ def test_when_suspending_a_Reported_event_then_it_should_not_apper_in_repported_
     print(reports)
     assert len(reports) == 0
 
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_when_suspending_a_Reported_event_then_it_should_not_apper_in_repported_events():
+    organizer = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    organizer_token = organizer.json()
+
+    organizer_id = jwt_handler.decode_token(organizer_token)['id']
+    print(organizer_id)
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {organizer_token}"})
+    new_event = new_event.json()
+    new_event_id = new_event["message"]['_id']['$oid']
+    event_2 = client.post("/organizers/active_events", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {organizer_token}"})
+    event_2 = event_2.json()
+    event_id_2 = event_2["message"]['_id']['$oid']
+    attendee_response = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
+    attendee_token = attendee_response.json()
+
+    report = {
+        "event_id": new_event_id,
+        "reason": "seems fake",
+    }
+    client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
+    report2 = {
+        "event_id":event_id_2,
+        "reason": "seems fake",
+    }
+    client.post("/attendees/report/event", json=report2, headers={"Authorization": f"Bearer {attendee_token}"})
+    admin_login_response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
+    admin_login_response = admin_login_response.json()
+    admin_token = admin_login_response['message']
+    events_reports_response = client.get("/admins/reports/events?from_date=2023-04-24&to_date=2023-05-14", headers={"Authorization": f"Bearer {admin_token}"})
+
+    assert events_reports_response.status_code == status.HTTP_200_OK
+    reports = events_reports_response.json()["message"]
+    
+    print(reports)
+    assert len(reports) == 2
+    response_to_cancel = client.patch(f"/admins/suspended_events/{new_event_id}", headers={"Authorization": f"Bearer {admin_token}"})
+    
+    assert response_to_cancel.status_code == status.HTTP_200_OK
+    events_reports_response = client.get("/admins/reports/events", headers={"Authorization": f"Bearer {admin_token}"})
+
+    assert events_reports_response.status_code == status.HTTP_200_OK
+    reports = events_reports_response.json()["message"]
+    
+    print(reports)
+    assert len(reports) == 1
+
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_when_suspending_an_organizer_then_it_should_not_apper_in_repported_events():
     organizer = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})

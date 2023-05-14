@@ -265,7 +265,7 @@ def delete_all_data(db):
     db["reservations"].delete_many({})
     db["events"].delete_many({})
     db["favourites"].delete_many({})
-     #db["events_drafts"].delete_many({})
+    db["events_drafts"].delete_many({})
 
 def validate_event_ticket(db, user_id: str, event_id: str, ticket_id: str):
          

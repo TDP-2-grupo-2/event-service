@@ -35,7 +35,7 @@ def report_event(user_reporter_id: str, event_report: dict, reports_db: Session,
 
 def get_reporting_events(reports_db: Session, from_date: datetime.date = None, to_date: datetime.date = None):
     pipeline = []
-   # pipeline.append({"$match": {"eventStatus": {"$eq":"active"}}})
+    pipeline.append({"$match": {"eventStatus": {"$eq":"active"}}})
     if from_date is not None:
         from_date_formatted = from_date.isoformat()
         pipeline.append({"$match": {"report_date": {"$gte": from_date_formatted}}})
@@ -126,9 +126,20 @@ def get_reporting_attendees(reports_db: Session, from_date: datetime.date = None
 
 
 def update_event_status(reports_db, event_id):
+    aux = reports_db["event_reports"].find()
+    print("ANTESSSSS")
+    print(list(json.loads(json_util.dumps(aux))))
+    print("\n")
     reports_db['event_reports'].update_many({"event_id": event_id}, {"$set": {'eventStatus': "canceled"}})
-    result=reports_db["event_reports"].find({"event_id": event_id})
+    
+    print("DESOUESSSS")
+    print("\n")
+    aux = reports_db["event_reports"].find()
+    print(list(json.loads(json_util.dumps(aux))))
 
 def update_events_status_by_organizer(reports_db, organizer_id):
     reports_db['event_reports'].update_many({"organizer_id": organizer_id}, {"$set": {'eventStatus': "canceled"}})
     result=reports_db["event_reports"].find({"organizer_id": organizer_id})
+
+def delete_all_data(reports_db):
+    reports_db['event_reports'].delete_many({})
