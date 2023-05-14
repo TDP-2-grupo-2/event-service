@@ -50,6 +50,24 @@ def test_when_login_for_the_first_time_an_attende_then_it_returns_its_token():
     assert actual["id"] == expected["id"]
     assert actual["rol"] == expected["rol"]
 
+def test_when_login__a_suspended_organizer_it_should_not_returns_its_token():
+
+    response = client.post("/organizers/loginGoogle", json={"email": "pepe@gmail.com", "name": "pepe "})
+    assert response.status_code == status.HTTP_200_OK, response.text
+    data = response.json()
+    actual = jwt_handler.decode_token(data)
+    response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
+    admin_token = response.json()["message"]
+    
+    blockResponse = client.patch(f"/admins/suspended_organizers/{str(actual['id'])}",headers={"Authorization": f"Bearer {admin_token}"})
+
+    response = client.post("/organizers/loginGoogle", json={"email": "pepe@gmail.com", "name": "pepe"})
+
+    assert response.status_code == status.HTTP_409_CONFLICT
+    data = response.json()
+    print(data)
+    assert data["detail"] == "The user is blocked"
+
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_when_saving_a_draft_event_then_it_does_it():

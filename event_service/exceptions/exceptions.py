@@ -15,10 +15,17 @@ class AdminWrongLoginInformation(AdminInfoException):
         self.status_code = 401  # conflic
         self.detail = "The username/password is incorrect"
 
+
+
 class AlreadyFinalizedEvent(EventInfoException):
     def __init__(self):
         self.status_code = 409  # conflic
         self.detail = "Este evento ya finalizo"
+
+class UserIsBlock(UserInfoException):
+    def __init__(self):
+        self.status_code = 409  # conflic
+        self.detail = "The user is blocked"
 
 class UserWrongLoginInformation(UserInfoException):
     def __init__(self):

@@ -24,7 +24,10 @@ def login_google(email: str, name: str, db: Session):
         user_created = create_organizer(email, name, db)
     else: 
         ## ya existe en la base
-        user_created = user
+        if isOrganizerBlock(db, user.id):
+            raise exceptions.UserIsBlock
+        else:
+            user_created = user
     return user_created
 
 def suspend_organizer(db:Session, organizer_id):
