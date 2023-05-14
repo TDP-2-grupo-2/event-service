@@ -332,5 +332,4 @@ def suspend_organizers_events_and_reservations(db, organizer_id):
              print(reserv)
              reservations.append(reserv['_id']["$oid"])
        
-        #print(reservations)
     return reservations

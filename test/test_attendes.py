@@ -91,6 +91,7 @@ def test_whenAUserTriesToReportAnExistingEvent_theReportCanBeCompleted_theAppRet
     data = report_event_response.json()
     data = data['message']
     print(data)
+    assert data['eventStatus'] == "active"
     assert data['event_id'] == report['event_id']
     assert data['event_name'] == report['event_name']
     assert data['event_description'] == report['event_description']

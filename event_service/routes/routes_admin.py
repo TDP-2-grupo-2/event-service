@@ -22,7 +22,9 @@ async def login (adminLogin: users_schema.adminLogin):
 
 
 @admin_router.patch("/suspended_events/{event_id}", status_code=status.HTTP_200_OK)
-async def cancel_active_event(rq:Request, event_id: str, event_db: Session = Depends(events_database.get_mongo_db)):
+async def cancel_active_event(rq:Request, event_id: str, 
+                                event_db: Session = Depends(events_database.get_mongo_db),
+                                reports_db: Session = Depends(reports_database.get_reports_db)):
     try:
         authentification_handler.is_auth(rq.headers)
         token = authentification_handler.get_token(rq.headers)
@@ -30,6 +32,8 @@ async def cancel_active_event(rq:Request, event_id: str, event_db: Session = Dep
         if decoded_token["rol"] != 'admin':
             raise exceptions.UnauthorizeUser
         canceled_event = event_repository.suspend_event(event_db, event_id)
+        reports_repository.update_event_status(reports_db, event_id)
+
         return {"message": canceled_event}
 
     except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
@@ -37,7 +41,8 @@ async def cancel_active_event(rq:Request, event_id: str, event_db: Session = Dep
 
 
 @admin_router.get("/reports/attendees", status_code=status.HTTP_200_OK)
-async def get_reporting_attendees(rq:Request, from_date: datetime.date = None, to_date: datetime.date = None, reports_db: Session = Depends(reports_database.get_reports_db)):
+async def get_reporting_attendees(rq:Request, from_date: datetime.date = None, to_date: datetime.date = None, 
+                                  reports_db: Session = Depends(reports_database.get_reports_db)):
     try:
         authentification_handler.is_auth(rq.headers)
         token = authentification_handler.get_token(rq.headers)
@@ -50,7 +55,8 @@ async def get_reporting_attendees(rq:Request, from_date: datetime.date = None, t
         raise HTTPException(**error.__dict__)
 
 @admin_router.get("/reports/events", status_code=status.HTTP_200_OK)
-async def get_reporting_events(rq:Request, from_date: datetime.date = None, to_date: datetime.date = None, reports_db: Session = Depends(reports_database.get_reports_db)):
+async def get_reporting_events(rq:Request, from_date: datetime.date = None, to_date: datetime.date = None, 
+                               reports_db: Session = Depends(reports_database.get_reports_db)):
     try:
         authentification_handler.is_auth(rq.headers)
         token = authentification_handler.get_token(rq.headers)

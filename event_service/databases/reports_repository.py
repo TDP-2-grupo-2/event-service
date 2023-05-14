@@ -15,6 +15,7 @@ def report_event(user_reporter_id: str, event_report: dict, reports_db: Session,
     if existing_report is not None:
         raise exceptions.AlreadyReportedEvent
     
+    event_report["eventStatus"] = reported_event["status"]
     event_report["organizer_id"] = reported_event["ownerId"]
     event_report["user_reporter_id"] = user_reporter_id
     print(event_report["user_reporter_id"],  event_report["organizer_id"] )
@@ -26,6 +27,7 @@ def report_event(user_reporter_id: str, event_report: dict, reports_db: Session,
 
 def get_reporting_events(reports_db: Session, from_date: datetime.date = None, to_date: datetime.date = None):
     pipeline = []
+    pipeline.append({"$match": {"eventStatus": {"$eq":"active"}}})
     if from_date is not None:
         from_date_formatted = from_date.isoformat()
         pipeline.append({"$match": {"report_date": {"$gte": from_date_formatted}}})
@@ -69,6 +71,7 @@ def get_reporting_events(reports_db: Session, from_date: datetime.date = None, t
     pipeline.append(rank_by_amount_of_reports)
     pipeline.append(final_projection)
     reports = reports_db["event_reports"].aggregate(pipeline)
+
     return list(json.loads(json_util.dumps(reports)))
 
 
@@ -114,7 +117,6 @@ def get_reporting_attendees(reports_db: Session, from_date: datetime.date = None
     return list(json.loads(json_util.dumps(reports)))
 
 
-    
-
-
-
+def update_event_status(reports_db, event_id):
+    reports_db['event_reports'].update_many({"event_id": event_id}, {"$set": {'eventStatus': "canceled"}})
+    result=reports_db["event_reports"].find({"event_id": event_id})
