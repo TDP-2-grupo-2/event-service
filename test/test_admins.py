@@ -883,9 +883,6 @@ def test_when_suspending_a_Reported_event_then_it_should_not_apper_in_repported_
     print(reports)
     assert len(reports) == 0
 
-
-
-
 #TODO: REVISAR TEST
 
 # @pytest.mark.usefixtures("drop_collection_documents")

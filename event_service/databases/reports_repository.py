@@ -109,29 +109,28 @@ def get_reporting_attendees(reports_db: Session, from_date: datetime.date = None
         if doc['_id']['user_reporter_id'] != id:
             ids.append(doc['_id']['user_reporter_id'])
             id = doc['_id']['user_reporter_id']
+
+
     for user_id in ids:
+        print(ids)
         amount_reports_reason = 0
         amount_reports = 0
         doc_to_save = {}
         for doc in reports: 
             if doc['_id']['user_reporter_id'] == user_id:
                 amount_reports += doc['amount_of_reports_per_reason']
+                print('entra?',doc['_id']['user_name'], doc['amount_of_reports_per_reason'], amount_reports)
                 if amount_reports_reason < doc['amount_of_reports_per_reason']:
                     amount_reports_reason = doc['amount_of_reports_per_reason']
-                    doc_to_save = doc
-        del doc_to_save['amount_of_reports_per_reason']
-        del doc_to_save['_id']['user_reporter_id']
-        doc_to_save['amount_of_reports'] = amount_reports
-        doc_to_save['most_frecuent_reason'] = doc_to_save['_id']['reason']
-        del doc_to_save['_id']['reason']
-        doc_to_save['user_email'] = doc_to_save['_id']['user_email']
-        doc_to_save['user_name'] = doc_to_save['_id']['user_name']
-        del doc_to_save['_id']['user_email']
-        del doc_to_save['_id']['user_name']
-        print('dooooc print ', doc_to_save)
+                    doc_to_save['most_frecuent_reason'] = doc['_id']['reason']
+                    doc_to_save['user_email'] = doc['_id']['user_email']
+                    doc_to_save['user_name'] = doc['_id']['user_name']
+                    print('DOCOCCCOCOC', doc_to_save)
+                doc_to_save['amount_of_reports'] = amount_reports
+        
         final_reports.append(doc_to_save)
 
-    print(final_reports)
+    print('ESl',len(final_reports))
 
     return final_reports
 
