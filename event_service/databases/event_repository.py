@@ -326,7 +326,7 @@ def suspend_organizers_events_and_reservations(db, organizer_id):
     #print(events)
     reservations = []
     for event in events:
-        aux = suspend_event(db, event['_id']["$oid"])
+        suspend_event(db, event['_id']["$oid"])
         reservation = get_reservations_for_event(db,  event['_id']["$oid"])
         for reserv in reservation:
              print(reserv)

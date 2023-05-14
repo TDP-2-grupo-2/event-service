@@ -90,4 +90,4 @@ class EventIsCanceled(EventInfoException):
 class AlreadyReportedEvent(ReportsInfoException):
     def __init__(self):
         self.status_code = 409  # conflic
-        self.detail = "Este evento ya fue reportado por este usuario"
+        self.detail = "Ya has reportado este evento"
