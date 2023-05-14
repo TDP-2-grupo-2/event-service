@@ -49,6 +49,19 @@ async def get_reporting_attendees(rq:Request, from_date: datetime.date = None, t
     except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__)
 
+@admin_router.get("/reports/events", status_code=status.HTTP_200_OK)
+async def get_reporting_events(rq:Request, from_date: datetime.date = None, to_date: datetime.date = None, reports_db: Session = Depends(reports_database.get_reports_db)):
+    try:
+        authentification_handler.is_auth(rq.headers)
+        token = authentification_handler.get_token(rq.headers)
+        decoded_token = jwt_handler.decode_token(token)
+        if decoded_token["rol"] != 'admin':
+            raise exceptions.UnauthorizeUser
+        reports_by_attendee = reports_repository.get_reporting_events(reports_db, from_date, to_date)
+        return {"message": reports_by_attendee}
+    except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
+        raise HTTPException(**error.__dict__)
+
 @admin_router.patch("/suspended_organizers/{organizer_id}", status_code=status.HTTP_200_OK)
 async def suspend_organizer(rq:Request, organizer_id, user_db: Session = Depends(users_database.get_postg_db)):
     try:
