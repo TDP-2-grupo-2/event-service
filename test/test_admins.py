@@ -1068,7 +1068,7 @@ def test_when_an_admin_is_trying_to_susped_an_organizer_then_it_should_suspend_t
     print(events)
     user_id = login_user()
     
-    response_to_reservation_1 = client.post(f"/events/reservations/user/{user_id}/event/{event_1_id}")
+    response_to_reservation_1 = client.post(f"/events/reservations/user/{str(user_id)}/event/{event_1_id}")
 
     response_to_reservation_1 = response_to_reservation_1.json()["message"]
     reservation_1 = response_to_reservation_1["_id"]["$oid"]
