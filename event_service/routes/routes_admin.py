@@ -63,15 +63,19 @@ async def get_reporting_events(rq:Request, from_date: datetime.date = None, to_d
         raise HTTPException(**error.__dict__)
 
 @admin_router.patch("/suspended_organizers/{organizer_id}", status_code=status.HTTP_200_OK)
-async def suspend_organizer(rq:Request, organizer_id, user_db: Session = Depends(users_database.get_postg_db)):
+async def suspend_organizer(rq:Request, organizer_id, user_db: Session = Depends(users_database.get_postg_db),
+                             event_db: Session = Depends(events_database.get_mongo_db)):
     try:
+        print("entre")
         authentification_handler.is_auth(rq.headers)
         token = authentification_handler.get_token(rq.headers)
         decoded_token = jwt_handler.decode_token(token)
         if decoded_token["rol"] != 'admin':
             raise exceptions.UnauthorizeUser
-        suspend_organizer = organizer_repository.suspend_organizer(user_db, organizer_id)
-        return {"message": suspend_organizer}
+        isBlock = organizer_repository.suspend_organizer(user_db, organizer_id)
+        print(isBlock)
+        reservations = event_repository.suspend_organizers_events_and_reservations(event_db, organizer_id)
+        return {"message": reservations}
     except (exceptions.UserInfoException) as error:
         raise HTTPException(**error.__dict__)
 

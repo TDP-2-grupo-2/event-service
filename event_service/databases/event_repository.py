@@ -255,7 +255,9 @@ def get_events_by_owner_with_status(db, user_id: str, status: str = None):
     query = {"ownerId": user_id}
     if status is not None:
         query["status"] = status
+    print(query)
     events_by_owner = db['events'].find(query)
+    print(events_by_owner)
     return list(json.loads(json_util.dumps(events_by_owner)))
 
 
@@ -312,3 +314,21 @@ def get_events_happening_tomorrow(events_db):
     tomorrows_date = (today + datetime.timedelta(days=1)).isoformat()
     tomorrow_events = events_db["reservations"].find(filter={"event_date": tomorrows_date, "status": 'to_be_used'}, projection={'status': 0})
     return list(json.loads(json_util.dumps(tomorrow_events)))
+
+
+def get_reservations_for_event(db, event_id: str):
+    reservation = db["reservations"].find({"event_id": event_id})
+    return json.loads(json_util.dumps(reservation))
+
+def suspend_organizers_events_and_reservations(db, organizer_id):
+    events = get_events_by_owner_with_status(db, organizer_id, "active")
+    print("eventos q tengo")
+    print(events)
+    reservations = []
+    for event in events:
+        print(event)
+        aux = suspend_event(db, event['_id']["$oid"])
+        print(aux)
+        reservations.push(get_reservations_for_event(db,  event['_id']["$oid"])["_id"]["$oid"])
+        print(reservations)
+    return reservations

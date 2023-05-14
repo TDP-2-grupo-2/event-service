@@ -19,6 +19,11 @@ def drop_collection_documents():
     config.clear_db_reservations_collection(events_db)
     config.clear_db_events_reports_collection(reports_db)
 
+def login_user():
+    response = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
+    data = response.json()
+    return data
+
 json_rock_music_event = {
             "name": "Music Fest",  "ownerName": "Agustina Segura",  "description": "Musical de pop, rock y mucho más", 
             "location": "Av. Pres. Figueroa Alcorta 7597, C1428 CABA", "locationDescription": "Estadio River", "capacity": 5000, 
@@ -603,22 +608,7 @@ def test_WhenTryingToGetAttendeesOrderedByTheAmountOfReportsUpToCertainDate_OneA
     assert reports[0]['user_name'] == 'agustina segura'
     assert reports[0]['amount_of_reports'] == 2
 
-@pytest.mark.usefixtures("drop_collection_documents")
-def test_when_an_admin_is_trying_to_susped_an_organizer_then_it_should_suspend_the_organizer():
-    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
-    data = response.json()
-    actual = jwt_handler.decode_token(data)
-    organizer_id = actual['id']
-    response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
-    admin_token = response.json()["message"]
 
-    blockResponse = client.patch(f"/admins/suspended_organizers/{organizer_id}",headers={"Authorization": f"Bearer {admin_token}"})
-
-    assert blockResponse.status_code == status.HTTP_200_OK
-
-    blockResponse = blockResponse.json()['message']
-    print(blockResponse)
-    assert blockResponse['isBlock'] == True
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -1052,3 +1042,54 @@ def test_when_getting_reported_events_by_date_to_should_return_the_correct_ones(
     assert reports[0]['most_frecuent_reason'] == 'seems fake'
     assert reports[0]['amount_of_reports'] == 2
 
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_when_an_admin_is_trying_to_susped_an_organizer_then_it_should_suspend_the_organizer():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    data = response.json()
+    actual = jwt_handler.decode_token(data)
+    organizer_id = actual['id']
+    print(data)
+
+    event_1 = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {data}"})
+    event_2 = client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {data}"})
+
+    event_1 = event_1.json()['message']
+    print(event_1['status'])
+    event_1_id = event_1['_id']["$oid"]
+    print(event_1_id)
+    event_2 = event_2.json()['message']
+    event_2_id = event_2['_id']["$oid"]
+
+    print(event_2_id)
+    response = client.get("/organizers/events?status=active",  headers={"Authorization": f"Bearer {data}"})
+    data = response.json()
+    events = data['message']
+    print(events)
+    user_id = login_user()
+    
+    response_to_reservation_1 = client.post(f"/events/reservations/user/{user_id}/event/{event_1_id}")
+
+    response_to_reservation_1 = response_to_reservation_1.json()["message"]
+    reservation_1 = response_to_reservation_1["_id"]["$oid"]
+
+    response_to_reservation_2 = client.post(f"/events/reservations/user/{user_id}/event/{event_2_id}")
+
+    response_to_reservation_2 = response_to_reservation_2.json()["message"]
+    reservation_2 = response_to_reservation_2["_id"]["$oid"]
+    
+
+    
+
+    
+    response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
+    admin_token = response.json()["message"]
+    print(organizer_id)
+    blockResponse = client.patch(f"/admins/suspended_organizers/{organizer_id}",headers={"Authorization": f"Bearer {admin_token}"})
+
+    assert blockResponse.status_code == status.HTTP_200_OK
+
+    blockResponse = blockResponse.json()['message']
+    print(blockResponse)
+    assert blockResponse[0] == reservation_1
+    assert blockResponse[1] == reservation_2
