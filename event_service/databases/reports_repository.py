@@ -96,25 +96,44 @@ def get_reporting_attendees(reports_db: Session, from_date: datetime.date = None
                             "amount_of_reports_per_reason": {"$sum": 1}
                         }}
     sort_by_most_frecuent_reporting_reason = {"$sort": {"_id.user_reporter_id": 1, "amount_of_reports": 1}}
-
-    group_by_reason = {"$group": {
-                            "_id": {
-                                "user_name": "$_id.user_name", 
-                                "user_email": "$_id.user_email",
-                                },                     
-                            "amount_of_reports": {"$sum": "$amount_of_reports_per_reason"},
-                            "most_frecuent_reason": {"$first": "$_id.reason"}        
-                        }}
-    
-    rank_by_amount_of_reports = {"$sort": {"amount_of_reports": -1}}
-    final_projection = { "$project" : {"user_name": "$_id.user_name", "user_email": "$_id.user_email", "_id": 0,  "amount_of_reports": 1,  "most_frecuent_reason": 1}}
     pipeline.append(group_by_attendee_and_reason_of_report)
     pipeline.append(sort_by_most_frecuent_reporting_reason)
-    pipeline.append(group_by_reason)
-    pipeline.append(rank_by_amount_of_reports)
-    pipeline.append(final_projection)
     reports = reports_db["event_reports"].aggregate(pipeline)
-    return list(json.loads(json_util.dumps(reports)))
+    reports = list(json.loads(json_util.dumps(reports)))
+    print(reports)
+    id = -1
+    ids = []
+    final_reports = []
+
+    for doc in reports:
+        if doc['_id']['user_reporter_id'] != id:
+            ids.append(doc['_id']['user_reporter_id'])
+            id = doc['_id']['user_reporter_id']
+    for user_id in ids:
+        amount_reports_reason = 0
+        amount_reports = 0
+        doc_to_save = {}
+        for doc in reports: 
+            if doc['_id']['user_reporter_id'] == user_id:
+                amount_reports += doc['amount_of_reports_per_reason']
+                if amount_reports_reason < doc['amount_of_reports_per_reason']:
+                    amount_reports_reason = doc['amount_of_reports_per_reason']
+                    doc_to_save = doc
+        del doc_to_save['amount_of_reports_per_reason']
+        del doc_to_save['_id']['user_reporter_id']
+        doc_to_save['amount_of_reports'] = amount_reports
+        doc_to_save['most_frecuent_reason'] = doc_to_save['_id']['reason']
+        del doc_to_save['_id']['reason']
+        doc_to_save['user_email'] = doc_to_save['_id']['user_email']
+        doc_to_save['user_name'] = doc_to_save['_id']['user_name']
+        del doc_to_save['_id']['user_email']
+        del doc_to_save['_id']['user_name']
+        print('dooooc print ', doc_to_save)
+        final_reports.append(doc_to_save)
+
+    print(final_reports)
+
+    return final_reports
 
 
 def update_event_status(reports_db, event_id):

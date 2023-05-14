@@ -534,6 +534,7 @@ def test_WhenTryingToGetAttendeesOrderedByTheAmountOfReportsFromCertainDate_OneA
 
 
 
+
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTryingToGetAttendeesOrderedByTheAmountOfReportsUpToCertainDate_OneAttendeeReportedThreeEvents_ItShouldReturnOneDocument():
     #organizer login create one event
@@ -611,7 +612,6 @@ def test_WhenTryingToGetAttendeesOrderedByTheAmountOfReportsUpToCertainDate_OneA
 
 
 
-
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_when_an_admin_is_trying_to_susped_an_organizer_tha_not_exits_then_it_should_not_suspend_the_organizer():
     response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
@@ -637,7 +637,6 @@ def test_When_getting_events_ordered_by_the_amount_of_reports_with_no_reports_th
     reports = attendees_reports_response.json()["message"]
 
     assert reports == []
-
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_when_getting_events_reported_with_one_report_then_it_should_return_it():
