@@ -35,7 +35,7 @@ def report_event(user_reporter_id: str, event_report: dict, reports_db: Session,
 
 def get_reporting_events(reports_db: Session, from_date: datetime.date = None, to_date: datetime.date = None):
     pipeline = []
-    pipeline.append({"$match": {"eventStatus": {"$eq":"active"}}})
+   # pipeline.append({"$match": {"eventStatus": {"$eq":"active"}}})
     if from_date is not None:
         from_date_formatted = from_date.isoformat()
         pipeline.append({"$match": {"report_date": {"$gte": from_date_formatted}}})
