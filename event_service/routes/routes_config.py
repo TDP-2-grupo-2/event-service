@@ -18,4 +18,4 @@ async def delete_attendees(db: Session = Depends(users_database.get_postg_db)):
 
 @config_router.delete("/databases/reports",status_code=status.HTTP_200_OK)
 async def delete_reports(reports_db: Session = Depends(get_reports_db)):
-    re7.delete_all_data(reports_db)
+    reports_repository.delete_all_data(reports_db)
