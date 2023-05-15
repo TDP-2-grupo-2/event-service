@@ -46,3 +46,14 @@ def isOrganizerBlock(db:Session, organizer_id):
     if user is None:
         raise exceptions.UserNotFound
     return user.isBlock
+
+
+def unsuspend_organizer(db: Session, organizer_id):
+    user = get_organizer_by_id(organizer_id, db)
+    if user is None:
+        print("usuaio no existe")
+        raise exceptions.UserNotFound
+    user.isBlock = False
+    db.commit()
+    db.refresh(user)
+    return user

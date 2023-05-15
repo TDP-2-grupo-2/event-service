@@ -87,3 +87,12 @@ async def suspend_organizer(rq:Request, organizer_id: int, user_db: Session = De
     except (exceptions.UserInfoException) as error:
         raise HTTPException(**error.__dict__)
 
+
+@admin_router.patch("/unsuspend/{organizer_id}", status_code=status.HTTP_200_OK)
+async def unsuspend_organizer(organizer_id: int, user_db: Session = Depends(users_database.get_postg_db)):
+    try:
+        isBlock = organizer_repository.unsuspend_organizer(user_db, organizer_id)
+        return {"message": isBlock}
+    except (exceptions.UserInfoException) as error:
+        raise HTTPException(**error.__dict__)
+
