@@ -18,8 +18,6 @@ def report_event(user_reporter_id: str, event_report: dict, reports_db: Session,
     event_report["eventStatus"] = reported_event["status"]
     event_report["organizer_id"] = reported_event["ownerId"]
     event_report["user_reporter_id"] = user_reporter_id
-    print(event_report["user_reporter_id"],  event_report["organizer_id"] )
-
     new_event_report = reports_db["event_reports"].insert_one(event_report)
     report_created = reports_db["event_reports"].find_one(filter={"_id": new_event_report.inserted_id}, projection={'organizer_id':0, 'user_reporter_id':0})
     return json.loads(json_util.dumps(report_created))
@@ -35,6 +33,7 @@ def get_reporting_events(reports_db: Session, from_date: datetime.date = None, t
     if to_date is not None:
         to_date_formatted = to_date.isoformat()
         pipeline.append({"$match": {"report_date": {"$lte": to_date_formatted}}})
+
     group_by_events_and_reason_of_the_report = {"$group": {
                             "_id": {
                                 "event_name": "$event_name", 
@@ -46,18 +45,28 @@ def get_reporting_events(reports_db: Session, from_date: datetime.date = None, t
                                 },                
                             "amount_of_reports_per_reason": {"$sum": 1}
                         }}
-    
+    group_by_events_and_reason_of_the_report2 = {"$group": {
+                            "_id": {
+                                "event_name": "$_id.event_name", 
+                                "event_description": "$_id.event_description",
+                                "event_id": "$_id.event_id",
+                                "organizer_id": "$_id.organizer_id",
+                                "organizer_name": "$_id.organizer_name",
+                                "reason": "$_id.reason"
+                                },                
+                            "amount_of_reports_per_reason": {"$sum":"$amount_of_reports_per_reason"}
+                        }}
     final_projection = { "$project" : {"event_name": "$_id.event_name", "event_description": "$_id.event_description",
                                        "organizer_name": "$_id.organizer_name",  "id": "$_id.event_id", "organizer_id": "$_id.organizer_id",
                                         "_id": 0,  "amount_of_reports_per_reason": 1,  "reason": "$_id.reason"
                                         }}
     pipeline.append(group_by_events_and_reason_of_the_report)
+    pipeline.append(group_by_events_and_reason_of_the_report2)
     pipeline.append(final_projection)
     reports = reports_db["event_reports"].aggregate(pipeline)
 
     reports = list(json.loads(json_util.dumps(reports)))
-
-    print('REPOOOOOOOORTS', reports)
+    print('reppppp', reports)
 
     id = -1
     ids = []
@@ -69,8 +78,6 @@ def get_reporting_events(reports_db: Session, from_date: datetime.date = None, t
         if doc['organizer_id'] != id:
             ids.append(doc['organizer_id'])
             id = doc['organizer_id']
-
-
 
     for user_id in ids:
         amount_reports_reason = 0
@@ -118,30 +125,11 @@ def get_reporting_attendees(reports_db: Session, from_date: datetime.date = None
                             "amount_of_reports_per_reason": {"$sum": 1}
                         }}
     final_projection = { "$project" : {"user_reporter_id": "$_id.user_reporter_id", "user_name": "$_id.user_name", "user_email": "$_id.user_email", "_id": 0,  "amount_of_reports_per_reason": 1,  "reason": "$_id.reason"}}
-
-    reports = reports_db["event_reports"].find({})
+    pipeline.append(group_by_attendee_and_reason_of_report)
+    pipeline.append(final_projection)
+    reports = reports_db["event_reports"].aggregate(pipeline)
     reports = list(json.loads(json_util.dumps(reports)))
 
-    grouped_reports = []
-
-    """ "user_name": "$user_name", 
-                                    "user_email": "$user_email",
-                                    "user_reporter_id": "$user_reporter_id",
-                                    "reason": "$reason"
-    """
-
-    user_name = ''
-    user_email = ''
-    user_reporter_id = -1
-    reason = ''
-
-    for doc in reports:
-        grouped_doc = {}
-        if doc['user_name'] != user_name and doc['user_email'] != user_email and doc['user_reporter_id'] != user_reporter_id and doc['reason'] != reason:
-            user_name = doc['user_name']
-            user_email = doc['user_email']
-            user_reporter_id = doc['user_reporter_id']
-            reason = doc['reason']
 
     id = -1
     ids = []
