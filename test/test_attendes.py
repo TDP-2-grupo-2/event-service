@@ -7,7 +7,7 @@ from event_service.utils import jwt_handler
 import pytest
 
 session = config.init_postg_db(app)
-reports_db = config.init_reports_db()
+reports_db = config.init_reports_db(app)
 events_db = config.init_db()
 
 client = TestClient(app)
