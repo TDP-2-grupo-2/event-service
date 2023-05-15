@@ -32,7 +32,7 @@ async def cancel_active_event(rq:Request, event_id: str,
         if decoded_token["rol"] != 'admin':
             raise exceptions.UnauthorizeUser
         canceled_event = event_repository.suspend_event(event_db, event_id)
-        reports_repository.update_event_status(reports_db, event_id)
+        reports_repository.update_events_status_by_organizer(reports_db, event_id)
 
         return {"message": canceled_event}
 

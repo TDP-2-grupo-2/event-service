@@ -43,6 +43,7 @@ def get_reporting_events(reports_db: Session, from_date: datetime.date = None, t
     if to_date is not None:
         to_date_formatted = to_date.isoformat()
         pipeline.append({"$match": {"report_date": {"$lte": to_date_formatted}}})
+
     group_by_events_and_reason_of_the_report = {"$group": {
                             "_id": {
                                 "event_name": "$event_name", 
@@ -54,33 +55,63 @@ def get_reporting_events(reports_db: Session, from_date: datetime.date = None, t
                                 },                
                             "amount_of_reports_per_reason": {"$sum": 1}
                         }}
-    sort_by_most_frecuent_reporting_reason = {"$sort": {"_id.event_id": -1, "amount_of_reports_per_reason": -1}}
-
-    group_by_reason = {"$group": {
+    group_by_events_and_reason_of_the_report2 = {"$group": {
                             "_id": {
-                                "event_id": "$_id.event_id",
                                 "event_name": "$_id.event_name", 
                                 "event_description": "$_id.event_description",
-                                "organizer_name": "$_id.organizer_name",
+                                "event_id": "$_id.event_id",
                                 "organizer_id": "$_id.organizer_id",
-                                },             
-                            "amount_of_reports": {"$sum": "$amount_of_reports_per_reason"},
-                            "most_frecuent_reason": {"$first": "$_id.reason"}        
+                                "organizer_name": "$_id.organizer_name",
+                                "reason": "$_id.reason"
+                                },                
+                            "amount_of_reports_per_reason": {"$sum":"$amount_of_reports_per_reason"}
                         }}
-    
-    rank_by_amount_of_reports = {"$sort": {"amount_of_reports": -1}}
     final_projection = { "$project" : {"event_name": "$_id.event_name", "event_description": "$_id.event_description",
                                        "organizer_name": "$_id.organizer_name",  "id": "$_id.event_id", "organizer_id": "$_id.organizer_id",
-                                        "_id": 0,  "amount_of_reports": 1,  "most_frecuent_reason": 1
+                                        "_id": 0,  "amount_of_reports_per_reason": 1,  "reason": "$_id.reason"
                                         }}
     pipeline.append(group_by_events_and_reason_of_the_report)
-    pipeline.append(sort_by_most_frecuent_reporting_reason)
-    pipeline.append(group_by_reason)
-    pipeline.append(rank_by_amount_of_reports)
+    pipeline.append(group_by_events_and_reason_of_the_report2)
     pipeline.append(final_projection)
     reports = reports_db["event_reports"].aggregate(pipeline)
 
-    return list(json.loads(json_util.dumps(reports)))
+    reports = list(json.loads(json_util.dumps(reports)))
+    print('reppppp', reports)
+
+    id = -1
+    ids = []
+    final_reports = []
+
+
+    for doc in reports:
+        print(doc)
+        if doc['organizer_id'] != id:
+            ids.append(doc['organizer_id'])
+            id = doc['organizer_id']
+
+    for user_id in ids:
+        amount_reports_reason = 0
+        amount_reports = 0
+        doc_to_save = {}
+        for doc in reports: 
+            if doc['organizer_id'] == user_id:
+                amount_reports += doc['amount_of_reports_per_reason']
+                if amount_reports_reason < doc['amount_of_reports_per_reason']:
+                    amount_reports_reason = doc['amount_of_reports_per_reason']
+                    doc_to_save['most_frecuent_reason'] = doc['reason']
+                    doc_to_save['id'] = doc['id']
+                    doc_to_save['event_name'] = doc['event_name']
+                    doc_to_save['event_description'] = doc['event_description']
+                    doc_to_save['organizer_name'] = doc['organizer_name']
+                    doc_to_save['organizer_name'] = doc['organizer_name']
+                    doc_to_save['organizer_id'] = doc['organizer_id']
+                doc_to_save['amount_of_reports'] = amount_reports
+        
+        final_reports.append(doc_to_save)
+    sorted_final_reports = sorted(final_reports, key=lambda x: x['amount_of_reports'])
+
+
+    return sorted_final_reports
 
 
 def get_reporting_attendees(reports_db: Session, from_date: datetime.date = None, to_date: datetime.date = None):
@@ -103,39 +134,44 @@ def get_reporting_attendees(reports_db: Session, from_date: datetime.date = None
                                 },                     
                             "amount_of_reports_per_reason": {"$sum": 1}
                         }}
-    sort_by_most_frecuent_reporting_reason = {"$sort": {"_id.user_reporter_id": 1, "amount_of_reports": 1}}
-
-    group_by_reason = {"$group": {
-                            "_id": {
-                                "user_name": "$_id.user_name", 
-                                "user_email": "$_id.user_email",
-                                },                     
-                            "amount_of_reports": {"$sum": "$amount_of_reports_per_reason"},
-                            "most_frecuent_reason": {"$first": "$_id.reason"}        
-                        }}
-    
-    rank_by_amount_of_reports = {"$sort": {"amount_of_reports": -1}}
-    final_projection = { "$project" : {"user_name": "$_id.user_name", "user_email": "$_id.user_email", "_id": 0,  "amount_of_reports": 1,  "most_frecuent_reason": 1}}
+    final_projection = { "$project" : {"user_reporter_id": "$_id.user_reporter_id", "user_name": "$_id.user_name", "user_email": "$_id.user_email", "_id": 0,  "amount_of_reports_per_reason": 1,  "reason": "$_id.reason"}}
     pipeline.append(group_by_attendee_and_reason_of_report)
-    pipeline.append(sort_by_most_frecuent_reporting_reason)
-    pipeline.append(group_by_reason)
-    pipeline.append(rank_by_amount_of_reports)
     pipeline.append(final_projection)
     reports = reports_db["event_reports"].aggregate(pipeline)
-    return list(json.loads(json_util.dumps(reports)))
+    reports = list(json.loads(json_util.dumps(reports)))
 
 
-def update_event_status(reports_db, event_id):
-    aux = reports_db["event_reports"].find()
-    print("ANTESSSSS")
-    print(list(json.loads(json_util.dumps(aux))))
-    print("\n")
-    reports_db['event_reports'].update_many({"event_id": event_id}, {"$set": {'eventStatus': "canceled"}})
-    
-    print("DESOUESSSS")
-    print("\n")
-    aux = reports_db["event_reports"].find()
-    print(list(json.loads(json_util.dumps(aux))))
+    id = -1
+    ids = []
+    final_reports = []
+
+
+    for doc in reports:
+        print(doc)
+        if doc['user_reporter_id'] != id:
+            ids.append(doc['user_reporter_id'])
+            id = doc['user_reporter_id']
+
+
+    for user_id in ids:
+        amount_reports_reason = 0
+        amount_reports = 0
+        doc_to_save = {}
+        for doc in reports: 
+            if doc['user_reporter_id'] == user_id:
+                amount_reports += doc['amount_of_reports_per_reason']
+                if amount_reports_reason < doc['amount_of_reports_per_reason']:
+                    amount_reports_reason = doc['amount_of_reports_per_reason']
+                    doc_to_save['most_frecuent_reason'] = doc['reason']
+                    doc_to_save['user_email'] = doc['user_email']
+                    doc_to_save['user_name'] = doc['user_name']
+                doc_to_save['amount_of_reports'] = amount_reports
+        
+        final_reports.append(doc_to_save)
+    sorted_final_reports = sorted(final_reports, key=lambda x: x['amount_of_reports'], reverse=True)
+
+
+    return sorted_final_reports
 
 def update_events_status_by_organizer(reports_db, organizer_id):
     reports_db['event_reports'].update_many({"organizer_id": organizer_id}, {"$set": {'eventStatus': "canceled"}})

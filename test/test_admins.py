@@ -224,7 +224,7 @@ def test_WhenTryingToGetAttendeesOrderedByTheAmountOfReports_OneAttendeeReported
     assert len(reports) == 1
     assert reports[0]['user_email'] == 'agustina@gmail.com'
     assert reports[0]['user_name'] == 'agustina segura'
-    assert reports[0]['most_frecuent_reason'] == 'spam'
+    assert reports[0]['most_frecuent_reason'] == "seems fake"
     assert reports[0]['amount_of_reports'] == 3
 
 
