@@ -41,7 +41,7 @@ def init_db():
     app.dependency_overrides[events_database.get_mongo_db] = override_get_db
     return db_test
 
-def init_reports_db():
+def init_reports_db(app):
     client = MongoClient( "mongodb://localhost:27017/")
     db_test = client['reports']
     def override_get_db():
@@ -71,3 +71,13 @@ def clear_db_draft_event_collection(db):
 def clear_db_events_reports_collection(db):
     result = db["event_reports"].delete_many({})
 
+def clear_postgres_db(user_db_session): 
+
+    # Delete all records from the table
+    user_db_session.query(user_model.Organizer).delete()
+
+    # Commit the changes
+    user_db_session.commit()
+
+    # Close the session
+    user_db_session.close()

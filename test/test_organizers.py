@@ -9,6 +9,7 @@ from event_service.utils import jwt_handler
 session = config.init_postg_db(app)
 db = config.init_db()
 client = TestClient(app)
+reports_db = config.init_reports_db(app)
 
 json_programming_event = {
             "name": "Aprendé a programar en python!",  "ownerName": "Sol Fontenla",  "description": "Aprende a programar en python desde cero",

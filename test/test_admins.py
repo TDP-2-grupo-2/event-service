@@ -9,7 +9,7 @@ from test import config
 session = config.init_postg_db(app)
 client = TestClient(app)
 events_db = config.init_db()
-reports_db = config.init_reports_db()
+reports_db = config.init_reports_db(app)
 
 
 @pytest.fixture
@@ -18,6 +18,12 @@ def drop_collection_documents():
     config.clear_db_events_collection(events_db)
     config.clear_db_reservations_collection(events_db)
     config.clear_db_events_reports_collection(reports_db)
+    config.clear_postgres_db(session)
+
+@pytest.fixture
+def drop_users_only():
+    config.clear_postgres_db(session)
+
 
 def login_user():
     response = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
@@ -38,6 +44,12 @@ json_lollapalooza_first_date = {
             "capacity": 200000, "dateEvent": "2024-01-28", "attendance": 300, "eventType": "SHOW", "tags": [ "MuSiCa", "DiVeRsIoN", "FESTIVAL" ],
             "latitud": -34.4811222, "longitud": -58.526158, "start": "11:00", "end": "23:00" }
 
+json_programming_event = {
+            "name": "Aprendé a programar en python!",  "ownerName": "Sol Fontenla",  "description": "Aprende a programar en python desde cero",
+            "location": "Av. Paseo Colón 850, C1063 CABA",
+            "locationDescription": "Facultad de Ingenieria - UBA", "capacity": 100, "dateEvent": "2023-08-07", "attendance": 0, "eventType": "TECNOLOGIA",
+            "tags": [ "PROGRAMACION", "APRENDIZAJE", ], "latitud": 8.9, "longitud": 6.8, "start": "21:00", "end": "22:30" }
+
 
 json_theatre_event = {
             "name": "Tootsie",  "ownerName": "Nico Vazquez",  "description": "La comedia del 2023",
@@ -45,7 +57,7 @@ json_theatre_event = {
             "capacity": 400, "dateEvent": "2023-10-30", "attendance": 0, "eventType": "TEATRO", 
             "tags": [ "COMEDIA", "FAMILIAR", "ENTRETENIMIENTO" ], "latitud": -34.6019915, "longitud": -58.3711065, "start": "21:00", "end": "22:30" }
 
-
+@pytest.mark.usefixtures("drop_users_only")
 def test_when_admin_login_with_correct_email_and_password_it_should_allow_it():
 
     response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
@@ -59,6 +71,7 @@ def test_when_admin_login_with_correct_email_and_password_it_should_allow_it():
     assert info['id'] == 0
     assert info['rol'] == 'admin'
 
+@pytest.mark.usefixtures("drop_users_only")
 def test_when_admin_login_with_incorrect_email_it_not_should_allow_it():
 
     response = client.post("/admins/login", json={"email":"aaadmiin@gmail.com", "password": "admintdp2"})
@@ -69,6 +82,7 @@ def test_when_admin_login_with_incorrect_email_it_not_should_allow_it():
 
     assert data['detail'] == "El usuario/contraseña es incorrecta"
 
+@pytest.mark.usefixtures("drop_users_only")
 def test_when_admin_login_with_incorrect_password_it_not_should_allow_it():
 
     response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "adminnntdpp2"})
@@ -95,7 +109,7 @@ def test_WhenTryingToSuspendAnEvent_TheUserSuspendingTheEventIsNotAdmin_ItShould
     response_to_cancel = client.patch(f"/admins/suspended_events/{new_event_id}", headers={"Authorization": f"Bearer {another_user_token}"})
     assert response_to_cancel.status_code == status.HTTP_401_UNAUTHORIZED, response_to_cancel.text
     data = response_to_cancel.json()
-    print(data)
+    
     assert data["detail"] == "El usuario no esta autorizado"
 
 
@@ -230,7 +244,7 @@ def test_WhenTryingToGetAttendeesOrderedByTheAmountOfReports_OneAttendeeReported
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
-def test_WhenTryingToGetAttendeesOrderedByTheAmountOfReports_TwoAttendeesReportedThreeEvents_ItShouldReturnOneDocument():
+def test_WhenTryingToGetAttendeesOrderedByTheAmountOfReports_TwoAttendeesReportedThreeEvents_ItShouldReturnTwoDocuments():
     #organizer login create one event
     organizer_response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
     organizer_token = organizer_response.json()
@@ -280,7 +294,7 @@ def test_WhenTryingToGetAttendeesOrderedByTheAmountOfReports_TwoAttendeesReporte
     
     assert attendees_reports_response.status_code == status.HTTP_200_OK
     reports = attendees_reports_response.json()["message"]
-    print('reporteees', reports)
+
     assert len(reports) == 2
     assert reports[0]['user_email'] == 'agustina@gmail.com'
     assert reports[0]['user_name'] == 'agustina segura'
@@ -291,8 +305,7 @@ def test_WhenTryingToGetAttendeesOrderedByTheAmountOfReports_TwoAttendeesReporte
     assert reports[1]['amount_of_reports'] == 1
 
 
-
-
+ 
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenTryingToGetAttendeesOrderedByTheAmountOfReports_OneAttendeeReportedOneTime_ItShouldReturnOneDocument():
@@ -566,9 +579,8 @@ def test_when_getting_events_reported_with_one_report_then_it_should_return_it()
     assert events_reports_response.status_code == status.HTTP_200_OK
     reports = events_reports_response.json()["message"]
     
-    print(reports)
     assert len(reports) == 1
-    assert reports[0]['id'] == new_event_id
+    assert reports[0]['event_id'] == new_event_id
     assert reports[0]['event_name'] == json_rock_music_event['name']
     assert reports[0]['event_description'] == json_rock_music_event['description']
     assert reports[0]['organizer_name'] == json_rock_music_event['ownerName']
@@ -614,10 +626,9 @@ def test_when_event_get_3_reports_it_should_return_the_event_with_amount_report_
 
     assert events_reports_response.status_code == status.HTTP_200_OK
     reports = events_reports_response.json()["message"]
-    
-    print(reports)
+
     assert len(reports) == 1
-    assert reports[0]['id'] == new_event_id
+    assert reports[0]['event_id'] == new_event_id
     assert reports[0]['event_name'] == json_rock_music_event['name']
     assert reports[0]['event_description'] == json_rock_music_event['description']
     assert reports[0]['organizer_name'] == json_rock_music_event['ownerName']
@@ -627,30 +638,222 @@ def test_when_event_get_3_reports_it_should_return_the_event_with_amount_report_
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
-def test_when_event_get_4_reports_for_2_events_and_getting_reported_events_then_it_should_return_the_events_in_the_write_order():
+def test_when_organizer_gets_4_reports_for_2_events_getting_reported_events__should_return_the_events_in_the_right_order():
+    organizer = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    first_organizer_token = organizer.json()
+    new_event = client.post("/organizers/active_events", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {first_organizer_token}"})
+    new_event = new_event.json()
+    new_event_id = new_event["message"]['_id']['$oid']
+
+    other_event = client.post("/organizers/active_events", json=json_programming_event, headers={"Authorization": f"Bearer {first_organizer_token}"})
+    other_event = other_event.json()
+    other_event_id = other_event["message"]['_id']['$oid']
+
+    attendee_response = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
+    attendee_token = attendee_response.json()
+    report1 = {
+        "event_id": new_event_id,
+        "reason": "seems fake",
+    }
+
+    report2 = {
+        "event_id": other_event_id,
+        "reason": "seems fake",
+    }
+    client.post("/attendees/report/event", json=report1, headers={"Authorization": f"Bearer {attendee_token}"})
+    client.post("/attendees/report/event", json=report2, headers={"Authorization": f"Bearer {attendee_token}"})
+    attendee_response = client.post("/attendees/loginGoogle", json={"email": "rama@gmail.com", "name": "rama sanchez"})
+    attendee_token = attendee_response.json()
+    report3 = {
+        "event_id": new_event_id,
+        "reason": "spam",
+    }
+    client.post("/attendees/report/event", json=report3, headers={"Authorization": f"Bearer {attendee_token}"})
+    attendee_response = client.post("/attendees/loginGoogle", json={"email": "pedro@gmail.com", "name": "pedro sanchez"})
+    attendee_token = attendee_response.json()
+    
+    report4 = {
+        "event_id": new_event_id,
+        "reason": "spam",
+    }
+    client.post("/attendees/report/event", json=report4, headers={"Authorization": f"Bearer {attendee_token}"})
+
+    admin_login_response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
+    admin_login_response = admin_login_response.json()
+    admin_token = admin_login_response['message']
+
+    events_reports_response = client.get("/admins/reports/events", headers={"Authorization": f"Bearer {admin_token}"})
+
+    assert events_reports_response.status_code == status.HTTP_200_OK
+    reports = events_reports_response.json()["message"]
+    
+
+    assert len(reports) == 2
+    assert reports[0]['event_id'] == new_event_id
+    assert reports[0]['event_name'] == json_lollapalooza_first_date['name']
+    assert reports[0]['event_description'] == json_lollapalooza_first_date['description']
+    assert reports[0]['organizer_name'] == json_lollapalooza_first_date['ownerName']
+    assert reports[0]['organizer_id'] == 1
+    assert reports[0]['most_frecuent_reason'] == 'spam'
+    assert reports[0]['amount_of_reports'] == 3
+    assert reports[1]['event_id'] == other_event_id
+    assert reports[1]['event_name'] == json_programming_event['name']
+    assert reports[1]['event_description'] == json_programming_event['description']
+    assert reports[1]['organizer_name'] == json_programming_event['ownerName']
+    assert reports[1]['organizer_id'] == 1
+    assert reports[1]['most_frecuent_reason'] == 'seems fake'
+    assert reports[1]['amount_of_reports'] == 1
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_when_suspending_a_Reported_event_then_it_should_not_apper_in_repported_events():
     organizer = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
     organizer_token = organizer.json()
     new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {organizer_token}"})
     new_event = new_event.json()
     new_event_id = new_event["message"]['_id']['$oid']
-
-    other_event = client.post("/organizers/active_events", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {organizer_token}"})
-    other_event = other_event.json()
-    other_event_id = other_event["message"]['_id']['$oid']
-    print("eveto:  ", other_event_id)
     attendee_response = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
     attendee_token = attendee_response.json()
     report = {
         "event_id": new_event_id,
         "reason": "seems fake",
     }
-    print(other_event_id)
-    report2 = {
-        "event_id": other_event_id,
+    todays_date = datetime.date.today().isoformat()
+
+    client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
+
+    admin_login_response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
+    admin_login_response = admin_login_response.json()
+    admin_token = admin_login_response['message']
+    events_reports_response = client.get(f"/admins/reports/events?from_date=2023-04-24&to_date={todays_date}", headers={"Authorization": f"Bearer {admin_token}"})
+
+    assert events_reports_response.status_code == status.HTTP_200_OK
+    reports = events_reports_response.json()["message"]
+    
+    assert len(reports) == 1
+    response_to_cancel = client.patch(f"/admins/suspended_events/{new_event_id}", headers={"Authorization": f"Bearer {admin_token}"})
+    
+    assert response_to_cancel.status_code == status.HTTP_200_OK
+    events_reports_response = client.get("/admins/reports/events?from_date=2023-04-24&to_date=2023-05-14", headers={"Authorization": f"Bearer {admin_token}"})
+
+    assert events_reports_response.status_code == status.HTTP_200_OK
+    reports = events_reports_response.json()["message"]
+    
+    assert len(reports) == 0
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_when_suspending_one_of_two_Reported_event_then_it_should_not_apper_in_repported_events():
+    organizer = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    organizer_token = organizer.json()
+
+    organizer_id = jwt_handler.decode_token(organizer_token)['id']
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {organizer_token}"})
+    new_event = new_event.json()
+    new_event_id = new_event["message"]['_id']['$oid']
+    event_2 = client.post("/organizers/active_events", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {organizer_token}"})
+    event_2 = event_2.json()
+    event_id_2 = event_2["message"]['_id']['$oid']
+    attendee_response = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
+    attendee_token = attendee_response.json()
+    todays_date = datetime.date.today().isoformat()
+
+
+    report = {
+        "event_id": new_event_id,
         "reason": "seems fake",
     }
     client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
+    report2 = {
+        "event_id":event_id_2,
+        "reason": "seems fake",
+    }
     client.post("/attendees/report/event", json=report2, headers={"Authorization": f"Bearer {attendee_token}"})
+    admin_login_response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
+    admin_login_response = admin_login_response.json()
+    admin_token = admin_login_response['message']
+    events_reports_response = client.get(f"/admins/reports/events?from_date=2023-04-24&to_date={todays_date}", headers={"Authorization": f"Bearer {admin_token}"})
+
+    assert events_reports_response.status_code == status.HTTP_200_OK
+    reports = events_reports_response.json()["message"]
+    
+    assert len(reports) == 2
+    response_to_cancel = client.patch(f"/admins/suspended_events/{new_event_id}", headers={"Authorization": f"Bearer {admin_token}"})
+    
+    assert response_to_cancel.status_code == status.HTTP_200_OK
+    events_reports_response = client.get("/admins/reports/events", headers={"Authorization": f"Bearer {admin_token}"})
+    assert events_reports_response.status_code == status.HTTP_200_OK
+    reports = events_reports_response.json()["message"]
+
+    print('reppooooooooo', reports)
+    
+    assert len(reports) == 1
+    
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_when_suspending_an_organizer_then_it_should_not_appear_in_repported_events():
+    organizer = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    organizer_token = organizer.json()
+    todays_date = datetime.date.today().isoformat()
+
+    organizer_id = jwt_handler.decode_token(organizer_token)['id']
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {organizer_token}"})
+    new_event = new_event.json()
+    new_event_id = new_event["message"]['_id']['$oid']
+    event_2 = client.post("/organizers/active_events", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {organizer_token}"})
+    event_2 = event_2.json()
+    event_id_2 = event_2["message"]['_id']['$oid']
+    attendee_response = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
+    attendee_token = attendee_response.json()
+
+    report = {
+        "event_id": new_event_id,
+        "reason": "seems fake",
+    }
+    client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
+    report2 = {
+        "event_id":event_id_2,
+        "reason": "seems fake",
+    }
+    client.post("/attendees/report/event", json=report2, headers={"Authorization": f"Bearer {attendee_token}"})
+    admin_login_response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
+    admin_login_response = admin_login_response.json()
+    admin_token = admin_login_response['message']
+    events_reports_response = client.get(f"/admins/reports/events?from_date=2023-04-24&to_date={todays_date}", headers={"Authorization": f"Bearer {admin_token}"})
+
+    assert events_reports_response.status_code == status.HTTP_200_OK
+    reports = events_reports_response.json()["message"]
+    
+    assert len(reports) == 2
+    response_to_cancel = client.patch(f"/admins/suspended_organizers/{organizer_id}", headers={"Authorization": f"Bearer {admin_token}"})
+    
+    assert response_to_cancel.status_code == status.HTTP_200_OK
+    data = response_to_cancel.json()
+    events_reports_response = client.get(f"/admins/reports/events?from_date=2023-04-24&to_date={todays_date}", headers={"Authorization": f"Bearer {admin_token}"})
+
+    assert events_reports_response.status_code == status.HTTP_200_OK
+    reports = events_reports_response.json()["message"]
+    
+    assert len(reports) == 0
+
+
+
+
+#TODO: REVISAR TEST
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_when_getting_reported_events_by_date_from_and_to_it_should_return_the_correct_ones():
+    organizer = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    organizer_token = organizer.json()
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {organizer_token}"})
+    new_event = new_event.json()
+    new_event_id = new_event["message"]['_id']['$oid']
+    attendee_response = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
+    attendee_token = attendee_response.json()
+    report = {
+        "event_id": new_event_id,
+        "reason": "seems fake",
+    }
+    client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
     attendee_response = client.post("/attendees/loginGoogle", json={"email": "rama@gmail.com", "name": "rama sanchez"})
     attendee_token = attendee_response.json()
     report = {
@@ -665,35 +868,26 @@ def test_when_event_get_4_reports_for_2_events_and_getting_reported_events_then_
         "reason": "spam",
     }
     client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
-
     admin_login_response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
     admin_login_response = admin_login_response.json()
     admin_token = admin_login_response['message']
+    todays_date = datetime.date.today().isoformat()
 
-    events_reports_response = client.get("/admins/reports/events", headers={"Authorization": f"Bearer {admin_token}"})
-
+    events_reports_response = client.get(f"/admins/reports/events?from_date=2023-04-24&to_date={todays_date}", headers={"Authorization": f"Bearer {admin_token}"})
     assert events_reports_response.status_code == status.HTTP_200_OK
     reports = events_reports_response.json()["message"]
-    
-    print(reports)
-    assert len(reports) == 2
-    assert reports[0]['id'] == new_event_id
-    assert reports[0]['event_name'] == json_rock_music_event['name']
-    assert reports[0]['event_description'] == json_rock_music_event['description']
-    assert reports[0]['organizer_name'] == json_rock_music_event['ownerName']
+
+    assert len(reports) == 1
+    assert reports[0]['event_id'] == new_event_id
+    assert reports[0]['event_name'] == 'Music Fest'
+    assert reports[0]['event_description'] == "Musical de pop, rock y mucho más"
+    assert reports[0]['organizer_name'] == "Agustina Segura"
     assert reports[0]['organizer_id'] == 1
     assert reports[0]['most_frecuent_reason'] == 'spam'
     assert reports[0]['amount_of_reports'] == 3
-    assert reports[1]['id'] == other_event_id
-    assert reports[1]['event_name'] == json_lollapalooza_first_date['name']
-    assert reports[1]['event_description'] == json_lollapalooza_first_date['description']
-    assert reports[1]['organizer_name'] == json_lollapalooza_first_date['ownerName']
-    assert reports[1]['organizer_id'] == 1
-    assert reports[1]['most_frecuent_reason'] == 'seems fake'
-    assert reports[1]['amount_of_reports'] == 1
 
 @pytest.mark.usefixtures("drop_collection_documents")
-def test_when_suspending_a_Reported_event_then_it_should_not_apper_in_repported_events():
+def test_when_getting_reported_events_by_date_from_should_return_the_correct_ones():
     organizer = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
     organizer_token = organizer.json()
     new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {organizer_token}"})
@@ -706,369 +900,101 @@ def test_when_suspending_a_Reported_event_then_it_should_not_apper_in_repported_
         "reason": "seems fake",
     }
     client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
-
+    attendee_response = client.post("/attendees/loginGoogle", json={"email": "rama@gmail.com", "name": "rama sanchez"})
+    attendee_token = attendee_response.json()
+    report = {
+        "event_id": new_event_id,
+        "reason": "spam",
+    }
+    client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
+    attendee_response = client.post("/attendees/loginGoogle", json={"email": "pedro@gmail.com", "name": "pedro sanchez"})
+    attendee_token = attendee_response.json()
+    report = {
+        "event_id": new_event_id,
+        "reason": "spam",
+    }
+    client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
     admin_login_response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
     admin_login_response = admin_login_response.json()
     admin_token = admin_login_response['message']
-    events_reports_response = client.get("/admins/reports/events?from_date=2023-04-24&to_date=2023-05-14", headers={"Authorization": f"Bearer {admin_token}"})
-
+    events_reports_response = client.get("/admins/reports/events?from_date=2023-04-24", headers={"Authorization": f"Bearer {admin_token}"})
     assert events_reports_response.status_code == status.HTTP_200_OK
     reports = events_reports_response.json()["message"]
-    
-    print(reports)
+
     assert len(reports) == 1
-    response_to_cancel = client.patch(f"/admins/suspended_events/{new_event_id}", headers={"Authorization": f"Bearer {admin_token}"})
-    
-    assert response_to_cancel.status_code == status.HTTP_200_OK
-    events_reports_response = client.get("/admins/reports/events?from_date=2023-04-24&to_date=2023-05-14", headers={"Authorization": f"Bearer {admin_token}"})
+    assert reports[0]['event_id'] == new_event_id
+    assert reports[0]['event_name'] == 'Music Fest'
+    assert reports[0]['event_description'] == "Musical de pop, rock y mucho más"
+    assert reports[0]['organizer_name'] == "Agustina Segura"
+    assert reports[0]['organizer_id'] == 1
+    assert reports[0]['most_frecuent_reason'] == 'spam'
+    assert reports[0]['amount_of_reports'] == 3
 
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_when_getting_reported_events_by_date_to_should_return_empty_list():
+    organizer = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    organizer_token = organizer.json()
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {organizer_token}"})
+    new_event = new_event.json()
+    new_event_id = new_event["message"]['_id']['$oid']
+    attendee_response = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
+    attendee_token = attendee_response.json()
+    report = {
+        "event_id": new_event_id,
+        "reason": "seems fake",
+    }
+    client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
+    attendee_response = client.post("/attendees/loginGoogle", json={"email": "rama@gmail.com", "name": "rama sanchez"})
+    attendee_token = attendee_response.json()
+    report = {
+        "event_id": new_event_id,
+        "reason": "spam",
+    }
+    client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
+    attendee_response = client.post("/attendees/loginGoogle", json={"email": "pedro@gmail.com", "name": "pedro sanchez"})
+    attendee_token = attendee_response.json()
+    report = {
+        "event_id": new_event_id,
+        "reason": "seems fake",
+    }
+    client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
+    admin_login_response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
+    admin_login_response = admin_login_response.json()
+    admin_token = admin_login_response['message']
+    events_reports_response = client.get("/admins/reports/events?to_date=2023-04-24", headers={"Authorization": f"Bearer {admin_token}"})
     assert events_reports_response.status_code == status.HTTP_200_OK
     reports = events_reports_response.json()["message"]
-    
-    print(reports)
+
     assert len(reports) == 0
 
-
 @pytest.mark.usefixtures("drop_collection_documents")
-def test_when_suspending_a_Reported_event_then_it_should_not_apper_in_repported_events():
-    organizer = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
-    organizer_token = organizer.json()
+def test_when_an_admin_is_trying_to_susped_an_organizer_then_it_should_suspend_the_organizer():
+    response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
+    data = response.json()
+    actual = jwt_handler.decode_token(data)
+    organizer_id = actual['id']
 
-    organizer_id = jwt_handler.decode_token(organizer_token)['id']
-    print(organizer_id)
-    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {organizer_token}"})
-    new_event = new_event.json()
-    new_event_id = new_event["message"]['_id']['$oid']
-    event_2 = client.post("/organizers/active_events", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {organizer_token}"})
-    event_2 = event_2.json()
-    event_id_2 = event_2["message"]['_id']['$oid']
-    attendee_response = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
-    attendee_token = attendee_response.json()
+    event_1 = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {data}"})
+    event_2 = client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {data}"})
+    event_1 = event_1.json()['message']
+    event_1_id = event_1['_id']["$oid"]
+    event_2 = event_2.json()['message']
+    event_2_id = event_2['_id']["$oid"]
+    user_id = login_user()
 
-    report = {
-        "event_id": new_event_id,
-        "reason": "seems fake",
-    }
-    client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
-    report2 = {
-        "event_id":event_id_2,
-        "reason": "seems fake",
-    }
-    client.post("/attendees/report/event", json=report2, headers={"Authorization": f"Bearer {attendee_token}"})
-    admin_login_response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
-    admin_login_response = admin_login_response.json()
-    admin_token = admin_login_response['message']
-    events_reports_response = client.get("/admins/reports/events?from_date=2023-04-24&to_date=2023-05-14", headers={"Authorization": f"Bearer {admin_token}"})
+    response_to_reservation_1 = client.post(f"/events/reservations/user/{str(user_id)}/event/{event_1_id}")
+    response_to_reservation_1 = response_to_reservation_1.json()["message"]
+    reservation_1 = response_to_reservation_1["_id"]["$oid"]
+    response_to_reservation_2 = client.post(f"/events/reservations/user/{user_id}/event/{event_2_id}")
+    response_to_reservation_2 = response_to_reservation_2.json()["message"]
+    reservation_2 = response_to_reservation_2["_id"]["$oid"]
 
-    assert events_reports_response.status_code == status.HTTP_200_OK
-    reports = events_reports_response.json()["message"]
-    
-    print(reports)
-    assert len(reports) == 2
-    response_to_cancel = client.patch(f"/admins/suspended_events/{new_event_id}", headers={"Authorization": f"Bearer {admin_token}"})
-    
-    assert response_to_cancel.status_code == status.HTTP_200_OK
-    events_reports_response = client.get("/admins/reports/events", headers={"Authorization": f"Bearer {admin_token}"})
+    response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
+    admin_token = response.json()["message"]
 
-    assert events_reports_response.status_code == status.HTTP_200_OK
-    reports = events_reports_response.json()["message"]
-    
-    print(reports)
-    assert len(reports) == 1
+    blockResponse = client.patch(f"/admins/suspended_organizers/{organizer_id}",headers={"Authorization": f"Bearer {admin_token}"})
+    assert blockResponse.status_code == status.HTTP_200_OK
+    blockResponse = blockResponse.json()['message']
 
-@pytest.mark.usefixtures("drop_collection_documents")
-def test_when_suspending_an_organizer_then_it_should_not_apper_in_repported_events():
-    organizer = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
-    organizer_token = organizer.json()
-
-    organizer_id = jwt_handler.decode_token(organizer_token)['id']
-    print(organizer_id)
-    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {organizer_token}"})
-    new_event = new_event.json()
-    new_event_id = new_event["message"]['_id']['$oid']
-    event_2 = client.post("/organizers/active_events", json=json_lollapalooza_first_date, headers={"Authorization": f"Bearer {organizer_token}"})
-    event_2 = event_2.json()
-    event_id_2 = event_2["message"]['_id']['$oid']
-    attendee_response = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
-    attendee_token = attendee_response.json()
-
-    report = {
-        "event_id": new_event_id,
-        "reason": "seems fake",
-    }
-    client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
-    report2 = {
-        "event_id":event_id_2,
-        "reason": "seems fake",
-    }
-    client.post("/attendees/report/event", json=report2, headers={"Authorization": f"Bearer {attendee_token}"})
-
-    admin_login_response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
-    admin_login_response = admin_login_response.json()
-    admin_token = admin_login_response['message']
-    events_reports_response = client.get("/admins/reports/events?from_date=2023-04-24&to_date=2023-05-14", headers={"Authorization": f"Bearer {admin_token}"})
-
-    assert events_reports_response.status_code == status.HTTP_200_OK
-    reports = events_reports_response.json()["message"]
-    
-    print(reports)
-    assert len(reports) == 2
-    response_to_cancel = client.patch(f"/admins/suspended_organizers/{organizer_id}", headers={"Authorization": f"Bearer {admin_token}"})
-    
-    assert response_to_cancel.status_code == status.HTTP_200_OK
-    data = response_to_cancel.json()
-    print(data)
-    events_reports_response = client.get("/admins/reports/events?from_date=2023-04-24&to_date=2023-05-14", headers={"Authorization": f"Bearer {admin_token}"})
-
-    assert events_reports_response.status_code == status.HTTP_200_OK
-    reports = events_reports_response.json()["message"]
-    
-    print(reports)
-    assert len(reports) == 0
-
-
-
-
-#TODO: REVISAR TEST
-
-# @pytest.mark.usefixtures("drop_collection_documents")
-# def test_when_getting_reported_events_by_date_from_and_to_it_should_return_the_correct_ones():
-#     organizer = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
-#     organizer_token = organizer.json()
-#     new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {organizer_token}"})
-#     new_event = new_event.json()
-#     new_event_id = new_event["message"]['_id']['$oid']
-
-#     attendee_response = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
-#     attendee_token = attendee_response.json()
-#     report = {
-#         "event_id": new_event_id,
-#         "event_name": "Concierto", 
-#         "event_description": "Concierto de rock",
-#         "report_date": datetime.date.today().isoformat(),
-#         "reason": "seems fake",
-#         "user_email": "agustina@gmail.com", 
-#         "user_name": "agustina segura",
-#         "organizer_name": "sol fontenla"
-#     }
-#     client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
-#     attendee_response = client.post("/attendees/loginGoogle", json={"email": "rama@gmail.com", "name": "rama sanchez"})
-#     attendee_token = attendee_response.json()
-#     report = {
-#         "event_id": new_event_id,
-#         "event_name": "Concierto", 
-#         "event_description": "Concierto de rock",
-#         "report_date": "2022-09-08",
-#         "reason": "spam",
-#         "user_email": "rama@gmail.com", 
-#         "user_name": "rama sanchez",
-#         "organizer_name": "sol fontenla"
-#     }
-#     client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
-#     attendee_response = client.post("/attendees/loginGoogle", json={"email": "pedro@gmail.com", "name": "pedro sanchez"})
-#     attendee_token = attendee_response.json()
-#     report = {
-#         "event_id": new_event_id,
-#         "event_name": "Concierto", 
-#         "event_description": "Concierto de rock",
-#         "report_date": datetime.date.today().isoformat(),
-#         "reason": "spam",
-#         "user_email": "pedro@gmail.com", 
-#         "user_name": "pedro sanchez",
-#         "organizer_name": "sol fontenla"
-#     }
-#     client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
-
-#     admin_login_response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
-#     admin_login_response = admin_login_response.json()
-#     admin_token = admin_login_response['message']
-
-#     events_reports_response = client.get("/admins/reports/events?from_date=2023-04-24&to_date=2023-05-14", headers={"Authorization": f"Bearer {admin_token}"})
-
-#     assert events_reports_response.status_code == status.HTTP_200_OK
-#     reports = events_reports_response.json()["message"]
-    
-#     print(reports)
-#     assert len(reports) == 1
-#     assert reports[0]['id'] == new_event_id
-#     assert reports[0]['event_name'] == 'Concierto'
-#     assert reports[0]['event_description'] == 'Concierto de rock'
-#     assert reports[0]['organizer_name'] == 'sol fontenla'
-#     assert reports[0]['organizer_id'] == 1
-#     assert reports[0]['most_frecuent_reason'] == 'spam'
-#     assert reports[0]['amount_of_reports'] == 2
-
-# @pytest.mark.usefixtures("drop_collection_documents")
-# def test_when_getting_reported_events_by_date_from_should_return_the_correct_ones():
-#     organizer = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
-#     organizer_token = organizer.json()
-#     new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {organizer_token}"})
-#     new_event = new_event.json()
-#     new_event_id = new_event["message"]['_id']['$oid']
-
-#     attendee_response = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
-#     attendee_token = attendee_response.json()
-#     report = {
-#         "event_id": new_event_id,
-#         "event_name": "Concierto", 
-#         "event_description": "Concierto de rock",
-#         "report_date": "2022-07-23",
-#         "reason": "seems fake",
-#         "user_email": "agustina@gmail.com", 
-#         "user_name": "agustina segura",
-#         "organizer_name": "sol fontenla"
-#     }
-#     client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
-#     attendee_response = client.post("/attendees/loginGoogle", json={"email": "rama@gmail.com", "name": "rama sanchez"})
-#     attendee_token = attendee_response.json()
-#     report = {
-#         "event_id": new_event_id,
-#         "event_name": "Concierto", 
-#         "event_description": "Concierto de rock",
-#         "report_date": "2022-09-08",
-#         "reason": "spam",
-#         "user_email": "rama@gmail.com", 
-#         "user_name": "rama sanchez",
-#         "organizer_name": "sol fontenla"
-#     }
-#     client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
-#     attendee_response = client.post("/attendees/loginGoogle", json={"email": "pedro@gmail.com", "name": "pedro sanchez"})
-#     attendee_token = attendee_response.json()
-#     report = {
-#         "event_id": new_event_id,
-#         "event_name": "Concierto", 
-#         "event_description": "Concierto de rock",
-#         "report_date": datetime.date.today().isoformat(),
-#         "reason": "spam",
-#         "user_email": "pedro@gmail.com", 
-#         "user_name": "pedro sanchez",
-#         "organizer_name": "sol fontenla"
-#     }
-#     client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
-
-#     admin_login_response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
-#     admin_login_response = admin_login_response.json()
-#     admin_token = admin_login_response['message']
-
-#     events_reports_response = client.get("/admins/reports/events?from_date=2023-04-24", headers={"Authorization": f"Bearer {admin_token}"})
-
-#     assert events_reports_response.status_code == status.HTTP_200_OK
-#     reports = events_reports_response.json()["message"]
-    
-#     print(reports)
-#     assert len(reports) == 1
-#     assert reports[0]['id'] == new_event_id
-#     assert reports[0]['event_name'] == 'Concierto'
-#     assert reports[0]['event_description'] == 'Concierto de rock'
-#     assert reports[0]['organizer_name'] == 'sol fontenla'
-#     assert reports[0]['organizer_id'] == 1
-#     assert reports[0]['most_frecuent_reason'] == 'spam'
-#     assert reports[0]['amount_of_reports'] == 1
-
-# @pytest.mark.usefixtures("drop_collection_documents")
-# def test_when_getting_reported_events_by_date_to_should_return_the_correct_ones():
-#     organizer = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
-#     organizer_token = organizer.json()
-#     new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {organizer_token}"})
-#     new_event = new_event.json()
-#     new_event_id = new_event["message"]['_id']['$oid']
-
-#     attendee_response = client.post("/attendees/loginGoogle", json={"email": "agustina@gmail.com", "name": "agustina segura"})
-#     attendee_token = attendee_response.json()
-#     report = {
-#         "event_id": new_event_id,
-#         "event_name": "Concierto", 
-#         "event_description": "Concierto de rock",
-#         "report_date": "2022-07-23",
-#         "reason": "seems fake",
-#         "user_email": "agustina@gmail.com", 
-#         "user_name": "agustina segura",
-#         "organizer_name": "sol fontenla"
-#     }
-#     client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
-#     attendee_response = client.post("/attendees/loginGoogle", json={"email": "rama@gmail.com", "name": "rama sanchez"})
-#     attendee_token = attendee_response.json()
-#     report = {
-#         "event_id": new_event_id,
-#         "event_name": "Concierto", 
-#         "event_description": "Concierto de rock",
-#         "report_date": "2022-09-08",
-#         "reason": "spam",
-#         "user_email": "rama@gmail.com", 
-#         "user_name": "rama sanchez",
-#         "organizer_name": "sol fontenla"
-#     }
-#     client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
-#     attendee_response = client.post("/attendees/loginGoogle", json={"email": "pedro@gmail.com", "name": "pedro sanchez"})
-#     attendee_token = attendee_response.json()
-#     report = {
-#         "event_id": new_event_id,
-#         "event_name": "Concierto", 
-#         "event_description": "Concierto de rock",
-#         "report_date": datetime.date.today().isoformat(),
-#         "reason": "seems fake",
-#         "user_email": "pedro@gmail.com", 
-#         "user_name": "pedro sanchez",
-#         "organizer_name": "sol fontenla"
-#     }
-#     client.post("/attendees/report/event", json=report, headers={"Authorization": f"Bearer {attendee_token}"})
-
-#     admin_login_response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
-#     admin_login_response = admin_login_response.json()
-#     admin_token = admin_login_response['message']
-
-#     events_reports_response = client.get("/admins/reports/events?to_date=2023-04-24", headers={"Authorization": f"Bearer {admin_token}"})
-
-#     assert events_reports_response.status_code == status.HTTP_200_OK
-#     reports = events_reports_response.json()["message"]
-    
-#     print(reports)
-#     assert len(reports) == 1
-#     assert reports[0]['id'] == new_event_id
-#     assert reports[0]['event_name'] == 'Concierto'
-#     assert reports[0]['event_description'] == 'Concierto de rock'
-#     assert reports[0]['organizer_name'] == 'sol fontenla'
-#     assert reports[0]['organizer_id'] == 1
-#     assert reports[0]['most_frecuent_reason'] == 'seems fake'
-#     assert reports[0]['amount_of_reports'] == 2
-
-
-# @pytest.mark.usefixtures("drop_collection_documents")
-# def test_when_an_admin_is_trying_to_susped_an_organizer_then_it_should_suspend_the_organizer():
-#     response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
-#     data = response.json()
-#     actual = jwt_handler.decode_token(data)
-#     organizer_id = actual['id']
-#     print(data)
-
-#     event_1 = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {data}"})
-#     event_2 = client.post("/organizers/active_events", json=json_theatre_event, headers={"Authorization": f"Bearer {data}"})
-
-#     event_1 = event_1.json()['message']
-#     event_1_id = event_1['_id']["$oid"]
-#     event_2 = event_2.json()['message']
-#     event_2_id = event_2['_id']["$oid"]
-
-#     user_id = login_user()
-    
-#     response_to_reservation_1 = client.post(f"/events/reservations/user/{str(user_id)}/event/{event_1_id}")
-
-#     response_to_reservation_1 = response_to_reservation_1.json()["message"]
-#     reservation_1 = response_to_reservation_1["_id"]["$oid"]
-
-#     response_to_reservation_2 = client.post(f"/events/reservations/user/{user_id}/event/{event_2_id}")
-
-#     response_to_reservation_2 = response_to_reservation_2.json()["message"]
-#     reservation_2 = response_to_reservation_2["_id"]["$oid"]
-    
-#     response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
-#     admin_token = response.json()["message"]
-#     print(organizer_id)
-#     blockResponse = client.patch(f"/admins/suspended_organizers/{organizer_id}",headers={"Authorization": f"Bearer {admin_token}"})
-
-#     assert blockResponse.status_code == status.HTTP_200_OK
-
-#     blockResponse = blockResponse.json()['message']
-#     print(blockResponse)
-#     assert blockResponse[0] == reservation_1
-#     assert blockResponse[1] == reservation_2
+    assert blockResponse[0] == reservation_1
+    assert blockResponse[1] == reservation_2  
