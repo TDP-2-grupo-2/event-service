@@ -265,7 +265,7 @@ def delete_all_data(db):
     db["reservations"].delete_many({})
     db["events"].delete_many({})
     db["favourites"].delete_many({})
-     #db["events_drafts"].delete_many({})
+    db["events_drafts"].delete_many({})
 
 def validate_event_ticket(db, user_id: str, event_id: str, ticket_id: str):
          
@@ -326,7 +326,7 @@ def suspend_organizers_events_and_reservations(db, organizer_id):
     #print(events)
     reservations = []
     for event in events:
-        aux = suspend_event(db, event['_id']["$oid"])
+        suspend_event(db, event['_id']["$oid"])
         reservation = get_reservations_for_event(db,  event['_id']["$oid"])
         for reserv in reservation:
              print(reserv)

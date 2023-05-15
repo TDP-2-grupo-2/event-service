@@ -33,6 +33,7 @@ def login_google(email: str, name: str, db: Session):
 def suspend_organizer(db:Session, organizer_id):
     user = get_organizer_by_id(organizer_id, db)
     if user is None:
+        print("usuaio no existe")
         raise exceptions.UserNotFound
     user.isBlock = True
     db.commit()

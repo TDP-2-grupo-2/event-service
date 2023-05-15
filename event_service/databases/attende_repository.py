@@ -11,7 +11,12 @@ def verify_user_exists(id:int, db:Session):
     if user is None:
         raise exceptions.UserNotFound
     
-
+def get_attendee_by_id(db:Session, id:int):
+    user = db.query(user_model.Attende).filter(user_model.Attende.id == id).first()
+    if user is None:
+        raise exceptions.UserNotFound
+    return user
+    
 
 def create_attende(email: str, name: str, db: Session):
     db_attende = user_model.Attende(email=email, name=name)
