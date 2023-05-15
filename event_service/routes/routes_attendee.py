@@ -1,4 +1,5 @@
 from fastapi.encoders import jsonable_encoder
+import logging
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from event_service.databases import attende_repository, event_repository, events_database, reports_database, reports_repository, users_schema, users_database
 from event_service.exceptions import exceptions
@@ -30,10 +31,10 @@ async def report_event(event_report: EventReport, rq:Request, reports_db: Sessio
                        events_db: Session= Depends(events_database.get_mongo_db),
                        db: Session = Depends(users_database.get_postg_db)):
     try:
-        print(rq.headers)
+        logging.warning(rq.headers)
         authentification_handler.is_auth(rq.headers)
         token = authentification_handler.get_token(rq.headers)
-        print(token)
+        logging.warning(token)
         user_id = jwt_handler.decode_token(token)["id"]
         report_event = reports_repository.report_event(user_id, jsonable_encoder(event_report), reports_db, events_db, db)
         return {"message": report_event}
