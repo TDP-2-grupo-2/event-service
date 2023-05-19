@@ -1055,3 +1055,35 @@ def test_WhenGettingTomorrowEvents_BothOfTheRegisteredEventsIsTomorrowAndHasOneR
     data = data['message']
 
     assert len(data) == 2
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_When_two_users_resever_and_enevt_then_it_should_return_both_ids_when_getting_reservations_by_event():
+    token = jwt_handler.create_access_token("1", 'organizer')
+    response = client.post("/organizers/active_events", json=json_programming_event, headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == status.HTTP_201_CREATED, response.text
+
+    data = response.json()
+    data = data['message']
+    user_id = login_user()
+    event_id = data['_id']['$oid']
+
+    response = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
+    assert response.status_code == status.HTTP_201_CREATED, response.text
+
+    response = client.post("/attendees/loginGoogle", json={"email": "sol@gmail.com", "name": "sol fontenla"})
+    user_id_2 = response.json()
+
+    response = client.post(f"/events/reservations/user/{user_id_2}/event/{event_id}")
+    assert response.status_code == status.HTTP_201_CREATED, response.text
+
+    
+    respondes_attendes_reservation = client.get(f"/events/reservations/event/{event_id}/attendees")
+
+    assert respondes_attendes_reservation.status_code == status.HTTP_200_OK, respondes_attendes_reservation .text
+
+    data = respondes_attendes_reservation.json()
+
+    print(data)
+
+    assert len(data['message']) == 2

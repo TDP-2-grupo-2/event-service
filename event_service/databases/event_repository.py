@@ -320,6 +320,17 @@ def get_reservations_for_event(db, event_id: str):
     reservation = db["reservations"].find({"event_id": event_id})
     return json.loads(json_util.dumps(reservation))
 
+def get_attendess_by_event_reserved(db, event_id: str):
+    
+    attendes_ids = []
+    reservations = get_reservations_for_event(db, event_id)
+    for reservation in reservations:
+         print(reservation)
+         attendes_ids.append(reservation['user_id'])
+    
+    return attendes_ids
+         
+
 def suspend_organizers_events_and_reservations(db, organizer_id):
     events = get_events_by_owner_with_status(db, organizer_id, "active")
     print("eventos q tengo")

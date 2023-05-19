@@ -116,4 +116,13 @@ async def get_event_reservation_for_user(token: str, event_id: str, db=Depends(g
     
 
 
+@event_router.get("/reservations/event/{event_id}/attendees",  status_code=status.HTTP_200_OK)
+async def get_attendes_by_event_reserved(event_id: str, db=Depends(get_mongo_db)):
+    
+    try:   
+        result = event_repository.get_attendess_by_event_reserved(db, event_id)
+        return {"message": result}
+
+    except (exceptions.ReservationNotFound) as error:
+        raise HTTPException(**error.__dict__)
 
