@@ -22,7 +22,8 @@ async def login (adminLogin: users_schema.adminLogin):
 
 
 @admin_router.patch("/suspended_events/{event_id}", status_code=status.HTTP_200_OK)
-async def cancel_active_event(rq:Request, event_id: str, 
+async def cancel_active_event(rq:Request, event_id: str,
+                                motive: str, 
                                 event_db: Session = Depends(events_database.get_mongo_db),
                                 reports_db: Session = Depends(reports_database.get_reports_db)):
     try:
@@ -31,7 +32,7 @@ async def cancel_active_event(rq:Request, event_id: str,
         decoded_token = jwt_handler.decode_token(token)
         if decoded_token["rol"] != 'admin':
             raise exceptions.UnauthorizeUser
-        canceled_event = event_repository.suspend_event(event_db, event_id)
+        canceled_event = event_repository.suspend_event(event_db, event_id, motive)
         reports_repository.update_events_status_by_event_id(reports_db, event_id)
 
         return {"message": canceled_event}

@@ -106,7 +106,7 @@ def test_WhenTryingToSuspendAnEvent_TheUserSuspendingTheEventIsNotAdmin_ItShould
  
     new_event_id = new_event['message']['_id']['$oid']
 
-    response_to_cancel = client.patch(f"/admins/suspended_events/{new_event_id}", headers={"Authorization": f"Bearer {another_user_token}"})
+    response_to_cancel = client.patch(f"/admins/suspended_events/{new_event_id}?motive=SPAM", headers={"Authorization": f"Bearer {another_user_token}"})
     assert response_to_cancel.status_code == status.HTTP_401_UNAUTHORIZED, response_to_cancel.text
     data = response_to_cancel.json()
     
@@ -125,13 +125,14 @@ def test_WhenTryingToSuspendAnActiveEvent_TheUserSuspendingTheEventIsAdmin_ItSho
     admin_token = response.json()["message"]
  
     new_event_id = new_event['message']['_id']['$oid']
-
-    response_to_suspend = client.patch(f"/admins/suspended_events/{new_event_id}", headers={"Authorization": f"Bearer {admin_token}"})
+    motive="SPAM"
+    response_to_suspend = client.patch(f"/admins/suspended_events/{new_event_id}?motive={motive}", headers={"Authorization": f"Bearer {admin_token}"})
     assert response_to_suspend.status_code == status.HTTP_200_OK
     response_to_suspend = response_to_suspend.json()["message"]
-
+    print(response_to_suspend)
     assert response_to_suspend['_id']['$oid'] == new_event_id
     assert response_to_suspend['status'] == 'suspended'
+    assert response_to_suspend['suspendMotive'] == motive
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -731,7 +732,7 @@ def test_when_suspending_a_Reported_event_then_it_should_not_apper_in_repported_
     reports = events_reports_response.json()["message"]
     
     assert len(reports) == 1
-    response_to_cancel = client.patch(f"/admins/suspended_events/{new_event_id}", headers={"Authorization": f"Bearer {admin_token}"})
+    response_to_cancel = client.patch(f"/admins/suspended_events/{new_event_id}?motive=SPAM", headers={"Authorization": f"Bearer {admin_token}"})
     
     assert response_to_cancel.status_code == status.HTTP_200_OK
     events_reports_response = client.get("/admins/reports/events?from_date=2023-04-24&to_date=2023-05-14", headers={"Authorization": f"Bearer {admin_token}"})
@@ -778,7 +779,7 @@ def test_when_suspending_one_of_two_Reported_event_then_it_should_not_apper_in_r
     reports = events_reports_response.json()["message"]
     
     assert len(reports) == 2
-    response_to_cancel = client.patch(f"/admins/suspended_events/{new_event_id}", headers={"Authorization": f"Bearer {admin_token}"})
+    response_to_cancel = client.patch(f"/admins/suspended_events/{new_event_id}?motive=seems fake", headers={"Authorization": f"Bearer {admin_token}"})
     
     assert response_to_cancel.status_code == status.HTTP_200_OK
     events_reports_response = client.get("/admins/reports/events", headers={"Authorization": f"Bearer {admin_token}"})

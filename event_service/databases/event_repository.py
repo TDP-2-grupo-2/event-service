@@ -73,6 +73,7 @@ def createEvent(owner_id: str, event: dict, db):
     event['tags'] = tagsToUpper
     event['eventType'] = event['eventType'].upper()
     event['status'] = "active"
+    event['suspendMotive'] = "None"
     new_event = db["events"].insert_one(event)
     event_created = db["events"].find_one(
             filter={"_id": new_event.inserted_id}, projection={'ownerId':0})
@@ -290,7 +291,7 @@ def validate_event_ticket(db, user_id: str, event_id: str, ticket_id: str):
     elif event['status'] == 'suspended':
         raise exceptions.EventIsSuspended
 
-def suspend_event(db, event_id: str):
+def suspend_event(db, event_id: str, motive: str):
     event = db["events"].find_one({"_id": ObjectId(event_id)})
     if event is None:
             raise exceptions.EventNotFound
@@ -302,7 +303,7 @@ def suspend_event(db, event_id: str):
     
     if event['status'] == 'active':
         db["events"].update_one(
-                {"_id": ObjectId(event_id)}, {"$set": {'status': 'suspended'}}
+                {"_id": ObjectId(event_id)}, {"$set": {'status': 'suspended', 'suspendMotive': motive}}
         )
 
     suspended_event = db["events"].find_one({"_id": ObjectId(event_id)})
@@ -337,7 +338,7 @@ def suspend_organizers_events_and_reservations(db, organizer_id):
     #print(events)
     reservations = []
     for event in events:
-        suspend_event(db, event['_id']["$oid"])
+        suspend_event(db, event['_id']["$oid"], "Organizador suspendido")
         reservation = get_reservations_for_event(db,  event['_id']["$oid"])
         for reserv in reservation:
              print(reserv)
