@@ -310,6 +310,17 @@ def suspend_event(db, event_id: str, motive: str):
     update_event_tickets_status(db, event_id, 'suspended')
     return json.loads(json_util.dumps(suspended_event))
 
+
+def unsuspend_event(db, event_id: str):
+    event = db["events"].find_one({"_id": ObjectId(event_id)})
+    if event is None:
+            raise exceptions.EventNotFound
+    db["events"].update_one(
+                {"_id": ObjectId(event_id)}, {"$set": {'status': 'active'}}
+        )
+    unsuspended_event = db["events"].find_one({"_id": ObjectId(event_id)})
+    return json.loads(json_util.dumps(unsuspended_event))
+
 def get_events_happening_tomorrow(events_db):
     today = datetime.date.today()
     tomorrows_date = (today + datetime.timedelta(days=1)).isoformat()
