@@ -21,6 +21,20 @@ async def login (adminLogin: users_schema.adminLogin):
         raise HTTPException(**error.__dict__)
 
 
+@admin_router.patch("/unsuspended_events/{event_id}", status_code=status.HTTP_200_OK)
+async def unsuspend_active_event(event_id: str,
+                                event_db: Session = Depends(events_database.get_mongo_db)
+                                ):
+    try:
+      
+        canceled_event = event_repository.unsuspend_event(event_db, event_id)
+        return {"message": canceled_event}
+
+    except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
+        raise HTTPException(**error.__dict__)
+
+
+
 @admin_router.patch("/suspended_events/{event_id}", status_code=status.HTTP_200_OK)
 async def cancel_active_event(rq:Request, event_id: str,
                                 motive: str, 

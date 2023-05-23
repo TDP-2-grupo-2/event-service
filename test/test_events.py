@@ -1087,3 +1087,27 @@ def test_When_two_users_resever_and_enevt_then_it_should_return_both_ids_when_ge
     print(data)
 
     assert len(data['message']) == 2
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_when_reserving_a_ticket_and_adds_calendar_then_it_should_do_it():
+    token = jwt_handler.create_access_token("1", 'organizer')
+    response = client.post("/organizers/active_events", json=json_programming_event, headers={"Authorization": f"Bearer {token}"})
+    data = response.json()
+    data = data['message']
+    user_id = login_user()
+    event_id = data['_id']['$oid']
+
+    response_to_reservation = client.post(f"/events/reservations/user/{user_id}/event/{event_id}")
+    assert response_to_reservation.status_code == status.HTTP_201_CREATED, response.text
+
+    info = response_to_reservation.json()
+    print(info)
+
+    response_to_add_calendar = client.patch(f"/events/reservations/event/{event_id}/calendar", headers={"Authorization": f"Bearer {user_id}"})
+    assert response_to_add_calendar.status_code == status.HTTP_200_OK
+
+    data = response_to_add_calendar.json()
+    data = data['message']
+    print(data)
+
+    assert data['calendar'] == True

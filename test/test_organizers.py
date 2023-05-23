@@ -715,3 +715,25 @@ def test_when_an_organizer_is_not_block_then_it_should_return_it_is_not_block():
     
     data = response.json()['message']
     assert data == False
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_when_an_event_is_supended_then_it_should_show_its_motive():
+    response = client.post("/organizers/loginGoogle", json={"email": "agustinasegura@gmail.com", "name": "Agustina Segura"})
+    token = response.json()
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = new_event.json()
+
+    response = client.post("/admins/login", json={"email":"admin@gmail.com", "password": "admintdp2"})
+    admin_token = response.json()["message"]
+ 
+    new_event_id = new_event['message']['_id']['$oid']
+    motive="SPAM"
+    response_to_suspend = client.patch(f"/admins/suspended_events/{new_event_id}?motive={motive}", headers={"Authorization": f"Bearer {admin_token}"})
+    assert response_to_suspend.status_code == status.HTTP_200_OK
+    suspended_events = client.get("/organizers/events", params={"status": "suspended"}, headers={"Authorization": f"Bearer {token}"})
+    assert suspended_events.status_code == status.HTTP_200_OK, suspended_events.text
+    
+    suspended_events = suspended_events.json()
+    suspended_events = suspended_events['message']
+    
+    assert suspended_events[0]['suspendMotive'] == motive

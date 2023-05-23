@@ -114,7 +114,7 @@ def get_events(db, name: Union[str, None] = None,
                 distances: Union[str, None] = None):
 
     set_finished_events(db)
-
+    
     pipeline = [{"$match": {"status": "active"}}, { "$project" : { "ownerId": 0}}]
     if (name is not None):
         pipeline.append({"$match": {"name": { "$regex": name, "$options":'i'} }})
@@ -183,6 +183,10 @@ def get_user_reservations(db, user_id: str):
         events.append(get_event_by_id(res["event_id"], db))
     return events 
 
+def add_calendar_to_reservation(event_id, user_id, db):
+    db["reservations"].update_one({"user_id": user_id, "event_id": event_id}, {"$set": {'calendar': True}})
+    ticket = db["reservations"].find_one({"user_id": user_id, "event_id": event_id})
+    return json.loads(json_util.dumps(ticket))
 
 def get_event_reservation(db, user_id: str, event_id: str):
     reservation = db["reservations"].find_one({"user_id": user_id, "event_id": event_id})
@@ -211,6 +215,7 @@ def reserve_event(db, event_id: str, user_id: str):
             "event_name": event['name'],
             "event_date": event['dateEvent'],
             "event_start_time": event['start'],
+            "calendar": False,
         }
 
         db["reservations"].insert_one(new_reservation)
@@ -309,6 +314,17 @@ def suspend_event(db, event_id: str, motive: str):
     suspended_event = db["events"].find_one({"_id": ObjectId(event_id)})
     update_event_tickets_status(db, event_id, 'suspended')
     return json.loads(json_util.dumps(suspended_event))
+
+
+def unsuspend_event(db, event_id: str):
+    event = db["events"].find_one({"_id": ObjectId(event_id)})
+    if event is None:
+            raise exceptions.EventNotFound
+    db["events"].update_one(
+                {"_id": ObjectId(event_id)}, {"$set": {'status': 'active'}}
+        )
+    unsuspended_event = db["events"].find_one({"_id": ObjectId(event_id)})
+    return json.loads(json_util.dumps(unsuspended_event))
 
 def get_events_happening_tomorrow(events_db):
     today = datetime.date.today()
