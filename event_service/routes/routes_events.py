@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from event_service.databases import event_repository, attende_repository
 from event_service.databases.event_schema import Event, Coordinates
-from event_service.utils import jwt_handler
+from event_service.utils import jwt_handler, authentification_handler
 from event_service.databases.events_database import get_mongo_db
 from event_service.databases.users_database import get_postg_db
 from event_service.exceptions import exceptions
@@ -48,6 +48,7 @@ async def get_events(name: Optional[str] = None,
     return {"message": events}
 
 
+
 @event_router.patch("/favourites/{event_id}/user/{token}", status_code=status.HTTP_200_OK)
 async def toggle_favourite(event_id: str,token: str, db=Depends(get_mongo_db),  user_db=Depends(get_postg_db)):
     try:
@@ -81,6 +82,18 @@ async def reserve_event(event_id: str,token: str, db=Depends(get_mongo_db), user
     except (exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__) 
 
+
+@event_router.patch("/reservations/event/{event_id}/calendar", status_code=status.HTTP_200_OK)
+async def add_calendar_to_reservation(rq: Request, event_id: str, db=Depends(get_mongo_db), user_db=Depends(get_postg_db)):
+    try:
+        authentification_handler.is_auth(rq.headers)
+        token = authentification_handler.get_token(rq.headers)
+        user_id = jwt_handler.decode_token(token)["id"]
+        attende_repository.verify_user_exists(user_id, user_db)
+        reservation = event_repository.add_calendar_to_reservation(event_id, user_id, db)
+        return {"message": reservation}
+    except (exceptions.EventInfoException) as error:
+        raise HTTPException(**error.__dict__) 
 
 @event_router.get("/reservations/user/{token}", status_code=status.HTTP_200_OK)
 async def get_user_reservations(token: str, db=Depends(get_mongo_db), user_db=Depends(get_postg_db)):
