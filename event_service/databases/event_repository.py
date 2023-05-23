@@ -114,7 +114,7 @@ def get_events(db, name: Union[str, None] = None,
                 distances: Union[str, None] = None):
 
     set_finished_events(db)
-
+    
     pipeline = [{"$match": {"status": "active"}}, { "$project" : { "ownerId": 0}}]
     if (name is not None):
         pipeline.append({"$match": {"name": { "$regex": name, "$options":'i'} }})
