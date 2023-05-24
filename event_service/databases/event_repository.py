@@ -180,7 +180,9 @@ def get_user_reservations(db, user_id: str):
     reservations = db["reservations"].find({"user_id": user_id})
     events = []
     for res in reservations:
-        events.append(get_event_by_id(res["event_id"], db))
+        event = get_event_by_id(res["event_id"], db)
+        event['calendar'] = res['calendar']
+        events.append(event)
     return events 
 
 def add_calendar_to_reservation(event_id, user_id, db):

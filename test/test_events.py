@@ -1111,3 +1111,11 @@ def test_when_reserving_a_ticket_and_adds_calendar_then_it_should_do_it():
     print(data)
 
     assert data['calendar'] == True
+
+    response_to_reservations = client.get(f"/events/reservations/user/{user_id}")
+    assert response_to_reservations.status_code == status.HTTP_200_OK, response_to_reservations.text
+    data = response_to_reservations.json()
+    data = data['message']
+
+    assert len(data) == 1
+    assert data[0]['calendar'] == True
