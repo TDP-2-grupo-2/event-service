@@ -275,6 +275,22 @@ def delete_all_data(db):
     db["favourites"].delete_many({})
     db["events_drafts"].delete_many({})
 
+
+def register_event_entry(db, user_id, event_id):
+    
+    event_entry = db['events_entries'].find_one({"event_id": event_id, "user_id": user_id})
+    if event_entry is not None:
+        return
+    
+    event_entry = {
+         "user_id": user_id,
+         "event_id": event_id,
+         "entry_timestamp": datetime.date.now().isoformat()
+    }
+
+    db["events_entries"].insert_one(event_entry)
+
+
 def validate_event_ticket(db, user_id: str, event_id: str, ticket_id: str):
          
     event = get_event_by_id(event_id, db)
@@ -286,6 +302,7 @@ def validate_event_ticket(db, user_id: str, event_id: str, ticket_id: str):
          raise exceptions.TicketIsNotValid
     
     if event['status'] == 'active' and event_ticket['status'] == 'to_be_used':
+        register_event_entry(db, user_id, event_id)
         return update_event_ticket_status(db, ticket_id, 'used')
         
     elif event['status'] == 'active' and event_ticket['status'] == 'used':  
