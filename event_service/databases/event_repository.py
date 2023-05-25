@@ -275,10 +275,15 @@ def delete_all_data(db):
     db["favourites"].delete_many({})
     db["events_drafts"].delete_many({})
 
+def get_event_registered_entries(event_db, event_id):
+    event_entries = event_db['events_entries'].find_one({"event_id": event_id})
+    event_entries = list(json.loads(json_util.dumps(event_entries)))
+    event_entries = sorted(event_entries, key=lambda x: x['entry_stamp'], reverse=False)
 
-def register_event_entry(db, user_id, event_id):
+
+def register_event_entry(event_db, user_id, event_id):
     
-    event_entry = db['events_entries'].find_one({"event_id": event_id, "user_id": user_id})
+    event_entry = event_db['events_entries'].find_one({"event_id": event_id, "user_id": user_id})
     if event_entry is not None:
         return
     
@@ -288,7 +293,7 @@ def register_event_entry(db, user_id, event_id):
          "entry_timestamp": datetime.date.now().isoformat()
     }
 
-    db["events_entries"].insert_one(event_entry)
+    event_db["events_entries"].insert_one(event_entry)
 
 
 def validate_event_ticket(db, user_id: str, event_id: str, ticket_id: str):

@@ -138,3 +138,14 @@ def isOrganizerBlocked(rq:Request, db: Session = Depends(users_database.get_post
     except (exceptions.UserInfoException) as error:
         raise HTTPException(**error.__dict__)
     
+
+@organizer_router.get("/events/{event_id}/entries", status_code=status.HTTP_200_OK)
+def get_event_registered_entries(rq: Request, event_id: str, user_db: Session=Depends(users_database.get_postg_db), event_db: Session= Depends(events_database.get_mongo_db)):
+    try:
+        authentification_handler.is_auth(rq.headers)
+        token = authentification_handler.get_token(rq.headers)
+        jwt_handler.decode_token(token)["id"]
+        entries = event_repository.get_event_registered_entries(event_db, event_id)
+        return {"message": entries}
+    except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
+        raise HTTPException(**error.__dict__)
