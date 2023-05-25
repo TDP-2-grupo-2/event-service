@@ -290,7 +290,7 @@ def register_event_entry(event_db, user_id, event_id):
     event_entry = {
          "user_id": user_id,
          "event_id": event_id,
-         "entry_timestamp": datetime.date.now().isoformat()
+         "entry_timestamp": datetime.now().isoformat()
     }
 
     event_db["events_entries"].insert_one(event_entry)
