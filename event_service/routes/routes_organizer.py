@@ -144,8 +144,8 @@ def get_event_registered_entries(rq: Request, event_id: str, user_db: Session=De
     try:
         authentification_handler.is_auth(rq.headers)
         token = authentification_handler.get_token(rq.headers)
-        jwt_handler.decode_token(token)["id"]
-        entries = event_repository.get_event_registered_entries(event_db, event_id)
+        organizer_id = jwt_handler.decode_token(token)["id"]
+        entries = event_repository.get_event_registered_entries(event_db, event_id, organizer_id)
         return {"message": entries}
     except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__)
