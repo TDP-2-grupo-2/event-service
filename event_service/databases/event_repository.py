@@ -312,10 +312,11 @@ def register_event_entry(event_db, user_id, event_id):
     event_entry = {
          "user_id": user_id,
          "event_id": event_id,
-         "entry_timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+         "entry_timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     }
 
     event_db["events_entries"].insert_one(event_entry)
+    
 
 
 def validate_event_ticket(db, user_id: str, event_id: str, ticket_id: str):
@@ -329,11 +330,11 @@ def validate_event_ticket(db, user_id: str, event_id: str, ticket_id: str):
          raise exceptions.TicketIsNotValid
     
     if event['status'] == 'active' and event_ticket['status'] == 'to_be_used':
-        register_event_entry(db, user_id, event_id)
+        register_event_entry(db, event_ticket['user_id'], event_id)
         return update_event_ticket_status(db, ticket_id, 'used')
         
     elif event['status'] == 'active' and event_ticket['status'] == 'used':  
-        # error
+        
         raise exceptions.TicketAlreadyUsed 
     elif event['status'] == 'canceled':
         raise exceptions.EventIsCanceled

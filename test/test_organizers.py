@@ -768,15 +768,22 @@ def test_whenGettingTheRegisteredEntriesOfAnEvent_TheEventHasOneRegisteredEntry_
     new_event = new_event.json()
     new_event_id = new_event['message']['_id']['$oid']
 
-    #register entry
+    
     new_event_id = new_event["message"]['_id']['$oid']
+
+    #register entry
     random_user = client.post("/attendees/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "Sol Fontenla"})
     random_user = random_user.json()
-    random_user_id = jwt_handler.decode_token(token)['id']
-
     response_to_reservation = client.post(f"/events/reservations/user/{random_user}/event/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
     response_to_reservation = response_to_reservation.json()
+    ticket_id = response_to_reservation["message"]['_id']['$oid']
+    client.patch(f"/organizers/events/{new_event_id}/ticket_validation/{ticket_id}", headers={"Authorization": f"Bearer {token}"})
 
+    #register entry
+    another_random_user = client.post("/attendees/loginGoogle", json={"email": "ramasanchez@gmail.com", "name": "Rama  Sanchez"})
+    another_random_user = another_random_user.json()
+    response_to_reservation = client.post(f"/events/reservations/user/{another_random_user}/event/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
+    response_to_reservation = response_to_reservation.json()
     ticket_id = response_to_reservation["message"]['_id']['$oid']
     client.patch(f"/organizers/events/{new_event_id}/ticket_validation/{ticket_id}", headers={"Authorization": f"Bearer {token}"})
 
@@ -787,10 +794,6 @@ def test_whenGettingTheRegisteredEntriesOfAnEvent_TheEventHasOneRegisteredEntry_
     entries = response.json()["message"]
     assert len(entries) == 1
     assert entries[0]['event_id'] == new_event_id
-    assert entries[0]['amount_of_entries'] == 1
-    print(entries)
-    entry_time = datetime.datetime.strptime(entries[0]['entry_timestamp'], "%Y-%m-%d %H:%M:%S")
-    now_time = datetime.datetime.now()
-    diff = now_time - entry_time
-    max_delta = datetime.timedelta(seconds=10)
-    assert diff < max_delta
+    assert entries[0]['amount_of_entries'] == 2
+    now_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    assert now_time == entries[0]['entry_timestamp'] 
