@@ -275,6 +275,49 @@ def delete_all_data(db):
     db["favourites"].delete_many({})
     db["events_drafts"].delete_many({})
 
+def is_event_owner(event_db, event_id, organizer_id):
+    event = event_db['events'].find_one({"_id": ObjectId(event_id), 'ownerId': organizer_id})
+    return (event is not None)
+
+def get_event_registered_entries(event_db, event_id, organizer_id):
+    if not is_event_owner(event_db, event_id, organizer_id):
+        raise exceptions.UnauthorizeUser
+    
+    pipeline = []
+    filter_event_id = {"$match": {"event_id": event_id}}
+    group_by_timestamp = {"$group": {
+                            "_id": {
+                                "entry_timestamp": "$entry_timestamp", 
+                                "event_id": "$event_id"
+                                },                     
+                            "amount_of_entries": {"$sum": 1}
+                        }}
+    projection = { "$project" : {"entry_timestamp": "$_id.entry_timestamp",  "event_id": "$_id.event_id", "_id": 0,  "amount_of_entries": 1}}
+    pipeline.append(filter_event_id)
+    pipeline.append(group_by_timestamp)
+    pipeline.append(projection)
+
+    event_entries = event_db['events_entries'].aggregate(pipeline)
+    event_entries = list(json.loads(json_util.dumps(event_entries)))
+    event_entries = sorted(event_entries, key=lambda x: x['entry_timestamp'], reverse=False)
+    return event_entries
+
+
+def register_event_entry(event_db, user_id, event_id):
+    
+    event_entry = event_db['events_entries'].find_one({"event_id": event_id, "user_id": user_id})
+    if event_entry is not None:
+        return
+    
+    event_entry = {
+         "user_id": user_id,
+         "event_id": event_id,
+         "entry_timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+    event_db["events_entries"].insert_one(event_entry)
+
+
 def validate_event_ticket(db, user_id: str, event_id: str, ticket_id: str):
          
     event = get_event_by_id(event_id, db)
@@ -286,6 +329,7 @@ def validate_event_ticket(db, user_id: str, event_id: str, ticket_id: str):
          raise exceptions.TicketIsNotValid
     
     if event['status'] == 'active' and event_ticket['status'] == 'to_be_used':
+        register_event_entry(db, user_id, event_id)
         return update_event_ticket_status(db, ticket_id, 'used')
         
     elif event['status'] == 'active' and event_ticket['status'] == 'used':  

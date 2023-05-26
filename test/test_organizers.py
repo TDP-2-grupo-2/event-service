@@ -1,3 +1,4 @@
+import datetime
 from bson import ObjectId
 from fastapi.testclient import TestClient
 from fastapi import status
@@ -575,7 +576,8 @@ def test_WhenValidatingATicketFromAnEventThatExists_TheTicketIsValidAndHasBeenUs
     assert validation_response.status_code == status.HTTP_409_CONFLICT, response.text
     validation_response = validation_response.json()
     assert validation_response["detail"] == "Este ticket ya fue utilizado"
-    
+   
+ 
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenValidatingATicketFromAnEventThatExists_TheEventHasAlreadyFinished_ItShouldReturnThatIsNotValid():
@@ -625,7 +627,6 @@ def test_WhenValidatingATicketFromAnEventThatExists_TheEventHasBeenCanceled_ItSh
     assert validation_response.status_code == status.HTTP_409_CONFLICT, response.text
     validation_response = validation_response.json()
     assert validation_response["detail"] == "Este evento fue cancelado"
-
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenValidatingATicketFromAnEventThatExists_TheEventHasBeenSuspended_ItShouldReturnThatIsNotValid():
@@ -683,11 +684,12 @@ def test_WhenGettingSuspendedEventsByOwner_TheOwnerHasOneSuspendedEvent_itShould
     assert len(suspended_events) == 1
     assert new_event_id == suspended_events[0]['_id']['$oid']
  
-
+ 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_WhenGettingSuspendedEventsByOwner_TheOwnerHasOneFromTwoSuspendedEvents_itShouldReturnTheEvent():
     response = client.post("/organizers/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "sol fontenla"})
     token = response.json()
+    print(token)
     new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
     new_event = client.post("/organizers/active_events", json=json_programming_event, headers={"Authorization": f"Bearer {token}"})
 
@@ -737,3 +739,58 @@ def test_when_an_event_is_supended_then_it_should_show_its_motive():
     suspended_events = suspended_events['message']
     
     assert suspended_events[0]['suspendMotive'] == motive
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_whenGettingTheRegisteredEntriesOfAnEvent_TheEventHasNoRegisteredEntriesYet_TheResultIsAnEmptyList():
+
+    #create event
+    response = client.post("/organizers/loginGoogle", json={"email": "agustinasegura@gmail.com", "name": "Agustina Segura"})
+    token = response.json()
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = new_event.json()
+    new_event_id = new_event['message']['_id']['$oid']
+
+    #get entries
+    response = client.get(f"/organizers/events/{new_event_id}/entries", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == status.HTTP_200_OK
+    entries = response.json()["message"]
+    assert entries == []
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_whenGettingTheRegisteredEntriesOfAnEvent_TheEventHasOneRegisteredEntry_TheResultIsOneEntry():
+
+    #create event
+    response = client.post("/organizers/loginGoogle", json={"email": "agustinasegura@gmail.com", "name": "Agustina Segura"})
+    token = response.json()
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = new_event.json()
+    new_event_id = new_event['message']['_id']['$oid']
+
+    #register entry
+    new_event_id = new_event["message"]['_id']['$oid']
+    random_user = client.post("/attendees/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "Sol Fontenla"})
+    random_user = random_user.json()
+    random_user_id = jwt_handler.decode_token(token)['id']
+
+    response_to_reservation = client.post(f"/events/reservations/user/{random_user}/event/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
+    response_to_reservation = response_to_reservation.json()
+
+    ticket_id = response_to_reservation["message"]['_id']['$oid']
+    client.patch(f"/organizers/events/{new_event_id}/ticket_validation/{ticket_id}", headers={"Authorization": f"Bearer {token}"})
+
+
+    #get entries
+    response = client.get(f"/organizers/events/{new_event_id}/entries", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == status.HTTP_200_OK
+    entries = response.json()["message"]
+    assert len(entries) == 1
+    assert entries[0]['event_id'] == new_event_id
+    assert entries[0]['amount_of_entries'] == 1
+    print(entries)
+    entry_time = datetime.datetime.strptime(entries[0]['entry_timestamp'], "%Y-%m-%d %H:%M:%S")
+    now_time = datetime.datetime.now()
+    diff = now_time - entry_time
+    max_delta = datetime.timedelta(seconds=10)
+    assert diff < max_delta

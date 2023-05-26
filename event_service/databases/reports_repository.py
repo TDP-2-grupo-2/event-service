@@ -67,12 +67,6 @@ def get_reporting_events(reports_db: Session, from_date: datetime.date = None, t
     reports = reports_db["event_reports"].aggregate(pipeline)
 
     reports = list(json.loads(json_util.dumps(reports)))
-    if len(reports) == 3:
-        print('reppppp', reports[0], len(reports))
-        print('reppppp', reports[1], len(reports))
-        print('reppppp', reports[2], len(reports))
-
-
     organizer_id = -1
     event_id = -1
 
@@ -153,14 +147,12 @@ def get_reporting_attendees(reports_db: Session, from_date: datetime.date = None
 
 
     for doc in reports:
-        print(doc)
         if doc['user_reporter_id'] != id:
             ids.append(doc['user_reporter_id'])
             id = doc['user_reporter_id']
 
 
     for user_id in ids:
-        print('isdds',ids)
         amount_reports_reason = 0
         amount_reports = 0
         doc_to_save = {}
