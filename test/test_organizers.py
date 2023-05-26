@@ -3,6 +3,7 @@ from bson import ObjectId
 from fastapi.testclient import TestClient
 from fastapi import status
 import pytest
+import pytz
 from test import config
 from event_service.app import app
 from event_service.utils import jwt_handler
@@ -11,6 +12,7 @@ session = config.init_postg_db(app)
 db = config.init_db()
 client = TestClient(app)
 reports_db = config.init_reports_db(app)
+timezone = pytz.timezone('America/Argentina/Buenos_Aires')
 
 json_programming_event = {
             "name": "Aprendé a programar en python!",  "ownerName": "Sol Fontenla",  "description": "Aprende a programar en python desde cero",
@@ -752,14 +754,57 @@ def test_whenGettingTheRegisteredEntriesOfAnEvent_TheEventHasNoRegisteredEntries
     new_event_id = new_event['message']['_id']['$oid']
 
     #get entries
-    response = client.get(f"/organizers/events/{new_event_id}/entries", headers={"Authorization": f"Bearer {token}"})
+    response = client.get(f"/organizers/events/{new_event_id}/statistics", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_200_OK
-    entries = response.json()["message"]
-    assert entries == []
+    statistics = response.json()["message"]
+    assert statistics['entries'] == []
+    assert statistics['capacity'] == 5000
+    assert statistics['attendance'] == 0
+    assert statistics['current_registered_attendance'] == 0
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_whenGettingTheRegisteredEntriesOfAnEvent_TheEventHasOneRegisteredEntry_TheResultIsOneEntry():
+
+    #create event
+    response = client.post("/organizers/loginGoogle", json={"email": "agustinasegura@gmail.com", "name": "Agustina Segura"})
+    token = response.json()
+    new_event = client.post("/organizers/active_events", json=json_rock_music_event, headers={"Authorization": f"Bearer {token}"})
+    new_event = new_event.json()
+    new_event_id = new_event['message']['_id']['$oid']
+
+    
+    new_event_id = new_event["message"]['_id']['$oid']
+
+    #register entry
+    random_user = client.post("/attendees/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "Sol Fontenla"})
+    random_user = random_user.json()
+    response_to_reservation = client.post(f"/events/reservations/user/{random_user}/event/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
+    response_to_reservation = response_to_reservation.json()
+    ticket_id = response_to_reservation["message"]['_id']['$oid']
+    client.patch(f"/organizers/events/{new_event_id}/ticket_validation/{ticket_id}", headers={"Authorization": f"Bearer {token}"})
+
+    #register entry
+    another_random_user = client.post("/attendees/loginGoogle", json={"email": "ramasanchez@gmail.com", "name": "Rama  Sanchez"})
+    another_random_user = another_random_user.json()
+    response_to_reservation = client.post(f"/events/reservations/user/{another_random_user}/event/{new_event_id}", headers={"Authorization": f"Bearer {token}"})
+    response_to_reservation = response_to_reservation.json()
+
+    #get entries
+    response = client.get(f"/organizers/events/{new_event_id}/statistics", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == status.HTTP_200_OK
+    statistics = response.json()["message"]
+    assert len(statistics['entries']) == 1
+    assert statistics['event_id'] == new_event_id
+    assert statistics['entries'][0]['amount_of_entries'] == 1
+    now_time = datetime.datetime.now(timezone).strftime("%Y-%m-%d %H:%M")
+    assert now_time == statistics['entries'][0]['entry_timestamp'] 
+    assert statistics['capacity'] == 5000
+    assert statistics['attendance'] == 2
+    assert statistics['current_registered_attendance'] == 1
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_whenGettingTheRegisteredEntriesOfAnEvent_TheEventHasTwoRegisteredEntriesInOneMinute_TheResultIsOneEntry():
 
     #create event
     response = client.post("/organizers/loginGoogle", json={"email": "agustinasegura@gmail.com", "name": "Agustina Segura"})
@@ -789,11 +834,14 @@ def test_whenGettingTheRegisteredEntriesOfAnEvent_TheEventHasOneRegisteredEntry_
 
 
     #get entries
-    response = client.get(f"/organizers/events/{new_event_id}/entries", headers={"Authorization": f"Bearer {token}"})
+    response = client.get(f"/organizers/events/{new_event_id}/statistics", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_200_OK
-    entries = response.json()["message"]
-    assert len(entries) == 1
-    assert entries[0]['event_id'] == new_event_id
-    assert entries[0]['amount_of_entries'] == 2
-    now_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-    assert now_time == entries[0]['entry_timestamp'] 
+    statistics = response.json()["message"]
+    assert len(statistics['entries']) == 1
+    assert statistics['event_id'] == new_event_id
+    assert statistics['entries'][0]['amount_of_entries'] == 2
+    now_time = datetime.datetime.now(timezone).strftime("%Y-%m-%d %H:%M")
+    assert now_time == statistics['entries'][0]['entry_timestamp'] 
+    assert statistics['capacity'] == 5000
+    assert statistics['attendance'] == 2
+    assert statistics['current_registered_attendance'] == 2
