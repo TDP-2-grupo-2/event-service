@@ -797,8 +797,9 @@ def test_whenGettingTheRegisteredEntriesOfAnEvent_TheEventHasOneRegisteredEntry_
     assert len(statistics['entries']) == 1
     assert statistics['event_id'] == new_event_id
     assert statistics['entries'][0]['amount_of_entries'] == 1
-    now_time = datetime.datetime.now(timezone).strftime("%Y-%m-%d %H:%M")
+    now_time = datetime.datetime.now(timezone).strftime("%Y-%m-%d %H")
     assert now_time == statistics['entries'][0]['entry_timestamp'] 
+    print(statistics['entries'][0]['entry_timestamp'] )
     assert statistics['capacity'] == 5000
     assert statistics['attendance'] == 2
     assert statistics['current_registered_attendance'] == 1
@@ -840,7 +841,7 @@ def test_whenGettingTheRegisteredEntriesOfAnEvent_TheEventHasTwoRegisteredEntrie
     assert len(statistics['entries']) == 1
     assert statistics['event_id'] == new_event_id
     assert statistics['entries'][0]['amount_of_entries'] == 2
-    now_time = datetime.datetime.now(timezone).strftime("%Y-%m-%d %H:%M")
+    now_time = datetime.datetime.now(timezone).strftime("%Y-%m-%d %H")
     assert now_time == statistics['entries'][0]['entry_timestamp'] 
     assert statistics['capacity'] == 5000
     assert statistics['attendance'] == 2

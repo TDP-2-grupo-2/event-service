@@ -326,7 +326,7 @@ def register_event_entry(event_db, user_id, event_id):
     event_entry = {
          "user_id": user_id,
          "event_id": event_id,
-         "entry_timestamp": datetime.datetime.now(timezone).strftime("%Y-%m-%d %H:%M")
+         "entry_timestamp": datetime.datetime.now(timezone).strftime("%Y-%m-%d %H")
     }
 
     event_db["events_entries"].insert_one(event_entry)
