@@ -1,6 +1,7 @@
 version: "3.9"
 
 services:
+
   event-service:
     build: . # subir nuestra imagen y usarla de docker hub
     env_file:
@@ -25,7 +26,7 @@ services:
     volumes:
       - users-postgres:/var/lib/postgresql/data
     restart: on-failure
-  
+
   mongo: 
     image: mongo:latest
     ports: 
@@ -37,6 +38,19 @@ services:
     volumes:
         - events-mongo:/data/db
     restart: on-failure
+  
+  mongo-express:
+    container_name: mongo-express
+    image: mongo-express:latest
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - ME_CONFIG_MONGODB_SERVER=mongo
+    depends_on:
+      - mongo
+    ports:
+      - "8081:8081"
+    restart: always
 
 volumes:
   users-postgres:

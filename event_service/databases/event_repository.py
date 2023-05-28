@@ -6,10 +6,12 @@ from bson.objectid import ObjectId
 from event_service.exceptions import exceptions
 from typing import Union, List
 from ..utils.distance_calculator import DistanceCalculator
+import pytz 
 
 ALPHA = 0.25
 
 distance_calculator = DistanceCalculator()
+timezone = pytz.timezone('America/Argentina/Buenos_Aires')
 
 def save_event_draft(event:dict, id:int, db):
     
@@ -275,24 +277,23 @@ def delete_all_data(db):
     db["favourites"].delete_many({})
     db["events_drafts"].delete_many({})
 
-def is_event_owner(event_db, event_id, organizer_id):
-    event = event_db['events'].find_one({"_id": ObjectId(event_id), 'ownerId': organizer_id})
-    return (event is not None)
+def get_event_statistics(event_db, event_id, organizer_id):
 
-def get_event_registered_entries(event_db, event_id, organizer_id):
-    if not is_event_owner(event_db, event_id, organizer_id):
+    event = get_event_by_id(event_id, event_db)
+    event_capacity = event['capacity']
+    event_attendance = event['attendance']
+    if event['ownerId'] != organizer_id:
         raise exceptions.UnauthorizeUser
-    
+         
     pipeline = []
     filter_event_id = {"$match": {"event_id": event_id}}
     group_by_timestamp = {"$group": {
                             "_id": {
-                                "entry_timestamp": "$entry_timestamp", 
-                                "event_id": "$event_id"
+                                "entry_timestamp": "$entry_timestamp"
                                 },                     
                             "amount_of_entries": {"$sum": 1}
                         }}
-    projection = { "$project" : {"entry_timestamp": "$_id.entry_timestamp",  "event_id": "$_id.event_id", "_id": 0,  "amount_of_entries": 1}}
+    projection = { "$project" : {"entry_timestamp": "$_id.entry_timestamp", "_id": 0,  "amount_of_entries": 1}}
     pipeline.append(filter_event_id)
     pipeline.append(group_by_timestamp)
     pipeline.append(projection)
@@ -300,7 +301,20 @@ def get_event_registered_entries(event_db, event_id, organizer_id):
     event_entries = event_db['events_entries'].aggregate(pipeline)
     event_entries = list(json.loads(json_util.dumps(event_entries)))
     event_entries = sorted(event_entries, key=lambda x: x['entry_timestamp'], reverse=False)
-    return event_entries
+    event_current_registered_attendance = 0
+
+    for registry in event_entries:
+        event_current_registered_attendance += registry['amount_of_entries']
+
+    statistics = {
+        'entries': event_entries,
+        'current_registered_attendance': event_current_registered_attendance,
+        'capacity': event_capacity,
+        'attendance': event_attendance,
+        'event_id': event_id
+    }
+    
+    return statistics
 
 
 def register_event_entry(event_db, user_id, event_id):
@@ -312,7 +326,7 @@ def register_event_entry(event_db, user_id, event_id):
     event_entry = {
          "user_id": user_id,
          "event_id": event_id,
-         "entry_timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+         "entry_timestamp": datetime.datetime.now(timezone).strftime("%Y-%m-%d %H")
     }
 
     event_db["events_entries"].insert_one(event_entry)
