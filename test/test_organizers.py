@@ -805,7 +805,7 @@ def test_whenGettingTheRegisteredEntriesOfAnEvent_TheEventHasOneRegisteredEntry_
     assert statistics['current_registered_attendance'] == 1
 
 @pytest.mark.usefixtures("drop_collection_documents")
-def test_whenGettingTheRegisteredEntriesOfAnEvent_TheEventHasTwoRegisteredEntriesInOneMinute_TheResultIsOneEntry():
+def test_whenGettingTheRegisteredEntriesOfAnEvent_TheEventHasTwoRegisteredEntriesInOneHour_TheResultIsOneEntry():
 
     #create event
     response = client.post("/organizers/loginGoogle", json={"email": "agustinasegura@gmail.com", "name": "Agustina Segura"})
@@ -846,3 +846,5 @@ def test_whenGettingTheRegisteredEntriesOfAnEvent_TheEventHasTwoRegisteredEntrie
     assert statistics['capacity'] == 5000
     assert statistics['attendance'] == 2
     assert statistics['current_registered_attendance'] == 2
+
+
