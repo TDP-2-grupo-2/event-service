@@ -277,14 +277,8 @@ def delete_all_data(db):
     db["favourites"].delete_many({})
     db["events_drafts"].delete_many({})
 
-def get_event_statistics(event_db, event_id, organizer_id):
+def get_event_registered_entries_per_timestamp(event_db, event_id):
 
-    event = get_event_by_id(event_id, event_db)
-    event_capacity = event['capacity']
-    event_attendance = event['attendance']
-    if event['ownerId'] != organizer_id:
-        raise exceptions.UnauthorizeUser
-         
     pipeline = []
     filter_event_id = {"$match": {"event_id": event_id}}
     group_by_timestamp = {"$group": {
@@ -301,20 +295,8 @@ def get_event_statistics(event_db, event_id, organizer_id):
     event_entries = event_db['events_entries'].aggregate(pipeline)
     event_entries = list(json.loads(json_util.dumps(event_entries)))
     event_entries = sorted(event_entries, key=lambda x: x['entry_timestamp'], reverse=False)
-    event_current_registered_attendance = 0
 
-    for registry in event_entries:
-        event_current_registered_attendance += registry['amount_of_entries']
-
-    statistics = {
-        'entries': event_entries,
-        'current_registered_attendance': event_current_registered_attendance,
-        'capacity': event_capacity,
-        'attendance': event_attendance,
-        'event_id': event_id
-    }
-    
-    return statistics
+    return event_entries
 
 
 def register_event_entry(event_db, user_id, event_id):

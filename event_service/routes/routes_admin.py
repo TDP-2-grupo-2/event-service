@@ -7,8 +7,10 @@ from event_service.databases import admin_repository, event_repository, events_d
 from event_service.exceptions import exceptions
 from sqlalchemy.orm import Session
 from event_service.utils import jwt_handler, authentification_handler
+from event_service.utils.events_statistics_handler import EventsStatisticsHandler
 
 admin_router = APIRouter()
+eventStatisticsHandler = EventsStatisticsHandler()
 
 @admin_router.post("/login", status_code=status.HTTP_200_OK)
 async def login (adminLogin: users_schema.adminLogin):
@@ -92,7 +94,7 @@ async def suspend_organizer(rq:Request, organizer_id: int, user_db: Session = De
         authentification_handler.is_auth(rq.headers)
         token = authentification_handler.get_token(rq.headers)
         decoded_token = jwt_handler.decode_token(token)
-        print(organizer_id)
+
         if decoded_token["rol"] != 'admin':
             raise exceptions.UnauthorizeUser
         isBlock = organizer_repository.suspend_organizer(user_db, organizer_id)
@@ -111,3 +113,21 @@ async def unsuspend_organizer(organizer_id: int, user_db: Session = Depends(user
     except (exceptions.UserInfoException) as error:
         raise HTTPException(**error.__dict__)
 
+
+@admin_router.get("/statistics/events/status", status_code=status.HTTP_200_OK)
+async def get_events_statistics(rq:Request, organizer_id: int, user_db: Session = Depends(users_database.get_postg_db),
+                             event_db: Session = Depends(events_database.get_mongo_db),
+                             reports_db: Session = Depends(reports_database.get_reports_db)):
+    try:
+        authentification_handler.is_auth(rq.headers)
+        token = authentification_handler.get_token(rq.headers)
+        decoded_token = jwt_handler.decode_token(token)
+
+        if decoded_token["rol"] != 'admin':
+            raise exceptions.UnauthorizeUser
+        
+        statistics = eventStatisticsHandler.get_events_status_statistics(event_db)
+
+        return {"message": statistics}
+    except (exceptions.UserInfoException) as error:
+        raise HTTPException(**error.__dict__)
