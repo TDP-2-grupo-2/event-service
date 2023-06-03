@@ -114,10 +114,9 @@ async def unsuspend_organizer(organizer_id: int, user_db: Session = Depends(user
         raise HTTPException(**error.__dict__)
 
 
-@admin_router.get("/statistics/events/status", status_code=status.HTTP_200_OK)
-async def get_events_statistics(rq:Request, organizer_id: int, user_db: Session = Depends(users_database.get_postg_db),
-                             event_db: Session = Depends(events_database.get_mongo_db),
-                             reports_db: Session = Depends(reports_database.get_reports_db)):
+@admin_router.get("/statistics/events/types", status_code=status.HTTP_200_OK)
+async def get_events_types_statistics(rq:Request, event_db: Session = Depends(events_database.get_mongo_db), 
+                                       from_date: datetime.date = None, to_date: datetime.date = None, ):
     try:
         authentification_handler.is_auth(rq.headers)
         token = authentification_handler.get_token(rq.headers)
@@ -126,7 +125,7 @@ async def get_events_statistics(rq:Request, organizer_id: int, user_db: Session 
         if decoded_token["rol"] != 'admin':
             raise exceptions.UnauthorizeUser
         
-        statistics = eventStatisticsHandler.get_events_status_statistics(event_db)
+        statistics = eventStatisticsHandler.get_events_types_statistics(event_db, from_date, to_date)
 
         return {"message": statistics}
     except (exceptions.UserInfoException) as error:

@@ -65,7 +65,9 @@ def remove_draft_event(db, event_id: str):
     db["events_drafts"].delete_one({"_id": ObjectId(event_id)})
 
 def createEvent(owner_id: str, event: dict, db):
-    if event.dateEvent < datetime.date.today():
+    today = datetime.date.today()
+
+    if event.dateEvent < today:
         raise exceptions.InvalidDate()
     event = jsonable_encoder(event)
     tagsToUpper = []
@@ -76,6 +78,8 @@ def createEvent(owner_id: str, event: dict, db):
     event['eventType'] = event['eventType'].upper()
     event['status'] = "active"
     event['suspendMotive'] = "None"
+    event["dateOfCreation"] = today.isoformat()
+
     new_event = db["events"].insert_one(event)
     event_created = db["events"].find_one(
             filter={"_id": new_event.inserted_id}, projection={'ownerId':0})
@@ -265,9 +269,7 @@ def get_events_by_owner_with_status(db, user_id: str, status: str = None):
     query = {"ownerId": user_id}
     if status is not None:
         query["status"] = status
-    print(query)
     events_by_owner = db['events'].find(query)
-    print(events_by_owner)
     return list(json.loads(json_util.dumps(events_by_owner)))
 
 
@@ -385,7 +387,6 @@ def get_attendess_by_event_reserved(db, event_id: str):
     attendes_ids = []
     reservations = get_reservations_for_event(db, event_id)
     for reservation in reservations:
-         print(reservation)
          attendes_ids.append(reservation['user_id'])
     
     return attendes_ids
@@ -393,14 +394,50 @@ def get_attendess_by_event_reserved(db, event_id: str):
 
 def suspend_organizers_events_and_reservations(db, organizer_id):
     events = get_events_by_owner_with_status(db, organizer_id, "active")
-    print("eventos q tengo")
-    #print(events)
     reservations = []
+
     for event in events:
         suspend_event(db, event['_id']["$oid"], "Organizador suspendido")
         reservation = get_reservations_for_event(db,  event['_id']["$oid"])
         for reserv in reservation:
-             print(reserv)
              reservations.append(reserv['_id']["$oid"])
        
     return reservations
+
+
+def get_events_statistics_by_event_type(events_db, from_date, to_date):
+    
+    pipeline = []
+
+    if from_date is not None:
+        from_date_formatted = from_date.isoformat()
+        pipeline.append({"$match": {"dateOfCreation": {"$gte": from_date_formatted}}})
+
+    if to_date is not None:
+        to_date_formatted = to_date.isoformat()
+        pipeline.append({"$match": {"dateOfCreation": {"$lte": to_date_formatted}}})
+    
+    group_by_event_type = {"$group": {
+                            "_id": {
+                                "type": "$eventType"
+                                },                     
+                            "amount_per_type": {"$sum": 1}
+                            }}
+    
+    projection = { "$project" : {"type": "$_id.type", "amount_per_type": 1, "_id": 0}}
+    sort = {"$sort": {"amount_per_type": 1}}
+
+    pipeline.append(group_by_event_type)
+    pipeline.append(projection)
+    pipeline.append(sort)
+    pipeline_result = events_db["events"].aggregate(pipeline)
+    return list(json.loads(json_util.dumps(pipeline_result)))
+
+
+    
+
+    
+
+
+    
+
