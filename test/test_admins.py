@@ -1,4 +1,5 @@
 import datetime
+from bson import ObjectId
 from fastapi.testclient import TestClient
 from fastapi import status
 from event_service.app import app
@@ -46,7 +47,7 @@ json_lollapalooza_first_date = {
 json_programming_event = {
             "name": "Aprendé a programar en python!",  "ownerName": "Sol Fontenla",  "description": "Aprende a programar en python desde cero",
             "location": "Av. Paseo Colón 850, C1063 CABA",
-            "locationDescription": "Facultad de Ingenieria - UBA", "capacity": 100, "dateEvent": "2023-08-07", "attendance": 0, "eventType": "TECNOLOGIA",
+            "locationDescription": "Facultad de Ingenieria - UBA", "capacity": 100, "dateEvent": "2023-08-07", "attendance": 0, "eventType": "OTRO",
             "tags": [ "PROGRAMACION", "APRENDIZAJE", ], "latitud": 8.9, "longitud": 6.8, "start": "21:00", "end": "22:30" }
 
 
@@ -919,7 +920,7 @@ def test_when_an_admin_is_trying_to_susped_an_organizer_then_it_should_suspend_t
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
-def test_WhenAnAdminGetsTheEventsTypesStatistics_ThereAreNoneEventsYet_ItShouldReturnCeroOfEachType():
+def test_WhenAnAdminGetsTheEventsTypesStatistics_ThereAreNoneEventsYet_ItShouldReturnZeroOfEachType():
     admin_token = admin_login()
 
     response = client.get("/admins/statistics/events/types", headers={"Authorization": f"Bearer {admin_token}"})
@@ -952,6 +953,46 @@ def test_WhenAnAdminGetsTheEventsTypesStatistics_ThereIsOneEvent_ItShouldReturnO
     assert event_types_statistics["CONCIERTO"] == 0
     assert event_types_statistics["OTRO"] == 0
 
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenAnAdminGetsTheEventsTypesStatisticsFilteringByDate_ThereAreNoEventsOnThatRange_ItShouldReturnZero():
+    organizer_token = login_organizer("solfontenla@gmail.com", "sol fontenla")
+    create_event(json_rock_music_event, organizer_token)
+
+    admin_token = admin_login()
+
+    response = client.get("/admins/statistics/events/types", params={"from_date": "2023-01-01", "to_date": "2023-03-02"}, headers={"Authorization": f"Bearer {admin_token}"})
+    assert response.status_code == status.HTTP_200_OK
+    event_types_statistics = response.json()["message"]
+
+    assert event_types_statistics["CONFERENCIA"] == 0
+    assert event_types_statistics["CINE"] == 0
+    assert event_types_statistics["TEATRO"] == 0
+    assert event_types_statistics["SHOW"] == 0
+    assert event_types_statistics["CONCIERTO"] == 0
+    assert event_types_statistics["OTRO"] == 0
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenAnAdminGetsTheEventsTypesStatisticsFilteringByDate_ThereAreTwoEventsButOnlyOneOnThatRange_ItShouldReturnOneShow():
+    organizer_token = login_organizer("solfontenla@gmail.com", "sol fontenla")
+    e = create_event(json_rock_music_event, organizer_token)
+    create_event(json_programming_event, organizer_token)
+
+    events_db['events'].update_one({'_id': ObjectId(e['_id']["$oid"])}, {"$set":{'dateOfCreation': "2023-01-05"}})
+
+    admin_token = admin_login()
+
+    response = client.get("/admins/statistics/events/types", params={"from_date": "2023-01-01", "to_date": "2023-03-02"}, headers={"Authorization": f"Bearer {admin_token}"})
+    assert response.status_code == status.HTTP_200_OK
+    event_types_statistics = response.json()["message"]
+
+    assert event_types_statistics["CONFERENCIA"] == 0
+    assert event_types_statistics["CINE"] == 0
+    assert event_types_statistics["TEATRO"] == 0
+    assert event_types_statistics["SHOW"] == 1
+    assert event_types_statistics["CONCIERTO"] == 0
+    assert event_types_statistics["OTRO"] == 0
 
 
 
