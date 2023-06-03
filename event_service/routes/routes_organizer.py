@@ -6,8 +6,10 @@ from sqlalchemy.orm import Session
 from event_service.utils import jwt_handler, authentification_handler
 from fastapi.encoders import jsonable_encoder
 from event_service.databases.event_schema import Event
+from event_service.utils.events_statistics_handler import EventsStatisticsHandler
 
 organizer_router = APIRouter()
+eventsStatisticsHandler = EventsStatisticsHandler()
 
 @organizer_router.post("/loginGoogle", status_code=status.HTTP_200_OK)
 async def login_google(
@@ -145,7 +147,7 @@ def get_event_registered_entries(rq: Request, event_id: str, user_db: Session=De
         authentification_handler.is_auth(rq.headers)
         token = authentification_handler.get_token(rq.headers)
         organizer_id = jwt_handler.decode_token(token)["id"]
-        entries = event_repository.get_event_statistics(event_db, event_id, organizer_id)
+        entries = eventsStatisticsHandler.get_event_registered_entries_statistics(event_db, event_id, organizer_id)
         return {"message": entries}
     except (exceptions.UserInfoException, exceptions.EventInfoException) as error:
         raise HTTPException(**error.__dict__)
