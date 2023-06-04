@@ -7,7 +7,7 @@ from event_service.databases import event_repository
 class EventsStatisticsHandler:
 
     event_types = ["CONFERENCIA", "TEATRO", "CINE", "SHOW", "CONCIERTO", "OTRO"]
-    event_status = {"suspended":"suspendido", "active": "activo", "cancelled": "cancelado", "finalized": "finalizado"}
+    event_status = {"suspended":"suspendido", "active": "activo", "canceled": "cancelado", "finalized": "finalizado"}
 
     def get_events_status_statistics(self, event_db, from_date, to_date):
         grouped_event_status = event_repository.get_events_statistics_by_event_status(event_db, from_date, to_date)
@@ -23,7 +23,7 @@ class EventsStatisticsHandler:
             event_status_statistics[event_status] = status_result["amount_per_status"]
 
         grouped_event_status_keys = event_status_statistics.keys()
-        
+
         for event_status_key in self.event_status.keys():
             if event_status_key not in grouped_event_status_keys:
                 event_status_statistics[self.event_status[event_status_key]] = 0
