@@ -405,7 +405,7 @@ def suspend_organizers_events_and_reservations(db, organizer_id):
     return reservations
 
 
-def get_events_statistics_by_event_type(events_db, from_date, to_date):
+def get_events_statistics_by_event_status(events_db, from_date, to_date):
     
     pipeline = []
 
@@ -417,17 +417,17 @@ def get_events_statistics_by_event_type(events_db, from_date, to_date):
         to_date_formatted = to_date.isoformat()
         pipeline.append({"$match": {"dateOfCreation": {"$lte": to_date_formatted}}})
     
-    group_by_event_type = {"$group": {
+    group_by_event_status = {"$group": {
                             "_id": {
-                                "type": "$eventType"
+                                "status": "$status"
                                 },                     
-                            "amount_per_type": {"$sum": 1}
+                            "amount_per_status": {"$sum": 1}
                             }}
     
-    projection = { "$project" : {"type": "$_id.type", "amount_per_type": 1, "_id": 0}}
-    sort = {"$sort": {"amount_per_type": 1}}
+    projection = { "$project" : {"status": "$_id.status", "amount_per_status": 1, "_id": 0}}
+    sort = {"$sort": {"amount_per_status": 1}}
 
-    pipeline.append(group_by_event_type)
+    pipeline.append(group_by_event_status)
     pipeline.append(projection)
     pipeline.append(sort)
     pipeline_result = events_db["events"].aggregate(pipeline)
