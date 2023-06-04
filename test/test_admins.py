@@ -927,12 +927,7 @@ def test_WhenAnAdminGetsTheEventsTypesStatistics_ThereAreNoneEventsYet_ItShouldR
     assert response.status_code == status.HTTP_200_OK
     event_types_statistics = response.json()["message"]
 
-    assert event_types_statistics["CONFERENCIA"] == 0
-    assert event_types_statistics["CINE"] == 0
-    assert event_types_statistics["TEATRO"] == 0
-    assert event_types_statistics["SHOW"] == 0
-    assert event_types_statistics["CONCIERTO"] == 0
-    assert event_types_statistics["OTRO"] == 0
+    assert event_types_statistics == {}
     
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -946,12 +941,10 @@ def test_WhenAnAdminGetsTheEventsTypesStatistics_ThereIsOneEvent_ItShouldReturnO
     assert response.status_code == status.HTTP_200_OK
     event_types_statistics = response.json()["message"]
 
-    assert event_types_statistics["CONFERENCIA"] == 0
-    assert event_types_statistics["CINE"] == 0
-    assert event_types_statistics["TEATRO"] == 0
-    assert event_types_statistics["SHOW"] == 1
-    assert event_types_statistics["CONCIERTO"] == 0
-    assert event_types_statistics["OTRO"] == 0
+    assert event_types_statistics["suspendido"] == 0
+    assert event_types_statistics["finalizado"] == 0
+    assert event_types_statistics["activo"] == 1
+    assert event_types_statistics["cancelado"] == 0
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -965,12 +958,7 @@ def test_WhenAnAdminGetsTheEventsTypesStatisticsFilteringByDate_ThereAreNoEvents
     assert response.status_code == status.HTTP_200_OK
     event_types_statistics = response.json()["message"]
 
-    assert event_types_statistics["CONFERENCIA"] == 0
-    assert event_types_statistics["CINE"] == 0
-    assert event_types_statistics["TEATRO"] == 0
-    assert event_types_statistics["SHOW"] == 0
-    assert event_types_statistics["CONCIERTO"] == 0
-    assert event_types_statistics["OTRO"] == 0
+    assert event_types_statistics == {}
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -987,12 +975,36 @@ def test_WhenAnAdminGetsTheEventsTypesStatisticsFilteringByDate_ThereAreTwoEvent
     assert response.status_code == status.HTTP_200_OK
     event_types_statistics = response.json()["message"]
 
-    assert event_types_statistics["CONFERENCIA"] == 0
-    assert event_types_statistics["CINE"] == 0
-    assert event_types_statistics["TEATRO"] == 0
-    assert event_types_statistics["SHOW"] == 1
-    assert event_types_statistics["CONCIERTO"] == 0
-    assert event_types_statistics["OTRO"] == 0
+    assert event_types_statistics["suspendido"] == 0
+    assert event_types_statistics["finalizado"] == 0
+    assert event_types_statistics["activo"] == 1
+    assert event_types_statistics["cancelado"] == 0
 
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_WhenAnAdminGetsTheEventsTypesStatisticsFilteringByDate_ThereAreManyEventsOnThatRange_ItShouldReturnTheCorrectShows():
+    organizer_token = login_organizer("solfontenla@gmail.com", "sol fontenla")
+    first_new_event =  create_event(json_rock_music_event, organizer_token)
+    first_new_event_id = first_new_event['_id']["$oid"]
+    second_new_event = create_event(json_programming_event, organizer_token)
+    second_new_event_id = second_new_event['_id']["$oid"]
+    third_new_event = create_event(json_lollapalooza_first_date, organizer_token)
+
+    today = datetime.date.today().isoformat()
+
+    admin_token = admin_login()
+
+    client.patch(f"/admins/suspended_events/{first_new_event_id}?motive=SPAM", headers={"Authorization": f"Bearer {admin_token}"})
+    client.patch(f"/organizers/canceled_events/{second_new_event_id}", headers={"Authorization": f"Bearer {organizer_token}"})
+
+    response = client.get("/admins/statistics/events/types", params={"from_date": "2023-01-01", "to_date": today}, headers={"Authorization": f"Bearer {admin_token}"})
+    assert response.status_code == status   .HTTP_200_OK
+    event_types_statistics = response.json()["message"]
+
+    assert event_types_statistics["suspendido"] == 1
+    assert event_types_statistics["finalizado"] == 0
+    assert event_types_statistics["activo"] == 1
+    assert event_types_statistics["cancelado"] == 1
 
 
