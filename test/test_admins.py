@@ -927,12 +927,7 @@ def test_WhenAnAdminGetsTheEventsTypesStatistics_ThereAreNoneEventsYet_ItShouldR
     assert response.status_code == status.HTTP_200_OK
     event_types_statistics = response.json()["message"]
 
-    assert event_types_statistics["CONFERENCIA"] == 0
-    assert event_types_statistics["CINE"] == 0
-    assert event_types_statistics["TEATRO"] == 0
-    assert event_types_statistics["SHOW"] == 0
-    assert event_types_statistics["CONCIERTO"] == 0
-    assert event_types_statistics["OTRO"] == 0
+    assert event_types_statistics == {}
     
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -946,12 +941,10 @@ def test_WhenAnAdminGetsTheEventsTypesStatistics_ThereIsOneEvent_ItShouldReturnO
     assert response.status_code == status.HTTP_200_OK
     event_types_statistics = response.json()["message"]
 
-    assert event_types_statistics["CONFERENCIA"] == 0
-    assert event_types_statistics["CINE"] == 0
-    assert event_types_statistics["TEATRO"] == 0
-    assert event_types_statistics["SHOW"] == 1
-    assert event_types_statistics["CONCIERTO"] == 0
-    assert event_types_statistics["OTRO"] == 0
+    assert event_types_statistics["suspendido"] == 0
+    assert event_types_statistics["finalizado"] == 0
+    assert event_types_statistics["activo"] == 1
+    assert event_types_statistics["cancelado"] == 0
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -965,12 +958,7 @@ def test_WhenAnAdminGetsTheEventsTypesStatisticsFilteringByDate_ThereAreNoEvents
     assert response.status_code == status.HTTP_200_OK
     event_types_statistics = response.json()["message"]
 
-    assert event_types_statistics["CONFERENCIA"] == 0
-    assert event_types_statistics["CINE"] == 0
-    assert event_types_statistics["TEATRO"] == 0
-    assert event_types_statistics["SHOW"] == 0
-    assert event_types_statistics["CONCIERTO"] == 0
-    assert event_types_statistics["OTRO"] == 0
+    assert event_types_statistics == {}
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -987,12 +975,9 @@ def test_WhenAnAdminGetsTheEventsTypesStatisticsFilteringByDate_ThereAreTwoEvent
     assert response.status_code == status.HTTP_200_OK
     event_types_statistics = response.json()["message"]
 
-    assert event_types_statistics["CONFERENCIA"] == 0
-    assert event_types_statistics["CINE"] == 0
-    assert event_types_statistics["TEATRO"] == 0
-    assert event_types_statistics["SHOW"] == 1
-    assert event_types_statistics["CONCIERTO"] == 0
-    assert event_types_statistics["OTRO"] == 0
-
+    assert event_types_statistics["suspendido"] == 0
+    assert event_types_statistics["finalizado"] == 0
+    assert event_types_statistics["activo"] == 1
+    assert event_types_statistics["cancelado"] == 0
 
 

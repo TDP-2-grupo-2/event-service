@@ -125,7 +125,7 @@ async def get_events_types_statistics(rq:Request, event_db: Session = Depends(ev
         if decoded_token["rol"] != 'admin':
             raise exceptions.UnauthorizeUser
         
-        statistics = eventStatisticsHandler.get_events_types_statistics(event_db, from_date, to_date)
+        statistics = eventStatisticsHandler.get_events_status_statistics(event_db, from_date, to_date)
 
         return {"message": statistics}
     except (exceptions.UserInfoException) as error:
