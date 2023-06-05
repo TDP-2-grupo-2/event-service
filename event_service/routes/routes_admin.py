@@ -130,3 +130,23 @@ async def get_events_types_statistics(rq:Request, event_db: Session = Depends(ev
         return {"message": statistics}
     except (exceptions.UserInfoException) as error:
         raise HTTPException(**error.__dict__)
+    
+
+
+
+@admin_router.get("/statistics/events/registered_entries", status_code=status.HTTP_200_OK)
+async def get_events_types_statistics(rq:Request, event_db: Session = Depends(events_database.get_mongo_db), 
+                                       from_date: datetime.date = None, to_date: datetime.date = None):
+    try:
+        authentification_handler.is_auth(rq.headers)
+        token = authentification_handler.get_token(rq.headers)
+        decoded_token = jwt_handler.decode_token(token)
+
+        if decoded_token["rol"] != 'admin':
+            raise exceptions.UnauthorizeUser
+        
+        statistics = eventStatisticsHandler.get_registered_entries_amount_per_event(event_db, from_date, to_date)
+
+        return {"message": statistics}
+    except (exceptions.UserInfoException) as error:
+        raise HTTPException(**error.__dict__)

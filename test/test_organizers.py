@@ -814,9 +814,6 @@ def test_whenGettingTheRegisteredEntriesOfAnEvent_TheEventHasTwoRegisteredEntrie
     new_event = new_event.json()
     new_event_id = new_event['message']['_id']['$oid']
 
-    
-    new_event_id = new_event["message"]['_id']['$oid']
-
     #register entry
     random_user = client.post("/attendees/loginGoogle", json={"email": "solfontenla@gmail.com", "name": "Sol Fontenla"})
     random_user = random_user.json()

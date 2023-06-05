@@ -6,6 +6,9 @@ from event_service.app import app
 import pytest
 from event_service.utils import jwt_handler
 from test import config
+import pytz
+timezone = pytz.timezone('America/Argentina/Buenos_Aires')
+
 
 session = config.init_postg_db(app)
 client = TestClient(app)
@@ -17,6 +20,7 @@ reports_db = config.init_reports_db(app)
 def drop_collection_documents():
     config.clear_db_draft_event_collection(events_db)
     config.clear_db_events_collection(events_db)
+    config.clear_db_events_entries(events_db)
     config.clear_db_reservations_collection(events_db)
     config.clear_db_events_reports_collection(reports_db)
     config.clear_postgres_db(session)
@@ -1007,4 +1011,50 @@ def test_WhenAnAdminGetsTheEventsTypesStatisticsFilteringByDate_ThereAreManyEven
     assert event_types_statistics["activo"] == 1
     assert event_types_statistics["cancelado"] == 1
 
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_whenGettingTheRegisteredEntriesStatistics_TheResultIsOneEvent():
 
+    #create events
+    organizer_token = login_organizer("solfontenla@gmail.com", "sol fontenla")
+    create_event(json_rock_music_event, organizer_token)
+    create_event(json_programming_event, organizer_token)
+    create_event(json_lollapalooza_first_date, organizer_token)
+
+    admin_token = admin_login()
+
+    #get entries
+    response = client.get(f"/admins/statistics/events/registered_entries", headers={"Authorization": f"Bearer {admin_token}"})
+    assert response.status_code == status.HTTP_200_OK
+    statistics = response.json()["message"]
+    print(statistics)
+    assert len(statistics) == 0
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_whenGettingTheRegisteredEntriesStatistics_TheResultIsOneEvent():
+
+    #create events
+    organizer_token = login_organizer("solfontenla@gmail.com", "sol fontenla")
+    first_event = create_event(json_rock_music_event, organizer_token)
+    first_event_id = first_event['_id']['$oid']
+    print('first_event_id', first_event_id)
+    create_event(json_programming_event, organizer_token)
+    create_event(json_lollapalooza_first_date, organizer_token)
+
+    admin_token = admin_login()
+
+    #validate one ticket
+    attendee_token = login_attendee("agustina@gmail.com", "agustina segura")
+    response_to_reservation = client.post(f"/events/reservations/user/{attendee_token}/event/{first_event_id}", headers={"Authorization": f"Bearer {attendee_token}"})
+    ticket_id = response_to_reservation.json()['message']['_id']['$oid']
+    client.patch(f"/organizers/events/{first_event_id}/ticket_validation/{ticket_id}", headers={"Authorization": f"Bearer {organizer_token}"})
+
+    #get entries
+    response = client.get(f"/admins/statistics/events/registered_entries", headers={"Authorization": f"Bearer {admin_token}"})
+    assert response.status_code == status.HTTP_200_OK
+    statistics = response.json()["message"]
+    print(statistics)
+    assert len(statistics) == 1
+    now_time = datetime.datetime.now(timezone).strftime("%Y-%m-%d %H")
+    assert len(statistics) == 1
+    assert statistics[0]['entry_timestamp'] == now_time
+    assert statistics[0]['amount_of_entries'] == 1
