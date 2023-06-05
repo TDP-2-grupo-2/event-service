@@ -58,4 +58,11 @@ class EventsStatisticsHandler:
         }
         
         return statistics
+    
+    def get_registered_entries_amount_per_event(self, event_db, from_date, to_date):
+            events = event_repository.get_registered_entries_amount_per_timestamp(event_db, from_date, to_date)
+            return events
+
+
+
 

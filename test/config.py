@@ -54,6 +54,8 @@ def init_reports_db(app):
     app.dependency_overrides[reports_database.get_reports_db] = override_get_db
     return db_test
 
+def clear_db_events_entries(db):
+    result = db["events_entries"].delete_many({})
 
 def clear_db_events_collection(db):
     result = db["events"].delete_many({})
