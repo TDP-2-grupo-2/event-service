@@ -280,31 +280,6 @@ def delete_all_data(db):
 
 
 
-def get_event_registered_entries_per_timestamp(event_db, event_id):
-
-    pipeline = []
-
-    if event_id is not None:
-        filter_event_id = {"$match": {"event_id": event_id}}
-        pipeline.append(filter_event_id)
-
-    group_by_timestamp = {"$group": {
-                            "_id": {
-                                "entry_timestamp": "$entry_timestamp"
-                                },                     
-                            "amount_of_entries": {"$sum": 1}
-                        }}
-    projection = { "$project" : {"entry_timestamp": "$_id.entry_timestamp", "_id": 0,  "amount_of_entries": 1}}
-    pipeline.append(group_by_timestamp)
-    pipeline.append(projection)
-
-    event_entries = event_db['events_entries'].aggregate(pipeline)
-    event_entries = list(json.loads(json_util.dumps(event_entries)))
-    event_entries = sorted(event_entries, key=lambda x: x['entry_timestamp'], reverse=False)
-
-    return event_entries
-
-
 def register_event_entry(event_db, user_id, event_id):
     
     event_entry = event_db['events_entries'].find_one({"event_id": event_id, "user_id": user_id})
@@ -412,58 +387,63 @@ def suspend_organizers_events_and_reservations(db, organizer_id):
 def get_events_statistics_by_event_status(events_db, from_date, to_date):
     
     pipeline = []
-
-    if from_date is not None:
-        from_date_formatted = from_date.isoformat()
-        pipeline.append({"$match": {"dateOfCreation": {"$gte": from_date_formatted}}})
-
-    if to_date is not None:
-        to_date_formatted = to_date.isoformat()
-        pipeline.append({"$match": {"dateOfCreation": {"$lte": to_date_formatted}}})
-    
-    group_by_event_status = {"$group": {
-                            "_id": {
-                                "status": "$status"
-                                },                     
-                            "amount_per_status": {"$sum": 1}
-                            }}
-    
-    projection = { "$project" : {"status": "$_id.status", "amount_per_status": 1, "_id": 0}}
+    add_filter_from_date(pipeline, from_date)
+    add_filter_to_date(pipeline, to_date)
+    count_amount_per_attribute(pipeline, "status", "amount_per_status")
+    project_amount_per_attribute(pipeline, "status", "amount_per_status")
     sort = {"$sort": {"amount_per_status": 1}}
-
-    pipeline.append(group_by_event_status)
-    pipeline.append(projection)
     pipeline.append(sort)
     pipeline_result = events_db["events"].aggregate(pipeline)
     return list(json.loads(json_util.dumps(pipeline_result)))
 
 
-
-def get_registered_entries_amount_per_timestamp(event_db, from_date, to_date):
-
-    pipeline = []
-
+def add_filter_from_date(pipeline, from_date):
     if from_date is not None:
         from_date_formatted = from_date.isoformat()
         pipeline.append({"$match": {"dateOfCreation": {"$gte": from_date_formatted}}})
 
+def add_filter_to_date(pipeline, to_date):
     if to_date is not None:
         to_date_formatted = to_date.isoformat()
         pipeline.append({"$match": {"dateOfCreation": {"$lte": to_date_formatted}}})
 
-    group_by_timestamp = {"$group": {
+def count_amount_per_attribute(pipeline, attribute: str, amount: str): 
+    group_by_attribute = {"$group": {
                             "_id": {
-                                "entry_timestamp": "$entry_timestamp"
+                                f"{attribute}": f"${attribute}"
                                 },                     
-                            "amount_of_entries": {"$sum": 1}
+                            f"{amount}": {"$sum": 1}
                         }}
-    projection = { "$project" : {"entry_timestamp": "$_id.entry_timestamp", "_id": 0,  "amount_of_entries": 1}}
-    pipeline.append(group_by_timestamp)
+    pipeline.append(group_by_attribute)
+
+def exec_pipeline(pipeline, event_db, collection: str):
+    result = event_db[collection].aggregate(pipeline)
+    result = list(json.loads(json_util.dumps(result)))
+    return result
+
+def project_amount_per_attribute(pipeline, attribute: str, amount: str):
+    projection = { "$project" : {f"{attribute}": f"$_id.{attribute}", "_id": 0,  f"{amount}": 1}}
     pipeline.append(projection)
 
-    event_entries = event_db['events_entries'].aggregate(pipeline)
-    event_entries = list(json.loads(json_util.dumps(event_entries)))
-    print (event_entries)
+def get_registered_entries_amount_per_timestamp(event_db, from_date, to_date):
+    pipeline = []
+    add_filter_from_date(pipeline, from_date)
+    add_filter_to_date(pipeline, to_date)
+    count_amount_per_attribute(pipeline, "entry_timestamp", "amount_of_entries") 
+    project_amount_per_attribute(pipeline, "entry_timestamp", "amount_of_entries")
+    event_entries = exec_pipeline(pipeline, event_db, "events_entries")
+    event_entries = sorted(event_entries, key=lambda x: x['entry_timestamp'], reverse=False)
+
+    return event_entries
+
+
+def get_event_registered_entries_per_timestamp(event_db, event_id):
+    pipeline = []
+    filter_event_id = {"$match": {"event_id": event_id}}
+    pipeline.append(filter_event_id)
+    count_amount_per_attribute(pipeline, "entry_timestamp", "amount_of_entries")
+    project_amount_per_attribute(pipeline, "entry_timestamp", "amount_of_entries")
+    event_entries = exec_pipeline(pipeline, event_db, "events_entries")
     event_entries = sorted(event_entries, key=lambda x: x['entry_timestamp'], reverse=False)
 
     return event_entries

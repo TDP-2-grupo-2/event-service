@@ -1012,7 +1012,7 @@ def test_WhenAnAdminGetsTheEventsTypesStatisticsFilteringByDate_ThereAreManyEven
     assert event_types_statistics["cancelado"] == 1
 
 @pytest.mark.usefixtures("drop_collection_documents")
-def test_whenGettingTheRegisteredEntriesStatistics_TheResultIsOneEvent():
+def test_whenGettingTheRegisteredEntriesStatistics_TheResultIsZeroEvents():
 
     #create events
     organizer_token = login_organizer("solfontenla@gmail.com", "sol fontenla")
@@ -1052,9 +1052,45 @@ def test_whenGettingTheRegisteredEntriesStatistics_TheResultIsOneEvent():
     response = client.get(f"/admins/statistics/events/registered_entries", headers={"Authorization": f"Bearer {admin_token}"})
     assert response.status_code == status.HTTP_200_OK
     statistics = response.json()["message"]
-    print(statistics)
     assert len(statistics) == 1
     now_time = datetime.datetime.now(timezone).strftime("%Y-%m-%d %H")
     assert len(statistics) == 1
     assert statistics[0]['entry_timestamp'] == now_time
     assert statistics[0]['amount_of_entries'] == 1
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_whenGettingTheRegisteredEntriesStatistics_TheResultIsTwoEvent():
+
+    #create events
+    organizer_token = login_organizer("solfontenla@gmail.com", "sol fontenla")
+    first_event = create_event(json_rock_music_event, organizer_token)
+    first_event_id = first_event['_id']['$oid']
+    second_event = create_event(json_programming_event, organizer_token)
+    second_event_id = second_event['_id']['$oid']
+    create_event(json_lollapalooza_first_date, organizer_token)
+
+    admin_token = admin_login()
+
+    #validate one ticket
+    attendee_token = login_attendee("agustina@gmail.com", "agustina segura")
+
+    first_response_to_reservation = client.post(f"/events/reservations/user/{attendee_token}/event/{first_event_id}", headers={"Authorization": f"Bearer {attendee_token}"})
+    first_ticket_id = first_response_to_reservation.json()['message']['_id']['$oid']
+    client.patch(f"/organizers/events/{first_event_id}/ticket_validation/{first_ticket_id}", headers={"Authorization": f"Bearer {organizer_token}"})
+
+
+    response_to_second_reservation = client.post(f"/events/reservations/user/{attendee_token}/event/{second_event_id}", headers={"Authorization": f"Bearer {attendee_token}"})
+    second_ticket_id = response_to_second_reservation.json()['message']['_id']['$oid']
+    client.patch(f"/organizers/events/{second_event_id}/ticket_validation/{second_ticket_id}", headers={"Authorization": f"Bearer {organizer_token}"})
+
+    #get entries
+    response = client.get(f"/admins/statistics/events/registered_entries", headers={"Authorization": f"Bearer {admin_token}"})
+    assert response.status_code == status.HTTP_200_OK
+    statistics = response.json()["message"]
+    print(statistics)
+    assert len(statistics) == 1
+    now_time = datetime.datetime.now(timezone).strftime("%Y-%m-%d %H")
+    assert len(statistics) == 1
+    assert statistics[0]['entry_timestamp'] == now_time
+    assert statistics[0]['amount_of_entries'] == 2
