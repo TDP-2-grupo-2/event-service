@@ -132,7 +132,19 @@ async def get_events_status_statistics(rq:Request, event_db: Session = Depends(e
         raise HTTPException(**error.__dict__)
     
 
+@admin_router.get("/statistics/events/top_organizers", status_code=status.HTTP_200_OK)
+async def get_organizers_statistics(rq:Request, event_db: Session = Depends(events_database.get_mongo_db)):
+    try:
+        authentification_handler.is_auth(rq.headers)
+        token = authentification_handler.get_token(rq.headers)
+        decoded_token = jwt_handler.decode_token(token)
 
+        if decoded_token["rol"] != 'admin':
+            raise exceptions.UnauthorizeUser
+        organizer_statitics = eventStatisticsHandler.get_top_organizers_statistics(event_db)
+        return {"message": organizer_statitics}
+    except (exceptions.UserInfoException) as error:
+        raise HTTPException(**error.__dict__)
 
 @admin_router.get("/statistics/events/registered_entries", status_code=status.HTTP_200_OK)
 async def get_events_types_statistics(rq:Request, event_db: Session = Depends(events_database.get_mongo_db), 
