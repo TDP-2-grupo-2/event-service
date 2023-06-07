@@ -12,4 +12,4 @@ firebase-admin==6.1.0
 python-jose==3.3.0
 pytz==2023.3
 pytz-deprecation-shim==0.1.0.post0
-numpy==1.24.3
+

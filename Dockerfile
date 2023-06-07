@@ -10,6 +10,7 @@ COPY ./requirements.txt ./
 # Install dependencies
 RUN /usr/local/bin/python -m pip install --upgrade pip 
 RUN pip install psycopg2-binary
+RUN pip install --extra-index-url https://alpine-wheels.github.io/index numpy
 RUN pip install -r requirements.txt
 
 # Create event_service dir
