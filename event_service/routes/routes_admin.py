@@ -114,8 +114,8 @@ async def unsuspend_organizer(organizer_id: int, user_db: Session = Depends(user
         raise HTTPException(**error.__dict__)
 
 
-@admin_router.get("/statistics/events/types", status_code=status.HTTP_200_OK)
-async def get_events_types_statistics(rq:Request, event_db: Session = Depends(events_database.get_mongo_db), 
+@admin_router.get("/statistics/events/status", status_code=status.HTTP_200_OK)
+async def get_events_status_statistics(rq:Request, event_db: Session = Depends(events_database.get_mongo_db), 
                                        from_date: datetime.date = None, to_date: datetime.date = None, ):
     try:
         authentification_handler.is_auth(rq.headers)
@@ -135,6 +135,7 @@ async def get_events_types_statistics(rq:Request, event_db: Session = Depends(ev
 
 
 @admin_router.get("/statistics/events/registered_entries", status_code=status.HTTP_200_OK)
+
 async def get_events_registered_entries_statistics(rq:Request, event_db: Session = Depends(events_database.get_mongo_db), 
                                        from_date: datetime.date = None, to_date: datetime.date = None, scale_type: str = "months"):
     try:
@@ -144,7 +145,7 @@ async def get_events_registered_entries_statistics(rq:Request, event_db: Session
 
         if decoded_token["rol"] != 'admin':
             raise exceptions.UnauthorizeUser
-        print('llega el scale type', scale_type)
+
         statistics = eventStatisticsHandler.get_registered_entries_amount_per_event(event_db, from_date, to_date, scale_type)
 
         return {"message": statistics}

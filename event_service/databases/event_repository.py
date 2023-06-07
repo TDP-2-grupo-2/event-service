@@ -433,7 +433,6 @@ def get_registered_entries_amount_per_timestamp(event_db, from_date, to_date):
     project_amount_per_attribute(pipeline, "entry_timestamp", "amount_of_entries")
     event_entries = exec_pipeline(pipeline, event_db, "events_entries")
     event_entries = sorted(event_entries, key=lambda x: x['entry_timestamp'], reverse=False)
-
     return event_entries
 
 
@@ -444,6 +443,6 @@ def get_event_registered_entries_per_timestamp(event_db, event_id):
     count_amount_per_attribute(pipeline, "entry_timestamp", "amount_of_entries")
     project_amount_per_attribute(pipeline, "entry_timestamp", "amount_of_entries")
     event_entries = exec_pipeline(pipeline, event_db, "events_entries")
-    event_entries = sorted(event_entries, key=lambda x: x['entry_timestamp'], reverse=False)
+    event_entries = sorted(event_entries, key=lambda x: x['entry_timestamp'], reverse=True)
 
     return event_entries
