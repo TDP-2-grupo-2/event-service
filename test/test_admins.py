@@ -1122,7 +1122,7 @@ def test_when_getting_top_5_organizers_then_it_should_return_it():
 
     second_response_to_reservation = client.post(f"/events/reservations/user/{attendee_token}/event/{event_3['_id']['$oid']}", headers={"Authorization": f"Bearer {attendee_token}"})
     second_ticket_id = second_response_to_reservation.json()['message']['_id']['$oid']
-    print(second_event)
+    
     aux = client.patch(f"/organizers/events/{event_3['_id']['$oid']}/ticket_validation/{second_ticket_id}", headers={"Authorization": f"Bearer {organizer_token_3}"})
 
     admin_token = admin_login()
