@@ -135,8 +135,9 @@ async def get_events_status_statistics(rq:Request, event_db: Session = Depends(e
 
 
 @admin_router.get("/statistics/events/registered_entries", status_code=status.HTTP_200_OK)
-async def get_events_types_statistics(rq:Request, event_db: Session = Depends(events_database.get_mongo_db), 
-                                       from_date: datetime.date = None, to_date: datetime.date = None, scale_type: str = None):
+
+async def get_events_registered_entries_statistics(rq:Request, event_db: Session = Depends(events_database.get_mongo_db), 
+                                       from_date: datetime.date = None, to_date: datetime.date = None, scale_type: str = "months"):
     try:
         authentification_handler.is_auth(rq.headers)
         token = authentification_handler.get_token(rq.headers)
@@ -144,7 +145,7 @@ async def get_events_types_statistics(rq:Request, event_db: Session = Depends(ev
 
         if decoded_token["rol"] != 'admin':
             raise exceptions.UnauthorizeUser
-        
+
         statistics = eventStatisticsHandler.get_registered_entries_amount_per_event(event_db, from_date, to_date, scale_type)
 
         return {"message": statistics}

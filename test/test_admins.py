@@ -1049,11 +1049,11 @@ def test_whenGettingTheRegisteredEntriesStatistics_TheResultIsOneEvent():
     client.patch(f"/organizers/events/{first_event_id}/ticket_validation/{ticket_id}", headers={"Authorization": f"Bearer {organizer_token}"})
 
     #get entries
-    response = client.get(f"/admins/statistics/events/registered_entries", headers={"Authorization": f"Bearer {admin_token}"})
+    response = client.get(f"/admins/statistics/events/registered_entries", params={"scale_type": "days"}, headers={"Authorization": f"Bearer {admin_token}"})
     assert response.status_code == status.HTTP_200_OK
     statistics = response.json()["message"]
     assert len(statistics) == 1
-    now_time = datetime.datetime.now(timezone).strftime("%Y-%m-%d %H")
+    now_time = datetime.datetime.now(timezone).strftime("%Y-%m-%d")
     assert len(statistics) == 1
     assert statistics[0]['entry_timestamp'] == now_time
     assert statistics[0]['amount_of_entries'] == 1
@@ -1085,12 +1085,12 @@ def test_whenGettingTheRegisteredEntriesStatistics_TheResultIsTwoEvent():
     client.patch(f"/organizers/events/{second_event_id}/ticket_validation/{second_ticket_id}", headers={"Authorization": f"Bearer {organizer_token}"})
 
     #get entries
-    response = client.get(f"/admins/statistics/events/registered_entries", headers={"Authorization": f"Bearer {admin_token}"})
+    response = client.get(f"/admins/statistics/events/registered_entries", params={"scale_type": "days"}, headers={"Authorization": f"Bearer {admin_token}"})
     assert response.status_code == status.HTTP_200_OK
     statistics = response.json()["message"]
-    print(statistics)
+    print('statssss', statistics)
     assert len(statistics) == 1
-    now_time = datetime.datetime.now(timezone).strftime("%Y-%m-%d %H")
+    now_time = datetime.datetime.now(timezone).strftime("%Y-%m-%d")
     assert len(statistics) == 1
     assert statistics[0]['entry_timestamp'] == now_time
     assert statistics[0]['amount_of_entries'] == 2
