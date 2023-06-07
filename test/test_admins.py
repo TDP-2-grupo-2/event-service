@@ -54,6 +54,10 @@ json_programming_event = {
             "locationDescription": "Facultad de Ingenieria - UBA", "capacity": 100, "dateEvent": "2023-08-07", "attendance": 0, "eventType": "OTRO",
             "tags": [ "PROGRAMACION", "APRENDIZAJE", ], "latitud": 8.9, "longitud": 6.8, "start": "21:00", "end": "22:30" }
 
+reggeaton_event ={  "name": "concierto de reggaton",  "ownerName": "roberto",  "description": "veni al concierto de reggeaton",
+            "location": "Av. Paseo Colón 850, C1063 CABA",
+            "locationDescription": "", "capacity": 10, "dateEvent": "2023-08-07", "attendance": 0, "eventType": "OTRO",
+            "tags": [ "COMEDIA", "FAMILIAR", "ENTRETENIMIENTO" ], "latitud": 8.9, "longitud": 6.8, "start": "21:00", "end": "22:30" }
 
 json_theatre_event = {
             "name": "Tootsie",  "ownerName": "Nico Vazquez",  "description": "La comedia del 2023",
@@ -68,6 +72,7 @@ def admin_login():
 
 def create_event(event_json, organizer_token):
     new_event = client.post("/organizers/active_events", json=event_json, headers={"Authorization": f"Bearer {organizer_token}"})
+
     return new_event.json()['message']
 
 def login_organizer(organizer_email, organizer_name):
@@ -1094,3 +1099,36 @@ def test_whenGettingTheRegisteredEntriesStatistics_TheResultIsTwoEvent():
     assert len(statistics) == 1
     assert statistics[0]['entry_timestamp'] == now_time
     assert statistics[0]['amount_of_entries'] == 2
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_when_getting_top_5_organizers_then_it_should_return_it():
+
+    organizer_token = login_organizer("solfontenla@gmail.com", "sol fontenla")
+    first_event = create_event(json_lollapalooza_first_date, organizer_token)
+    first_event_id = first_event['_id']['$oid']
+    second_event = create_event(json_programming_event, organizer_token)
+    second_event_id = second_event['_id']['$oid']
+    organizer_token_2 = login_organizer("asegura@gmail.com", "Agustina Segura")
+    
+    create_event(json_rock_music_event, organizer_token_2)
+    organizer_token_3 = login_organizer("roberto@gmail.com", "roberto")
+    event_3 = create_event(reggeaton_event, organizer_token_3)
+     #validate one ticket
+    attendee_token = login_attendee("agustina@gmail.com", "agustina segura")
+
+    first_response_to_reservation = client.post(f"/events/reservations/user/{attendee_token}/event/{first_event_id}", headers={"Authorization": f"Bearer {attendee_token}"})
+    first_ticket_id = first_response_to_reservation.json()['message']['_id']['$oid']
+    client.patch(f"/organizers/events/{first_event_id}/ticket_validation/{first_ticket_id}", headers={"Authorization": f"Bearer {organizer_token}"})
+
+    second_response_to_reservation = client.post(f"/events/reservations/user/{attendee_token}/event/{event_3['_id']['$oid']}", headers={"Authorization": f"Bearer {attendee_token}"})
+    second_ticket_id = second_response_to_reservation.json()['message']['_id']['$oid']
+    print(second_event)
+    aux = client.patch(f"/organizers/events/{event_3['_id']['$oid']}/ticket_validation/{second_ticket_id}", headers={"Authorization": f"Bearer {organizer_token_3}"})
+
+    admin_token = admin_login()
+    response = client.get(f"/admins/statistics/events/top_organizers", headers={"Authorization": f"Bearer {admin_token}"})
+    assert response.status_code == status.HTTP_200_OK
+    statistics = response.json()["message"]
+    print(statistics)
+    assert len(statistics) == 3
+    assert statistics[0]['ownerName'] == "roberto"
