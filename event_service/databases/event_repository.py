@@ -387,8 +387,8 @@ def suspend_organizers_events_and_reservations(db, organizer_id):
 def get_events_statistics_by_event_status(events_db, from_date, to_date):
     
     pipeline = []
-    add_filter_from_date(pipeline, from_date)
-    add_filter_to_date(pipeline, to_date)
+    add_date_filter(pipeline, from_date, "dateOfCreation", "$gte")
+    add_date_filter(pipeline, to_date, "dateOfCreation", "$lte")
     count_amount_per_attribute(pipeline, "status", "amount_per_status")
     project_amount_per_attribute(pipeline, "status", "amount_per_status")
     sort = {"$sort": {"amount_per_status": 1}}
@@ -397,15 +397,10 @@ def get_events_statistics_by_event_status(events_db, from_date, to_date):
     return list(json.loads(json_util.dumps(pipeline_result)))
 
 
-def add_filter_from_date(pipeline, from_date):
+def add_date_filter(pipeline, from_date, date_field: str, date_range: str):
     if from_date is not None:
         from_date_formatted = from_date.isoformat()
-        pipeline.append({"$match": {"dateOfCreation": {"$gte": from_date_formatted}}})
-
-def add_filter_to_date(pipeline, to_date):
-    if to_date is not None:
-        to_date_formatted = to_date.isoformat()
-        pipeline.append({"$match": {"dateOfCreation": {"$lte": to_date_formatted}}})
+        pipeline.append({"$match": {date_field: {date_range: from_date_formatted}}})
 
 def count_amount_per_attribute(pipeline, attribute: str, amount: str): 
     group_by_attribute = {"$group": {
@@ -428,8 +423,8 @@ def project_amount_per_attribute(pipeline, attribute: str, amount: str):
 
 def get_registered_entries_amount_per_timestamp(event_db, from_date, to_date):
     pipeline = []
-    add_filter_from_date(pipeline, from_date)
-    add_filter_to_date(pipeline, to_date)
+    add_date_filter(pipeline, from_date, "entry_timestamp", "$gte")
+    add_date_filter(pipeline, to_date, "entry_timestamp", "$lte")
     count_amount_per_attribute(pipeline, "entry_timestamp", "amount_of_entries") 
     project_amount_per_attribute(pipeline, "entry_timestamp", "amount_of_entries")
     event_entries = exec_pipeline(pipeline, event_db, "events_entries")
