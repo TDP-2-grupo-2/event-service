@@ -11,7 +11,8 @@ COPY ./requirements.txt ./
 RUN /usr/local/bin/python -m pip install --upgrade pip setuptools wheel
 RUN pip install psycopg2-binary
 
-RUN apk add --no-cache py3-numpy
+
+
 
 RUN pip install -r requirements.txt
 

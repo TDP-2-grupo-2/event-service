@@ -3,7 +3,7 @@ import datetime
 from typing import Optional
 from event_service.exceptions import exceptions
 from event_service.databases import event_repository
-from numpy import log as ln
+
 import math
 
 
@@ -119,7 +119,7 @@ class EventsStatisticsHandler:
 
                 relation_entries_capacity+= event_entries_amount/event['capacity']
             
-            coefficient = ((relation_entries_capacity*ln(orgaganizer_events['amount_of_events'] + 0.01))/(math.e))*100
+            coefficient = ((relation_entries_capacity*math.log(orgaganizer_events['amount_of_events'] + 0.01))/(math.e))*100
             
             
             top_organizers.append({'ownerName': orgaganizer_events['ownerName'], 'coeficient': coefficient})
