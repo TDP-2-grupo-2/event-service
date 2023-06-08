@@ -8,8 +8,12 @@ WORKDIR /app
 COPY ./requirements.txt ./
 
 # Install dependencies
-RUN /usr/local/bin/python -m pip install --upgrade pip 
+RUN /usr/local/bin/python -m pip install --upgrade pip setuptools wheel
 RUN pip install psycopg2-binary
+
+
+
+
 RUN pip install -r requirements.txt
 
 # Create event_service dir

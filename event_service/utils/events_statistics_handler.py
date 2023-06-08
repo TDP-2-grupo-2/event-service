@@ -4,6 +4,8 @@ from typing import Optional
 from event_service.exceptions import exceptions
 from event_service.databases import event_repository
 
+import math
+
 
 class EventsStatisticsHandler:
 
@@ -102,5 +104,27 @@ class EventsStatisticsHandler:
             return formatted_events
 
 
+    def get_top_organizers_statistics(self, event_db):
+        
+        top_organizers = []
+        group_organizer_by_event = event_repository.get_organizer_group_by_events(event_db)
+        for orgaganizer_events in group_organizer_by_event:
 
+            
+            coefficient = 0
+            relation_entries_capacity = 0
+            for event in orgaganizer_events['events']: 
+
+                event_entries_amount = event_repository.get_amount_of_event_registered_entries(event_db, event['eventId']['$oid'])
+
+                relation_entries_capacity+= event_entries_amount/event['capacity']
+            
+            coefficient = ((relation_entries_capacity*math.log(orgaganizer_events['amount_of_events'] + 0.01))/(math.e))*100
+            
+            
+            top_organizers.append({'ownerName': orgaganizer_events['ownerName'], 'coeficient': coefficient})
+
+        top_organizers = sorted(top_organizers, key=lambda d: d['coeficient'], reverse=True) 
+
+        return top_organizers[:5]
 

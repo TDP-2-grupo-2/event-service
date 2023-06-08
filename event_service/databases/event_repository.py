@@ -424,6 +424,7 @@ def exec_pipeline(pipeline, event_db, collection: str):
 def project_amount_per_attribute(pipeline, attribute: str, amount: str):
     projection = { "$project" : {f"{attribute}": f"$_id.{attribute}", "_id": 0,  f"{amount}": 1}}
     pipeline.append(projection)
+    
 
 def get_registered_entries_amount_per_timestamp(event_db, from_date, to_date):
     pipeline = []
@@ -434,6 +435,14 @@ def get_registered_entries_amount_per_timestamp(event_db, from_date, to_date):
     event_entries = exec_pipeline(pipeline, event_db, "events_entries")
     event_entries = sorted(event_entries, key=lambda x: x['entry_timestamp'], reverse=False)
     return event_entries
+
+def get_amount_of_event_registered_entries(event_db, event_id):
+     
+    pipeline = []
+    filter_event_id = {"$match": {"event_id": event_id}}
+    pipeline.append(filter_event_id)
+    event_entries = exec_pipeline(pipeline, event_db, "events_entries")
+    return len(event_entries)
 
 
 def get_event_registered_entries_per_timestamp(event_db, event_id):
@@ -446,3 +455,23 @@ def get_event_registered_entries_per_timestamp(event_db, event_id):
     event_entries = sorted(event_entries, key=lambda x: x['entry_timestamp'], reverse=True)
 
     return event_entries
+
+def get_organizer_group_by_events(db):
+    pipeline = []
+    group_by_organizer = {"$group": {
+                            "_id": {
+                                "ownerId": "$ownerId", 
+                                "ownerName": "$ownerName",
+                                },
+                            "events": { "$push":  { "eventId": "$_id", "capacity": "$capacity" } }  ,              
+                            "amount_of_events": {"$sum": 1}
+                        }}
+    project =  {"$project": { "_id": 0, "ownerId": "$_id.ownerId", "ownerName": "$_id.ownerName", "events": 1, "amount_of_events": 1} }
+    pipeline.append(group_by_organizer)
+    pipeline.append(project)
+    events_by_organizers = db["events"].aggregate(pipeline)
+
+    events = list(json.loads(json_util.dumps(events_by_organizers)))
+
+    return events
+    
