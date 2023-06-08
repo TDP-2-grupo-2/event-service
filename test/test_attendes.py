@@ -85,7 +85,6 @@ def test_whenAUserTriesToReportAnExistingEvent_theReportCanBeCompleted_theAppRet
     data = report_event_response.json()
     data = data['message']
     today = datetime.date.today().isoformat();
-    print(data)
     assert data['eventStatus'] == "active"
     assert data['event_id'] == report['event_id']
     assert data['event_name'] == json_rock_music_event["name"]
@@ -121,7 +120,6 @@ def test_whenAUserAlreadyReportedAnExistingEvent_theReportCannotBeCompleted_theA
     assert report_event_response.status_code == status.HTTP_409_CONFLICT, report_event_response.text
     reponse_text = report_event_response.json()
     reponse_text = reponse_text['detail']
-    print(reponse_text)
     assert reponse_text == "Ya has reportado este evento"
 
 

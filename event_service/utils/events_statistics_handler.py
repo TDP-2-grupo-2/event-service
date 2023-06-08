@@ -10,28 +10,31 @@ import math
 class EventsStatisticsHandler:
 
     event_types = ["CONFERENCIA", "TEATRO", "CINE", "SHOW", "CONCIERTO", "OTRO"]
-    event_status = {"suspended":"suspendido", "active": "activo", "canceled": "cancelado", "finalized": "finalizado"}
+    event_status = {"suspended":"suspendido", "active": "activo", "canceled": "cancelado", "finalized": "finalizado", "draft": "borrador"}
 
     def get_events_status_statistics(self, event_db, from_date, to_date):
-        grouped_event_status = event_repository.get_events_statistics_by_event_status(event_db, from_date, to_date)
+        grouped_published_events_status = event_repository.get_events_statistics_by_event_status(event_db, from_date, to_date)
         event_status_statistics = {}
 
-        if grouped_event_status == []:
+        if grouped_published_events_status == []:
             return event_status_statistics
         
-        for status_result in grouped_event_status:
+        for status_result in grouped_published_events_status:
             event_status = status_result["status"]
             event_status_statistics[event_status] = status_result["amount_per_status"]
 
         grouped_event_status_keys = event_status_statistics.keys()
 
+        # translation
         for event_status_key in self.event_status.keys():
-            if event_status_key not in grouped_event_status_keys:
-                event_status_statistics[self.event_status[event_status_key]] = 0
-            else:
+            event_status_statistics[self.event_status[event_status_key]] = 0
+            if event_status_key in grouped_event_status_keys:
                 event_status_statistics[self.event_status[event_status_key]] = event_status_statistics[event_status_key]
                 del event_status_statistics[event_status_key]
         
+        amount_draft_events = event_repository.get_amount_drafts_statistics(event_db, from_date, to_date)
+
+        event_status_statistics[self.event_status["draft"]] = amount_draft_events
 
         return event_status_statistics
 
@@ -63,7 +66,6 @@ class EventsStatisticsHandler:
     def change_registered_entries_scale(self, entries, previous_date_format:str, new_date_format: str):
         previous_date = 0
         dates = []
-        print('y el format', new_date_format)
         for entry in entries:
             actual_date = datetime.datetime.strptime(entry["entry_timestamp"], previous_date_format)
             entry_date = actual_date.strftime(new_date_format)
