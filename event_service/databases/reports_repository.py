@@ -15,7 +15,6 @@ def report_event(user_reporter_id: str, event_report: dict, reports_db: Session,
     existing_report = reports_db["event_reports"].find_one({"user_reporter_id": user_reporter_id, "event_id": event_report['event_id']})
     if existing_report is not None:
         raise exceptions.AlreadyReportedEvent
-    print(user_info)
     today = datetime.date.today().isoformat();
     event_report["event_name"] = reported_event["name"]
     event_report["event_description"] = reported_event["description"]
@@ -26,7 +25,6 @@ def report_event(user_reporter_id: str, event_report: dict, reports_db: Session,
     event_report["organizer_id"] = reported_event["ownerId"]
     event_report["organizer_name"] = reported_event["ownerName"]
     event_report["user_reporter_id"] = user_reporter_id
-    print(event_report["user_reporter_id"],  event_report["organizer_id"] )
 
     new_event_report = reports_db["event_reports"].insert_one(event_report)
     report_created = reports_db["event_reports"].find_one(filter={"_id": new_event_report.inserted_id}, projection={'organizer_id':0, 'user_reporter_id':0})
@@ -87,9 +85,7 @@ def get_reporting_events(reports_db: Session, from_date: datetime.date = None, t
     events_ids = list(dict.fromkeys(events_ids))
 
     for user_id in organizer_ids:
-        print('or ids', organizer_ids)
         for event_id in events_ids:
-            print('ev ids', events_ids)
             amount_reports_reason = 0
             amount_reports = 0
             doc_to_save = {}

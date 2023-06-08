@@ -1084,8 +1084,6 @@ def test_When_two_users_resever_and_enevt_then_it_should_return_both_ids_when_ge
 
     data = respondes_attendes_reservation.json()
 
-    print(data)
-
     assert len(data['message']) == 2
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -1101,14 +1099,12 @@ def test_when_reserving_a_ticket_and_adds_calendar_then_it_should_do_it():
     assert response_to_reservation.status_code == status.HTTP_201_CREATED, response.text
 
     info = response_to_reservation.json()
-    print(info)
 
     response_to_add_calendar = client.patch(f"/events/reservations/event/{event_id}/calendar", headers={"Authorization": f"Bearer {user_id}"})
     assert response_to_add_calendar.status_code == status.HTTP_200_OK
 
     data = response_to_add_calendar.json()
     data = data['message']
-    print(data)
 
     assert data['calendar'] == True
 

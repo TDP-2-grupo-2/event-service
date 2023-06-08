@@ -22,7 +22,6 @@ async def login_google(
             googleUser.name,
             db,
         )
-        print(user_created)
         token = jwt_handler.create_access_token(user_created.id, "organizer")
         return token
     except exceptions.UserInfoException as error:

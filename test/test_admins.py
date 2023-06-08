@@ -75,6 +75,11 @@ def create_event(event_json, organizer_token):
 
     return new_event.json()['message']
 
+def create_draft_event(event_json, organizer_token):
+    response = client.post("/organizers/draft_events", json=event_json, headers={"Authorization": f"Bearer {organizer_token}"})
+    return response.json()['message']
+
+
 def login_organizer(organizer_email, organizer_name):
     organizer = client.post("/organizers/loginGoogle", json={"email": organizer_email, "name": organizer_name})
     return organizer.json()
@@ -988,7 +993,7 @@ def test_WhenAnAdminGetsTheEventsTypesStatisticsFilteringByDate_ThereAreTwoEvent
     assert event_types_statistics["finalizado"] == 0
     assert event_types_statistics["activo"] == 1
     assert event_types_statistics["cancelado"] == 0
-
+    assert event_types_statistics["borrador"] == 0
 
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -998,7 +1003,8 @@ def test_WhenAnAdminGetsTheEventsTypesStatisticsFilteringByDate_ThereAreManyEven
     first_new_event_id = first_new_event['_id']["$oid"]
     second_new_event = create_event(json_programming_event, organizer_token)
     second_new_event_id = second_new_event['_id']["$oid"]
-    third_new_event = create_event(json_lollapalooza_first_date, organizer_token)
+    create_event(json_lollapalooza_first_date, organizer_token)
+    create_draft_event(json_theatre_event, organizer_token)
 
     today = datetime.date.today().isoformat()
 
@@ -1015,6 +1021,8 @@ def test_WhenAnAdminGetsTheEventsTypesStatisticsFilteringByDate_ThereAreManyEven
     assert event_types_statistics["finalizado"] == 0
     assert event_types_statistics["activo"] == 1
     assert event_types_statistics["cancelado"] == 1
+    assert event_types_statistics["borrador"] == 1
+
 
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_whenGettingTheRegisteredEntriesStatistics_TheResultIsZeroEvents():
@@ -1031,7 +1039,6 @@ def test_whenGettingTheRegisteredEntriesStatistics_TheResultIsZeroEvents():
     response = client.get(f"/admins/statistics/events/registered_entries", headers={"Authorization": f"Bearer {admin_token}"})
     assert response.status_code == status.HTTP_200_OK
     statistics = response.json()["message"]
-    print(statistics)
     assert len(statistics) == 0
 
 @pytest.mark.usefixtures("drop_collection_documents")
@@ -1041,7 +1048,6 @@ def test_whenGettingTheRegisteredEntriesStatistics_TheResultIsOneEvent():
     organizer_token = login_organizer("solfontenla@gmail.com", "sol fontenla")
     first_event = create_event(json_rock_music_event, organizer_token)
     first_event_id = first_event['_id']['$oid']
-    print('first_event_id', first_event_id)
     create_event(json_programming_event, organizer_token)
     create_event(json_lollapalooza_first_date, organizer_token)
 
@@ -1093,7 +1099,6 @@ def test_whenGettingTheRegisteredEntriesStatistics_TheResultIsTwoEvent():
     response = client.get(f"/admins/statistics/events/registered_entries", params={"scale_type": "days"}, headers={"Authorization": f"Bearer {admin_token}"})
     assert response.status_code == status.HTTP_200_OK
     statistics = response.json()["message"]
-    print('statssss', statistics)
     assert len(statistics) == 1
     now_time = datetime.datetime.now(timezone).strftime("%Y-%m-%d")
     assert len(statistics) == 1
@@ -1113,7 +1118,7 @@ def test_when_getting_top_5_organizers_then_it_should_return_it():
     create_event(json_rock_music_event, organizer_token_2)
     organizer_token_3 = login_organizer("roberto@gmail.com", "roberto")
     event_3 = create_event(reggeaton_event, organizer_token_3)
-     #validate one ticket
+    
     attendee_token = login_attendee("agustina@gmail.com", "agustina segura")
 
     first_response_to_reservation = client.post(f"/events/reservations/user/{attendee_token}/event/{first_event_id}", headers={"Authorization": f"Bearer {attendee_token}"})
@@ -1129,6 +1134,5 @@ def test_when_getting_top_5_organizers_then_it_should_return_it():
     response = client.get(f"/admins/statistics/events/top_organizers", headers={"Authorization": f"Bearer {admin_token}"})
     assert response.status_code == status.HTTP_200_OK
     statistics = response.json()["message"]
-    print(statistics)
     assert len(statistics) == 3
     assert statistics[0]['ownerName'] == "roberto"

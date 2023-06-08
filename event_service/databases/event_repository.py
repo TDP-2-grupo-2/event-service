@@ -19,6 +19,8 @@ def save_event_draft(event:dict, id:int, db):
     if event['eventType'] is not None :
         event['eventType'] = event['eventType'].upper()
     event['ownerId'] = id
+    today = datetime.date.today()
+    event["dateOfCreation"] = today.isoformat()
     new_event = db["events_drafts"].insert_one(event)
     event_created = db["events_drafts"].find_one(
             filter={"_id": new_event.inserted_id}, projection={'ownerId':0})
@@ -395,6 +397,15 @@ def get_events_statistics_by_event_status(events_db, from_date, to_date):
     pipeline.append(sort)
     pipeline_result = events_db["events"].aggregate(pipeline)
     return list(json.loads(json_util.dumps(pipeline_result)))
+
+def get_amount_drafts_statistics(events_db, from_date, to_date):
+    pipeline = []
+    add_date_filter(pipeline, from_date, "dateOfCreation", "$gte")
+    add_date_filter(pipeline, to_date, "dateOfCreation", "$lte")
+    pipeline_result = events_db["events_drafts"].aggregate(pipeline)
+    drafts = list(json.loads(json_util.dumps(pipeline_result)))
+    print('drafts que devuelve', drafts)
+    return len(drafts)
 
 
 def add_date_filter(pipeline, from_date, date_field: str, date_range: str):
