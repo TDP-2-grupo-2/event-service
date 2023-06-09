@@ -404,7 +404,6 @@ def get_amount_drafts_statistics(events_db, from_date, to_date):
     add_date_filter(pipeline, to_date, "dateOfCreation", "$lte")
     pipeline_result = events_db["events_drafts"].aggregate(pipeline)
     drafts = list(json.loads(json_util.dumps(pipeline_result)))
-    print('drafts que devuelve', drafts)
     return len(drafts)
 
 
@@ -430,6 +429,24 @@ def exec_pipeline(pipeline, event_db, collection: str):
 def project_amount_per_attribute(pipeline, attribute: str, amount: str):
     projection = { "$project" : {f"{attribute}": f"$_id.{attribute}", "_id": 0,  f"{amount}": 1}}
     pipeline.append(projection)
+
+def amount_events_per_timestamp(event_db, from_date, to_date, event_collection: str):
+    pipeline = []
+    add_date_filter(pipeline, from_date, "dateOfCreation", "$gte")
+    add_date_filter(pipeline, to_date, "dateOfCreation", "$lte")
+    count_amount_per_attribute(pipeline, "dateOfCreation", "amount_of_events") 
+    project_amount_per_attribute(pipeline, "dateOfCreation", "amount_of_events")
+    events = exec_pipeline(pipeline, event_db, event_collection)
+    events = sorted(events, key=lambda x: x['dateOfCreation'], reverse=False)
+    return events
+     
+    
+def get_events_amount_per_timestamp(event_db, from_date, to_date):
+    return amount_events_per_timestamp(event_db, from_date, to_date, "events")
+
+
+def get_events_drafts_amount_per_timestamp(event_db, from_date, to_date):
+    return amount_events_per_timestamp(event_db, from_date, to_date, "events_drafts")
     
 
 def get_registered_entries_amount_per_timestamp(event_db, from_date, to_date):
