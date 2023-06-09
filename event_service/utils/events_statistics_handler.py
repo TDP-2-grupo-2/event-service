@@ -63,11 +63,11 @@ class EventsStatisticsHandler:
         
         return statistics
 
-    def change_registered_entries_scale(self, entries, previous_date_format:str, new_date_format: str):
+    def change_registered_entries_scale(self, entries, previous_date_format:str, new_date_format: str, date_field: str, count_field: str):
         previous_date = 0
         dates = []
         for entry in entries:
-            actual_date = datetime.datetime.strptime(entry["entry_timestamp"], previous_date_format)
+            actual_date = datetime.datetime.strptime(entry[date_field], previous_date_format)
             entry_date = actual_date.strftime(new_date_format)
             if previous_date != entry_date:
                 dates.append(entry_date)
@@ -77,31 +77,78 @@ class EventsStatisticsHandler:
 
         for date in dates:
             date_document = {
-                "entry_timestamp": date,
-                "amount_of_entries": 0
+                date_field: date,
+                count_field: 0
             }
 
             for entry in entries:
-                actual_date = datetime.datetime.strptime(entry["entry_timestamp"], previous_date_format)
+                actual_date = datetime.datetime.strptime(entry[date_field], previous_date_format)
                 entry_date = actual_date.strftime(new_date_format)
 
                 if date == entry_date:    
-                    date_document["amount_of_entries"] += entry["amount_of_entries"]
+                    date_document[count_field] += entry[count_field]
 
             formatted_events.append(date_document)
 
         return formatted_events
+    
+    def merge_grouped_events_by_timestamp(self, draft_events, published_events):
+
+        j = 0
+        i = 0
+        amount_drafts = len(draft_events)
+        amount_published = len(published_events)
+        merged = []
+        print(published_events)
+        while i < amount_drafts and j < amount_published:
+            if draft_events[i]["dateOfCreation"] == published_events[j]["dateOfCreation"]:
+                amount_events = draft_events[i]["amount_of_events"] +  published_events[j]["amount_of_events"]
+                merged.append({"dateOfCreation": draft_events[i]["dateOfCreation"], "amount_of_events": amount_events})
+                i += 1
+                j += 1
+
+            elif datetime.fromtimestamp(draft_events[i]["dateOfCreation"]) < datetime.fromtimestamp(published_events[j]["amount_of_events"]):
+                merged.append({"dateOfCreation": draft_events[i]["dateOfCreation"], "amount_of_events": draft_events[i]["amount_of_events"]})
+                i += 1
+
+            else:
+                merged.append({"dateOfCreation": published_events[i]["amount_of_events"], "amount_of_events": published_events[i]["amount_of_events"]})
+                j += 1
+
+
+        while i < amount_drafts:
+            merged.append({"dateOfCreation": draft_events[i]["dateOfCreation"], "amount_of_events": draft_events[i]["amount_of_events"]})
+            i += 1
+
+
+        while j < amount_published:
+            merged.append({"dateOfCreation": published_events[i]["dateOfCreation"], "amount_of_events": published_events[i]["amount_of_events"]})
+            j += 1
+
+        print(merged)
+
+        return merged
+
+
+    def get_amount_events_per_timestamp(self, event_db, from_date, to_date):
+            draft_events = event_repository.get_events_drafts_amount_per_timestamp(event_db, from_date, to_date)
+            published_events = event_repository.get_events_amount_per_timestamp(event_db, from_date, to_date)
+            formatted_draft_events = self.change_registered_entries_scale(draft_events, "%Y-%m-%d", "%Y-%m", "dateOfCreation", "amount_of_events")
+            formatted_published_events = self.change_registered_entries_scale(published_events, "%Y-%m-%d", "%Y-%m", "dateOfCreation", "amount_of_events")
+            merged_events_results = self.merge_grouped_events_by_timestamp(formatted_draft_events, formatted_published_events)
+            return merged_events_results
+
 
     def get_registered_entries_amount_per_event(self, event_db, from_date, to_date, scale_type):
             events = event_repository.get_registered_entries_amount_per_timestamp(event_db, from_date, to_date)
             if scale_type == "years":
-                formatted_events = self.change_registered_entries_scale(events, "%Y-%m-%d %H", "%Y")
+                formatted_events = self.change_registered_entries_scale(events, "%Y-%m-%d %H", "%Y", "entry_timestamp", "amount_of_entries")
                 return formatted_events
             if scale_type == "months":
-                formatted_events = self.change_registered_entries_scale(events, "%Y-%m-%d %H", "%Y-%m")
+                formatted_events = self.change_registered_entries_scale(events, "%Y-%m-%d %H", "%Y-%m", "entry_timestamp", "amount_of_entries")
                 return formatted_events
             if scale_type == "days":
-                formatted_events = self.change_registered_entries_scale(events, "%Y-%m-%d %H", "%Y-%m-%d")
+                formatted_events = self.change_registered_entries_scale(events, "%Y-%m-%d %H", "%Y-%m-%d", "entry_timestamp", "amount_of_entries")
                 return formatted_events
             return formatted_events
 
@@ -129,4 +176,6 @@ class EventsStatisticsHandler:
         top_organizers = sorted(top_organizers, key=lambda d: d['coeficient'], reverse=True) 
 
         return top_organizers[:5]
+    
+
 
