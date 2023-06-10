@@ -1168,3 +1168,13 @@ def test_when_getting_report_metrics_by_motive_then_it_should_return_it():
     response = client.get(f"/admins/statistics/reports/type_of_reports", headers={"Authorization": f"Bearer {admin_token}"})
     assert response.status_code == status.HTTP_200_OK
     statistics = response.json()["message"]
+    print(statistics)
+    assert statistics[0]['motive'] == "spam"
+    assert statistics[0]['principal_type_of_event'] == "SHOW"
+    assert statistics[0]['amount_of_report_by_type_of_event'] == 3
+    assert statistics[0]['amount_of_total_report_by_motive'] == 5
+    assert statistics[1]['motive'] == "seems fake"
+    assert statistics[1]['principal_type_of_event'] == "OTRO"
+    assert statistics[1]['amount_of_total_report_by_motive'] == 2
+    assert statistics[1]['amount_of_report_by_type_of_event'] == 1
+    print(statistics)

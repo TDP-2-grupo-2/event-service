@@ -194,15 +194,17 @@ def get_reported_events_group_by_motive(reports_db, from_date, to_date):
     group_by_motive = {"$group": {
                             "_id": {
                                 "reason": "$reason",
-                                "event_type": "$event_type"
-                                },                  
+                                },
+                            "event_types_by_reason": {"$push": "$event_type"},                  
                             "amount_of_reports_per_reason_by_type": {"$sum": 1}
                         }}
-    final_projection = { "$project" : {"reason": "$_id.reason", "event_type": "$_id.event_type", "_id": 0,  "amount_of_reports_per_reason_by_type": 1}}
     
+
+    final_projection = { "$project" : {"reason": "$_id.reason", "event_types_by_reason": 1, "_id": 0,  "amount_of_reports_per_reason_by_type": 1}}
+    sort = {"$sort": {"amount_of_reports_per_reason_by_type": -1}}
     pipeline.append(group_by_motive)
     pipeline.append(final_projection)
-    pipeline.append({"$sort": {"user_reporter_id": 1}})
+    pipeline.append(sort)
     reports = reports_db["event_reports"].aggregate(pipeline)
     reports = list(json.loads(json_util.dumps(reports)))
     return reports
