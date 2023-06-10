@@ -112,7 +112,7 @@ class EventsStatisticsHandler:
                 i += 1
 
             else:
-                merged.append({"dateOfCreation": published_events[i]["amount_of_events"], "amount_of_events": published_events[i]["amount_of_events"]})
+                merged.append({"dateOfCreation": published_events[j]["amount_of_events"], "amount_of_events": published_events[j]["amount_of_events"]})
                 j += 1
 
 
@@ -122,7 +122,7 @@ class EventsStatisticsHandler:
 
 
         while j < amount_published:
-            merged.append({"dateOfCreation": published_events[i]["dateOfCreation"], "amount_of_events": published_events[i]["amount_of_events"]})
+            merged.append({"dateOfCreation": published_events[j]["dateOfCreation"], "amount_of_events": published_events[j]["amount_of_events"]})
             j += 1
 
         print(merged)
