@@ -1101,7 +1101,6 @@ def test_whenGettingTheRegisteredEntriesStatistics_TheResultIsTwoEvent():
     statistics = response.json()["message"]
     assert len(statistics) == 1
     now_time = datetime.datetime.now(timezone).strftime("%Y-%m-%d")
-    assert len(statistics) == 1
     assert statistics[0]['entry_timestamp'] == now_time
     assert statistics[0]['amount_of_entries'] == 2
 
@@ -1178,3 +1177,91 @@ def test_when_getting_report_metrics_by_motive_then_it_should_return_it():
     assert statistics[1]['amount_of_total_report_by_motive'] == 2
     assert statistics[1]['amount_of_report_by_type_of_event'] == 1
     print(statistics)
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_whenGettingTheEventsStatistics_TheResultIsOneEvents():
+
+    #create events
+    organizer_token = login_organizer("solfontenla@gmail.com", "sol fontenla")
+    create_event(json_rock_music_event, organizer_token)
+    create_event(json_programming_event, organizer_token)
+    create_event(json_lollapalooza_first_date, organizer_token)
+
+    admin_token = admin_login()
+
+    #get events
+    response = client.get(f"/admins/statistics/events/amount", headers={"Authorization": f"Bearer {admin_token}"})
+    assert response.status_code == status.HTTP_200_OK
+    statistics = response.json()["message"]
+    assert len(statistics) == 1
+    now_time = datetime.datetime.now(timezone).strftime("%Y-%m")
+    assert statistics[0]['dateOfCreation'] == now_time
+    assert statistics[0]['amount_of_events'] == 3
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_whenGettingTheEventsStatisticsByCertainDateRange_TheResultIsTwoEvents():
+
+    #create events
+    organizer_token = login_organizer("solfontenla@gmail.com", "sol fontenla")
+    event = create_event(json_rock_music_event, organizer_token)
+    create_event(json_programming_event, organizer_token)
+    create_event(json_lollapalooza_first_date, organizer_token)
+    events_db['events'].update_one({'_id': ObjectId(event['_id']["$oid"])}, {"$set":{'dateOfCreation': "2023-01-05"}})
+
+
+    admin_token = admin_login()
+    today = datetime.date.today().isoformat()
+
+    #get events
+    response = client.get(f"/admins/statistics/events/amount", params={"from_date": "2023-05-01", "to_date": today}, headers={"Authorization": f"Bearer {admin_token}"})
+    assert response.status_code == status.HTTP_200_OK
+    statistics = response.json()["message"]
+    assert len(statistics) == 1
+    now_time = datetime.datetime.now(timezone).strftime("%Y-%m")
+    assert statistics[0]['dateOfCreation'] == now_time
+    assert statistics[0]['amount_of_events'] == 2
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_whenGettingTheEventsStatisticsByCertainDateRange_TheResultIsThreeEvents():
+
+    #create events
+    organizer_token = login_organizer("solfontenla@gmail.com", "sol fontenla")
+    create_event(json_rock_music_event, organizer_token)
+    create_event(json_programming_event, organizer_token)
+    create_draft_event(json_theatre_event, organizer_token)
+
+
+    admin_token = admin_login()
+    today = datetime.date.today().isoformat()
+
+    #get events
+    response = client.get(f"/admins/statistics/events/amount", params={"from_date": "2023-05-01", "to_date": today}, headers={"Authorization": f"Bearer {admin_token}"})
+    assert response.status_code == status.HTTP_200_OK
+    statistics = response.json()["message"]
+    assert len(statistics) == 1
+    now_time = datetime.datetime.now(timezone).strftime("%Y-%m")
+    assert statistics[0]['dateOfCreation'] == now_time
+    assert statistics[0]['amount_of_events'] == 3
+
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_whenGettingTheEventsStatisticsByCertainDateRange_TheResultIsZeroEvents():
+
+    #create events
+    organizer_token = login_organizer("solfontenla@gmail.com", "sol fontenla")
+    event = create_event(json_rock_music_event, organizer_token)
+    create_event(json_programming_event, organizer_token)
+    create_event(json_lollapalooza_first_date, organizer_token)
+    events_db['events'].update_one({'_id': ObjectId(event['_id']["$oid"])}, {"$set":{'dateOfCreation': "2023-01-05"}})
+
+
+    admin_token = admin_login()
+
+    #get events
+    response = client.get(f"/admins/statistics/events/amount", params={"from_date": "2023-05-01", "to_date": "2023-03-02"}, headers={"Authorization": f"Bearer {admin_token}"})
+    assert response.status_code == status.HTTP_200_OK
+    statistics = response.json()["message"]
+    assert len(statistics) == 0
