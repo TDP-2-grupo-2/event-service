@@ -18,6 +18,7 @@ def report_event(user_reporter_id: str, event_report: dict, reports_db: Session,
     today = datetime.date.today().isoformat();
     event_report["event_name"] = reported_event["name"]
     event_report["event_description"] = reported_event["description"]
+    event_report["event_type"] = reported_event["eventType"]
     event_report["user_name"] = user_info.name
     event_report["report_date"] = today
     event_report["user_email"] = user_info.email
@@ -178,3 +179,31 @@ def update_events_status_by_event_id(reports_db, event_id):
 
 def delete_all_data(reports_db):
     reports_db['event_reports'].delete_many({})
+
+def get_reported_events_group_by_motive(reports_db, from_date, to_date):
+    pipeline = []
+
+    if from_date is not None:
+        from_date_formatted = from_date.isoformat()
+        pipeline.append({"$match": {"report_date": {"$gte": from_date_formatted}}})
+
+    if to_date is not None:
+        to_date_formatted = to_date.isoformat()
+        pipeline.append({"$match": {"report_date": {"$lte": to_date_formatted}}})
+
+    group_by_motive = {"$group": {
+                            "_id": {
+                                "reason": "$reason",
+                                "event_type": "$event_type"
+                                },                  
+                            "amount_of_reports_per_reason_by_type": {"$sum": 1}
+                        }}
+    final_projection = { "$project" : {"reason": "$_id.reason", "event_type": "$_id.event_type", "_id": 0,  "amount_of_reports_per_reason_by_type": 1}}
+    
+    pipeline.append(group_by_motive)
+    pipeline.append(final_projection)
+    pipeline.append({"$sort": {"user_reporter_id": 1}})
+    reports = reports_db["event_reports"].aggregate(pipeline)
+    reports = list(json.loads(json_util.dumps(reports)))
+    return reports
+    

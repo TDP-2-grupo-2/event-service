@@ -8,9 +8,11 @@ from event_service.exceptions import exceptions
 from sqlalchemy.orm import Session
 from event_service.utils import jwt_handler, authentification_handler
 from event_service.utils.events_statistics_handler import EventsStatisticsHandler
+from event_service.utils.reports_statistics_handler import ReportsStatisticsHandler
 
 admin_router = APIRouter()
 eventStatisticsHandler = EventsStatisticsHandler()
+reportStaticticHanlder = ReportsStatisticsHandler()
 
 @admin_router.post("/login", status_code=status.HTTP_200_OK)
 async def login (adminLogin: users_schema.adminLogin):
@@ -161,5 +163,24 @@ async def get_events_registered_entries_statistics(rq:Request, event_db: Session
         statistics = eventStatisticsHandler.get_registered_entries_amount_per_event(event_db, from_date, to_date, scale_type)
 
         return {"message": statistics}
+    except (exceptions.UserInfoException) as error:
+        raise HTTPException(**error.__dict__)
+
+
+@admin_router.get("/statistics/reports/type_of_reports", status_code=status.HTTP_200_OK)
+async def get_type_of_report_statistics(rq: Request, from_date: datetime.date = None, to_date: datetime.date = None,
+                                        event_db: Session = Depends(events_database.get_mongo_db),
+                                        reports_db: Session = Depends(reports_database.get_reports_db)):
+    try:
+        authentification_handler.is_auth(rq.headers)
+        token = authentification_handler.get_token(rq.headers)
+        decoded_token = jwt_handler.decode_token(token)
+
+        if decoded_token["rol"] != 'admin':
+            raise exceptions.UnauthorizeUser
+
+        reports_statistics = reportStaticticHanlder.get_report_motive_statistics(reports_db, event_db, from_date, to_date)
+
+        return {"message": reports_statistics}
     except (exceptions.UserInfoException) as error:
         raise HTTPException(**error.__dict__)
