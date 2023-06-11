@@ -196,7 +196,26 @@ async def get_type_of_report_statistics(rq: Request, from_date: datetime.date = 
         if decoded_token["rol"] != 'admin':
             raise exceptions.UnauthorizeUser
 
-        reports_statistics = reportStaticticHanlder.get_report_motive_statistics(reports_db, event_db, from_date, to_date)
+        reports_statistics = reportStaticticHanlder.get_report_motive_statistics(reports_db, from_date, to_date)
+
+        return {"message": reports_statistics}
+    except (exceptions.UserInfoException) as error:
+        raise HTTPException(**error.__dict__)
+
+
+@admin_router.get("/statistics/reports/event_types", status_code=status.HTTP_200_OK)
+async def get_type_of_events_statistics(rq: Request, from_date: datetime.date = None, to_date: datetime.date = None,
+                                        event_db: Session = Depends(events_database.get_mongo_db),
+                                        reports_db: Session = Depends(reports_database.get_reports_db)):
+    try:
+        authentification_handler.is_auth(rq.headers)
+        token = authentification_handler.get_token(rq.headers)
+        decoded_token = jwt_handler.decode_token(token)
+
+        if decoded_token["rol"] != 'admin':
+            raise exceptions.UnauthorizeUser
+
+        reports_statistics = reportStaticticHanlder.get_event_types_statistics(reports_db, from_date, to_date)
 
         return {"message": reports_statistics}
     except (exceptions.UserInfoException) as error:

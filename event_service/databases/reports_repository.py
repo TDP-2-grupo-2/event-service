@@ -180,6 +180,13 @@ def update_events_status_by_event_id(reports_db, event_id):
 def delete_all_data(reports_db):
     reports_db['event_reports'].delete_many({})
 
+
+def add_date_filter(pipeline, from_date, date_field: str, date_range: str):
+    if from_date is not None:
+        from_date_formatted = from_date.isoformat()
+        pipeline.append({"$match": {date_field: {date_range: from_date_formatted}}})
+
+
 def get_reported_events_group_by_motive(reports_db, from_date, to_date):
     pipeline = []
 
@@ -209,3 +216,33 @@ def get_reported_events_group_by_motive(reports_db, from_date, to_date):
     reports = list(json.loads(json_util.dumps(reports)))
     return reports
     
+
+def group_by_reports_type(pipeline):
+    pipeline.append({"$group": {
+                            "_id": {
+                                "event_type": "$event_type",
+                                },
+                            "report_reason_by_event_type": {"$push": "$reason"},                  
+                            "amount_of_reports_per_event_type_by_reason": {"$sum": 1}
+                        }})
+    
+
+def project_reports_types_and_motives(pipeline):
+    pipeline.append({ "$project" : {"event_type": "$_id.event_type", "report_reason_by_event_type": 1, "_id": 0,  "amount_of_reports_per_event_type_by_reason": 1}})
+
+
+def exec_pipeline(pipeline, reports_db, collection: str):
+    result = reports_db[collection].aggregate(pipeline)
+    result = list(json.loads(json_util.dumps(result)))
+    return result
+
+
+def get_reports_reasons_percentage_per_event_type(reports_db, from_date, to_date):
+    pipeline = []
+    add_date_filter(pipeline, from_date, "from_date", "$gte")
+    add_date_filter(pipeline, to_date, "to_date", "$lte")
+    group_by_reports_type(pipeline)
+    project_reports_types_and_motives(pipeline)
+    pipeline.append({"$sort": {"amount_of_reports_per_event_type_by_reason": -1}})
+    result = exec_pipeline(pipeline, reports_db, "event_reports")
+    return result
