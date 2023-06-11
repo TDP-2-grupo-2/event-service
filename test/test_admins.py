@@ -1178,6 +1178,45 @@ def test_when_getting_report_metrics_by_motive_then_it_should_return_it():
     assert statistics[1]['amount_of_report_by_type_of_event'] == 1
     print(statistics)
 
+
+
+@pytest.mark.usefixtures("drop_collection_documents")
+def test_when_getting_report_metrics_by_motive_then_it_should_return_it():
+    organizer_token = login_organizer("solfontenla@gmail.com", "sol fontenla")
+    first_event = create_event(json_lollapalooza_first_date, organizer_token)
+    first_event_id = first_event['_id']['$oid']
+    second_event = create_event(reggeaton_event, organizer_token)
+    second_event_id = second_event['_id']['$oid']
+    organizer_token_2 = login_organizer("asegura@gmail.com", "Agustina Segura")
+    create_event(json_rock_music_event, organizer_token_2)
+
+    ## Atteend 1 report events 
+    attendee_token_1 = login_attendee("agustina@gmail.com", "agustina segura")
+    client.post("/attendees/report/event", json={ "event_id": first_event_id ,"reason": "spam",}, headers={"Authorization": f"Bearer {attendee_token_1}"})   
+    ## Attend 2 report events
+    attendee_token_2 = login_attendee("sol@gmail.com", "sol fontenla")
+    client.post("/attendees/report/event", json={ "event_id": first_event_id ,"reason": "spam",}, headers={"Authorization": f"Bearer {attendee_token_2}"})
+    client.post("/attendees/report/event", json={ "event_id": second_event_id ,"reason": "seems fake",}, headers={"Authorization": f"Bearer {attendee_token_2}"})
+
+    attendee_token_3 = login_attendee("pepe@gmail.com", "pepe")
+    client.post("/attendees/report/event", json={ "event_id": first_event_id ,"reason": "seems fake",}, headers={"Authorization": f"Bearer {attendee_token_3}"})
+    client.post("/attendees/report/event", json={ "event_id": second_event_id ,"reason": "seems fake",}, headers={"Authorization": f"Bearer {attendee_token_3}"})
+
+
+    admin_token = admin_login()
+    response = client.get(f"/admins/statistics/reports/event_types", headers={"Authorization": f"Bearer {admin_token}"})
+    assert response.status_code == status.HTTP_200_OK
+    statistics = response.json()["message"]
+    assert len(statistics) == 2
+    assert statistics[0]['event_type'] == "SHOW"
+    assert statistics[0]['principal_report_motive'] == "spam"
+    assert statistics[0]['amount_of_reports_by_report_motive'] == 2
+    assert statistics[0]['amount_of_total_report_by_type'] == 3
+    assert statistics[1]['event_type'] == "OTRO"
+    assert statistics[1]['principal_report_motive'] == "seems fake"
+    assert statistics[1]['amount_of_reports_by_report_motive'] == 2
+    assert statistics[1]['amount_of_total_report_by_type'] == 2
+
 @pytest.mark.usefixtures("drop_collection_documents")
 def test_whenGettingTheEventsStatistics_TheResultIsOneEvents():
 
@@ -1261,7 +1300,8 @@ def test_whenGettingTheEventsStatisticsByCertainDateRange_TheResultIsZeroEvents(
     admin_token = admin_login()
 
     #get events
-    response = client.get(f"/admins/statistics/events/amount", params={"from_date": "2023-05-01", "to_date": "2023-03-02"}, headers={"Authorization": f"Bearer {admin_token}"})
+    response = client.get(f"/admins/statistics/events/amount", params={"from_date": "2023-03-01", "to_date": "2023-05-02"}, headers={"Authorization": f"Bearer {admin_token}"})
     assert response.status_code == status.HTTP_200_OK
     statistics = response.json()["message"]
     assert len(statistics) == 0
+ 

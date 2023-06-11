@@ -62,6 +62,7 @@ class EventsStatisticsHandler:
         }
         
         return statistics
+    
 
     def change_registered_entries_scale(self, entries, previous_date_format:str, new_date_format: str, date_field: str, count_field: str):
         previous_date = 0
@@ -125,8 +126,6 @@ class EventsStatisticsHandler:
             merged.append({"dateOfCreation": published_events[j]["dateOfCreation"], "amount_of_events": published_events[j]["amount_of_events"]})
             j += 1
 
-        print(merged)
-
         return merged
 
 
@@ -159,7 +158,6 @@ class EventsStatisticsHandler:
         group_organizer_by_event = event_repository.get_organizer_group_by_events(event_db)
         for orgaganizer_events in group_organizer_by_event:
 
-            
             coefficient = 0
             relation_entries_capacity = 0
             for event in orgaganizer_events['events']: 
