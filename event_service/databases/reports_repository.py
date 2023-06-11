@@ -239,8 +239,8 @@ def exec_pipeline(pipeline, reports_db, collection: str):
 
 def get_reports_reasons_percentage_per_event_type(reports_db, from_date, to_date):
     pipeline = []
-    add_date_filter(pipeline, from_date, "from_date", "$gte")
-    add_date_filter(pipeline, to_date, "to_date", "$lte")
+    add_date_filter(pipeline, from_date, "report_date", "$gte")
+    add_date_filter(pipeline, to_date, "report_date", "$lte")
     group_by_reports_type(pipeline)
     project_reports_types_and_motives(pipeline)
     pipeline.append({"$sort": {"amount_of_reports_per_event_type_by_reason": -1}})

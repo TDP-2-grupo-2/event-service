@@ -1218,6 +1218,17 @@ def test_when_getting_report_metrics_by_motive_then_it_should_return_it():
     assert statistics[1]['amount_of_total_report_by_type'] == 2
 
 @pytest.mark.usefixtures("drop_collection_documents")
+def test_when_getting_report_metrics_and_there_is_none_it_should_return_none():
+
+    admin_token = admin_login()
+    response = client.get(f"/admins/statistics/reports/type_of_reports", headers={"Authorization": f"Bearer {admin_token}"})
+    assert response.status_code == status.HTTP_200_OK
+    statistics = response.json()["message"]
+    assert len(statistics) == 0
+    print(statistics)
+    
+
+@pytest.mark.usefixtures("drop_collection_documents")
 def test_whenGettingTheEventsStatistics_TheResultIsOneEvents():
 
     #create events
