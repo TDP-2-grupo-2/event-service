@@ -1,6 +1,7 @@
 version: "3.9"
 
 services:
+
   event-service:
     build: . # subir nuestra imagen y usarla de docker hub
     env_file:
@@ -25,7 +26,7 @@ services:
     volumes:
       - users-postgres:/var/lib/postgresql/data
     restart: on-failure
-  
+
   mongo: 
     image: mongo:latest
     ports: 
@@ -37,36 +38,19 @@ services:
     volumes:
         - events-mongo:/data/db
     restart: on-failure
-
-  pgadmin:
-    container_name: pgadmin
-    image: dpage/pgadmin4
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
-      - PGADMIN_LISTEN_ADDRESS=0.0.0.0
-    ports:
-      - "80:8080"
-    depends_on:
-      - postgres
-    restart: on-failure
-
+  
   mongo-express:
     container_name: mongo-express
     image: mongo-express:latest
     environment:
-      - ME_CONFIG_MONGODB_ADMINUSERNAME=${ME_CONFIG_MONGODB_ADMINUSERNAME}
-      - ME_CONFIG_MONGODB_ADMINPASSWORD=${ME_CONFIG_MONGODB_ADMINPASSWORD}
-      #- ME_CONFIG_MONGODB_SERVER=${ME_CONFIG_MONGODB_SERVER}
-      - ME_CONFIG_BASICAUTH_USERNAME=${ME_CONFIG_BASICAUTH_USERNAME}
-      - ME_CONFIG_BASICAUTH_PASSWORD=${ME_CONFIG_BASICAUTH_PASSWORD}
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - ME_CONFIG_MONGODB_SERVER=mongo
     depends_on:
       - mongo
     ports:
       - "8081:8081"
-    restart: on-failure
-
-
+    restart: always
 
 volumes:
   users-postgres:

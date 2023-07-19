@@ -6,7 +6,6 @@ from event_service.databases.user_model import Base
 
 load_dotenv(find_dotenv())
 
-
 def init_database():
     POSTGRES_USER = os.getenv('POSTGRES_USER')
     POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD')
@@ -18,10 +17,19 @@ def init_database():
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     Base.metadata.create_all(engine)
 
-def get_db():
+def get_postg_db():
     db = SessionLocal()
-    print(db)
     try:
         yield db
     finally:
         db.close()
+
+def delete_all_data():
+    from sqlalchemy import create_engine, MetaData
+    POSTGRES_USER = os.getenv('POSTGRES_USER')
+    POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD')
+    POSTGRES_PORT = os.getenv('POSTGRES_PORT')
+    POSTGRES_SERVER = os.getenv('POSTGRES_SERVER')
+    db_url =  f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}:{POSTGRES_PORT}/event_services_db"
+    engine = create_engine(db_url, echo=True)
+    Base.metadata.drop_all(engine)

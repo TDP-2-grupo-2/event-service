@@ -1,5 +1,5 @@
 # Define image to use
-FROM python:3.8.2-alpine
+FROM python:3.11.0-alpine
 
 #define workdir
 WORKDIR /app
@@ -8,8 +8,12 @@ WORKDIR /app
 COPY ./requirements.txt ./
 
 # Install dependencies
-RUN /usr/local/bin/python -m pip install --upgrade pip 
+RUN /usr/local/bin/python -m pip install --upgrade pip setuptools wheel
 RUN pip install psycopg2-binary
+
+
+
+
 RUN pip install -r requirements.txt
 
 # Create event_service dir

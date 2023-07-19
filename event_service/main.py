@@ -1,9 +1,13 @@
 import uvicorn
 from event_service.app import app
-from event_service.databases import users_database, events_database
+from event_service.databases import events_database, reports_database, users_database
+
 
 users_database.init_database()
-event_db = events_database.EventDatabase()
+events_database.init_database()
+reports_database.init_reports_database()
+
+
 
 # TODO: Disconnect dbs
 
